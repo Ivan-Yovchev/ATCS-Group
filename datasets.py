@@ -5,9 +5,17 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
 class GCDC_Dataset(Dataset):
-    def __init__(self, csv_file, tokenizer):
+    def __init__(self, csv_file, tokenizer, max_len):
         data = pd.read_csv(csv_file)
-        self.x = [torch.LongTensor(tokenizer.encode(text, add_special_tokens=True)) for text in data['text']]
+
+        self.x = []
+        for text in data['text']:
+            sentence = torch.LongTensor(tokenizer.encode(text, add_special_tokens=True))
+
+            if sentence.shape[0] > max_len:
+                sentence = sentence[:max_len]
+            self.x.append(sentence)
+
         # consider only expert ratings and start as a binary classification according to the google doc
         y = data[['ratingA1', 'ratingA2', 'ratingA3']].mean(axis=1).to_numpy()
         self.y = torch.LongTensor(y > 2.5)
