@@ -4,8 +4,9 @@ from torch import nn
 
 class CNNBlock(nn.Module):
     """docstring for ClassName"""
-    def __init__(self, in_c, out_c, k_size, max_len, momentum):
+    def __init__(self, in_c, out_c, k_size, max_len, momentum, device):
         super(CNNBlock, self).__init__()
+        self.device = device
 
         self.block = nn.Sequential(
                         nn.Conv1d(in_channels=in_c, out_channels=out_c, kernel_size=k_size),
@@ -13,6 +14,8 @@ class CNNBlock(nn.Module):
                         nn.BatchNorm1d(num_features=out_c, momentum=momentum),
                         nn.MaxPool1d(kernel_size=(max_len - k_size))
                     )
+
+        self.to(device)
 
     def forward(self, x):
         return self.block(x)
@@ -23,19 +26,22 @@ class CNNModel(nn.Module):
                 self, 
                 embed_size, 
                 max_len, 
-                classifier, 
+                classifier,
+                device,
                 n_filters = 128, 
                 momentum = 0.7, 
                 filter_sizes = [2, 3, 4, 5, 6]
             ):
         super(CNNModel, self).__init__()
 
+        self.device = device
         self.cnn_blocks = []
 
         for f_size in filter_sizes:
-            self.cnn_blocks.append(CNNBlock(embed_size, n_filters, f_size, max_len, momentum))
+            self.cnn_blocks.append(CNNBlock(embed_size, n_filters, f_size, max_len, momentum, device))
 
         self.classifier = classifier
+        self.to(device)
 
     def forward(self, x):
         block_outs = []

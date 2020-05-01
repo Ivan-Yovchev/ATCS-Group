@@ -25,7 +25,11 @@ batch_output = bert_model(batch[0])
 print(outputs[0].shape)
 print(batch_output[0].permute(0,2,1).shape)
 
+### Model test
+
 n_filters = 128
 classifier = nn.Sequential(nn.Linear(5*n_filters, 1), nn.Sigmoid())
-model = CNNModel(batch_output[0].shape[2], max_len, classifier, n_filters=n_filters)
-print(model(batch_output[0].permute(0,2,1)))
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model = CNNModel(batch_output[0].shape[2], max_len, classifier, device, n_filters=n_filters)
+print(model(batch_output[0].permute(0,2,1).to(device)))
