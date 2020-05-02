@@ -54,12 +54,12 @@ class CNNModel(nn.Module):
         return self.classifier(input_to_dense)
 
 if __name__ == "__main__":
-
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     dense = nn.Sequential(nn.Linear(5*128, 1), nn.Sigmoid())
+    dense.to(device=device)
+    model = CNNModel(768, 300, dense, device=device)
 
-    model = CNNModel(768, 300, dense)
-
-    x = torch.randn(8, 768, 300)
+    x = torch.randn(8, 768, 300).to(device)
 
     print(model(x))
 
