@@ -4,6 +4,12 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
+def get_dataset(dataset_type, path, tokenizer, max_len):
+
+    if dataset_type == "gcdc":
+        return GCDC_Dataset(path, tokenizer, max_len)
+    # else if
+
 class GCDC_Dataset(Dataset):
     def __init__(self, csv_file, tokenizer, max_len):
         data = pd.read_csv(csv_file)
