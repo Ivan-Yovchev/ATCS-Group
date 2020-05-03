@@ -58,7 +58,7 @@ def parse_debate_dataset(filepath):
                 instance_id, 
                 motion.strip(), 
                 assertion.strip(), 
-                justification.replace('.', '.\n').strip(), 
+                justification.strip(), 
                 *[int(score) for score in scores]
             ])
             try:
