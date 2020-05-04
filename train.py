@@ -10,6 +10,10 @@ from cnn_model import CNNModel
 from tqdm import tqdm
 
 
+def _pad_sequence(t: torch.Tensor, to_seq_length=200):
+    out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
+
+
 def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device, threshold=False):
     # important for BatchNorm layer
     conv_model.train()
@@ -21,13 +25,10 @@ def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device,
         optim.zero_grad()
         label = label.to(device, torch.float32)
         mask = mask.to(device)
-        # x_ = [bert_model(x.to(device).unsqueeze(0))[0].permute(0, 2, 1) for x in document]
-        print(document.shape, mask.shape)
         x = bert_model(document.to(device), attention_mask=mask)
-        print(x[0].shape)
-        x = torch.sum(x[0]*mask.unsqueeze(-1), dim=1)/mask.sum(dim=1).unsqueeze(-1)
+        x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)
         x = x.unsqueeze(0).permute(0, 2, 1)
-        print(x.shape)
+        x = torch.nn.functional.pad(x, (0, 300 - x.size(2)))
         out = conv_model(x)
 
         # grad = loss(out > 0.5 if threshold else out, labels)
@@ -80,9 +81,7 @@ def main(args):
 
     for epoch in range(args.n_epochs):
         print("Epoch: ", epoch)
-
         avg_loss = train_model(model, bert_model, dataset, loss, optim, device=device)
-
         print("Avg loss: ", avg_loss)
 
 
