@@ -99,7 +99,7 @@ def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
     bert_model.to(device)
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, 2, device)
+    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, device)
     # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_pad_fn)
 
@@ -146,7 +146,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
