@@ -9,6 +9,8 @@ from transformers import BertTokenizer
 def get_dataset(dataset_type, path, tokenizer, max_len):
     if dataset_type == "gcdc":
         return GCDC_Dataset(path, tokenizer, max_len)
+    elif dataset_type == "hyperpartisan":
+        return HyperpartisanDataset(path, tokenizer, max_len)
     # else if
 
 
@@ -40,6 +42,28 @@ class GCDC_Dataset(Dataset):
     def __getitem__(self, idx):
         return self.docs[idx], self.masks[idx], self.y[idx]
 
+class HyperpartisanDataset(Dataset):
+    def __init__(self, json_file, tokenizer: BertTokenizer, max_len):
+        data = pd.read_json(json_file, orient='records')
+        self.docs = []
+        self.masks = []
+        # currently not including title; might be better if we add it
+        for text in data['text']:
+            res = tokenizer.batch_encode_plus(text.split('\n\n'),
+                                              max_length=max_len,
+                                              pad_to_max_length=True,
+                                              add_special_tokens=True,
+                                              return_tensors='pt')
+            self.docs.append(res['input_ids'])
+            self.masks.append(res['attention_mask'])
+
+        self.y = torch.LongTensor((data['label'] == 'true').astype('int').to_numpy())
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return self.docs[idx], self.masks[idx], self.y[idx]
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
