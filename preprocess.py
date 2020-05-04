@@ -132,6 +132,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path):
                 idx_file += 1
                 filepath = f'{output_file_path}-{idx_file}.json'
                 f = open(filepath, 'w')
+                f.write('[')
             if i != 0 and i % 10000 == 0:
                 print(f'Articles processed: {i}')
             i += 1
