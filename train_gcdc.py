@@ -10,10 +10,8 @@ from cnn_model import CNNModel
 from tqdm import tqdm
 import transformers
 import os
-
-
-def _pad_sequence(t: torch.Tensor, to_seq_length=200):
-    out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
+import random
+from tabulate import tabulate
 
 
 def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device, threshold=False):
@@ -32,8 +30,9 @@ def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device,
         label = label.to(device, torch.float32)
         mask = mask.to(device)
         x = bert_model(document.to(device), attention_mask=mask)
-        # x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)
-        x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
+        # x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0] # maxpooling
+        # x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1) # avg
+        # x = x[1]  # CLS
         x = x.unsqueeze(0).permute(0, 2, 1)
         x = torch.nn.functional.pad(x, (0, args.max_len - x.size(2)))
         out = conv_model(x)
@@ -59,8 +58,9 @@ def eval_model(bert_model, conv_model, dataset, device):
         for doc, mask, label in tqdm(dataset):
             mask = mask.to(device)
             x = bert_model(doc.to(device), attention_mask=mask)
-            x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
-            # x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)
+            # x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0] # maxpooling
+            x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)  # avg
+            x = x[1]  # CLS
             x = x.unsqueeze(0).permute(0, 2, 1)
             x = torch.nn.functional.pad(x, (0, args.max_len - x.size(2)))
             out = conv_model(x).item()
@@ -74,44 +74,45 @@ def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
     bert_model.to(device)
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200)
+    training_sets = [get_dataset(args.dataset_type, os.path.join('data/GCDC', t), bert_tokenizer, 200) for t in
+                     ('Clinton_train.csv', 'Enron_train.csv', 'Yelp_train.csv',)]
+    testing_sets = [get_dataset(args.dataset_type, os.path.join('data/GCDC', t), bert_tokenizer, 200) for t in
+                    ('Clinton_test.csv', 'Enron_test.csv', 'Yahoo_test.csv', 'Yelp_test.csv',)]
     # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_pad_fn)
 
-    classifier = None
-    if args.dataset_type == "gcdc":
-        classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
-    # else if
-    assert classifier is not None
+    classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
 
     conv_model = CNNModel(args.embed_size, args.max_len, classifier, device, n_filters=args.n_filters)
-    loss = None
-    if args.dataset_type == "gcdc":
-        loss = nn.BCELoss()
-    # else if
+    loss = nn.BCELoss()
 
-    assert loss is not None
-
-    print(f'Accuracy at start: {eval_model(bert_model, conv_model, testset, device):.4f}')
+    accuracies = {}
+    for ts in testing_sets:
+        accuracies[ts.csv_file.split('_')[0]] = [eval_model(bert_model, conv_model, ts, device)]
+    print(tabulate(accuracies, headers="keys"))
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     for epoch in range(args.n_epochs):
-        print("Epoch: ", epoch)
+        dataset = random.choice(training_sets)
+        print(f"Epoch: {epoch}, dataset file: {dataset.csv_file}")
         avg_loss = train_model(conv_model, bert_model, dataset, loss, optim, device=device)
         print("Avg loss: ", avg_loss)
-        accuracy = eval_model(bert_model, conv_model, testset, device)
-        print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
+        accuracies = {}
+        for ts in testing_sets:
+            accuracies[ts.csv_file.split('_')[0]] = [eval_model(bert_model, conv_model, ts, device)]
+        accuracy = sum(i[0] for i in accuracies.values()) / 4
+        print(f'Accuracies at {epoch + 1:02d}')
+        print(tabulate(accuracies, headers="keys"))
         if best_acc < accuracy:
             best_acc = accuracy
             with open(os.path.join('models', args.dataset_type + ".pt"), 'wb') as f:
+                optim.zero_grad()
                 torch.save({
                     'cnn_model': conv_model.state_dict(),
                     'bert_model': bert_model.state_dict(),
-                    'epoch': epoch + 1
+                    'epoch': epoch
                 }, f)
-
 
 
 if __name__ == "__main__":
