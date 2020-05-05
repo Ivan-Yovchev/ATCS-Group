@@ -72,7 +72,38 @@ class ParentDataset(Dataset):
         return self
 
     def __next__(self):
-        pass
+
+        if self.idx >= len(self):
+            self.__shuffle()
+            raise StopIteration
+
+        # Get interval of current batch
+        idx_start, idx_end = self.batch_size*self.idx, min(self.batch_size*(self.idx+1), len(self.y))
+
+        # Get batch lsits
+        docs, masks, ys = self.docs[idx_start:idx_end], self.masks[idx_start:idx_end], self.y[idx_start:idx_end]
+
+        # Pad docs (to have the same number of sentences)
+        lengths = [doc.shape[0] for doc in docs]
+        max_sent = max(lengths)
+
+        docs = stack(
+            [
+                F.pad(doc, pad=(0,0,0,max_sent-doc.shape[0]))
+                for doc in docs
+            ]
+        ).to(self.device)
+
+        masks = stack(
+            [
+                F.pad(mask, pad=(0,0,0,max_sent-mask.shape[0]))
+                for mask in masks
+            ]
+        ).to(self.device)
+
+        self.idx += 1
+
+        return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
         
 
 class GCDC_Dataset(ParentDataset):
@@ -85,41 +116,6 @@ class GCDC_Dataset(ParentDataset):
 
         return LongTensor(y >= 2)
 
-    def __next__(self):
-
-        if self.idx >= len(self):
-            self.__shuffle()
-            raise StopIteration
-
-        # Get interval of current batch
-        idx_start, idx_end = self.batch_size*self.idx, min(self.batch_size*(self.idx+1), len(self.y))
-
-        # Get batch lsits
-        docs, masks, ys = self.docs[idx_start:idx_end], self.masks[idx_start:idx_end], self.y[idx_start:idx_end]
-
-        # Pad docs (to have the same number of sentences)
-        lengths = [doc.shape[0] for doc in docs]
-        max_sent = max(lengths)
-
-        docs = stack(
-            [
-                F.pad(doc, pad=(0,0,0,max_sent-doc.shape[0]))
-                for doc in docs
-            ]
-        ).to(self.device)
-
-        masks = stack(
-            [
-                F.pad(mask, pad=(0,0,0,max_sent-mask.shape[0]))
-                for mask in masks
-            ]
-        ).to(self.device)
-
-        self.idx += 1
-
-        return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
-
-
 class HyperpartisanDataset(ParentDataset):
 
     def __get_data(self):
@@ -128,40 +124,6 @@ class HyperpartisanDataset(ParentDataset):
     def __get_y(self, data):
         return LongTensor((data['label'] == 'true').astype('int').to_numpy())
 
-    def __next__(self):
-
-        if self.idx >= len(self):
-            self.__shuffle()
-            raise StopIteration
-
-        # Get interval of current batch
-        idx_start, idx_end = self.batch_size*self.idx, min(self.batch_size*(self.idx+1), len(self.y))
-
-        # Get batch lsits
-        docs, masks, ys = self.docs[idx_start:idx_end], self.masks[idx_start:idx_end], self.y[idx_start:idx_end]
-
-        # Pad docs (to have the same number of sentences)
-        lengths = [doc.shape[0] for doc in docs]
-        max_sent = max(lengths)
-
-        docs = stack(
-            [
-                F.pad(doc, pad=(0,0,0,max_sent-doc.shape[0]))
-                for doc in docs
-            ]
-        ).to(self.device)
-
-        masks = stack(
-            [
-                F.pad(mask, pad=(0,0,0,max_sent-mask.shape[0]))
-                for mask in masks
-            ]
-        ).to(self.device)
-
-        self.idx += 1
-
-        return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
-
 class PersuasivenessDataset(ParentDataset):
 
     def __get_data(self):
@@ -169,42 +131,6 @@ class PersuasivenessDataset(ParentDataset):
 
     def __get_y(self, data):
         return LongTensor(data['Persuasiveness'].to_numpy())
-    
-    def __next__(self):
-
-        if self.idx >= len(self):
-            self.__shuffle()
-            raise StopIteration
-
-        # Get interval of current batch
-        idx_start, idx_end = self.batch_size*self.idx, min(self.batch_size*(self.idx+1), len(self.y))
-
-        # Get batch lsits
-        docs, masks, ys = self.docs[idx_start:idx_end], self.masks[idx_start:idx_end], self.y[idx_start:idx_end]
-
-        # Pad docs (to have the same number of sentences)
-        lengths = [doc.shape[0] for doc in docs]
-        max_sent = max(lengths)
-
-        docs = stack(
-            [
-                F.pad(doc, pad=(0,0,0,max_sent-doc.shape[0]))
-                for doc in docs
-            ]
-        ).to(self.device)
-
-        masks = stack(
-            [
-                F.pad(mask, pad=(0,0,0,max_sent-mask.shape[0]))
-                for mask in masks
-            ]
-        ).to(self.device)
-
-        self.idx += 1
-
-        return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
-
-
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
