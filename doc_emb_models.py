@@ -3,15 +3,19 @@ from torch import nn
 
 class BertBatcher(nn.Module):
 
-    def __init__(self, bert_model, max_len, mode="max"):
+    def __init__(self, bert_model, max_len, device, mode="max"):
         super().__init__()
 
         self.bert = bert_model
         self.max_len = max_len
         self.mode = mode
+        self.device = device
+
+        self.to(device)
 
     def forward(self, document, mask):
-
+        document = document.to(self.device)
+        mask = mask.to(self.device)
         # Encode sentences in documents
 
         mask = torch.flatten(mask, start_dim = 0, end_dim = 1)
@@ -49,11 +53,13 @@ if __name__ == "__main__":
 
     from transformers import BertModel
 
-    bert_model = BertModel.from_pretrained('bert-base-uncased')
-    model = BertMaxBatcher(bert_model, 200, "mean")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    x = torch.LongTensor(2, 7, 200).random_(0, 3000)
-    mask = torch.LongTensor(2, 7, 200).random_(0, 2)
+    bert_model = BertModel.from_pretrained('bert-base-uncased')
+    model = BertBatcher(bert_model, 200, device, "mean")
+
+    x = torch.LongTensor(2, 7, 20).random_(0, 3000)
+    mask = torch.LongTensor(2, 7, 20).random_(0, 2)
 
     print(model(x, mask).shape)
 
