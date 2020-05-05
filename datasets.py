@@ -27,12 +27,10 @@ class GCDC_Dataset(Dataset):
 
         data = pd.read_csv(csv_file)
 
-        e = tokenizer.encode('hello, boy')
+        self.csv_file = csv_file
         self.docs = []
         self.masks = []
         for text in data['text']:
-            # sentence = torch.LongTensor(tokenizer.encode(text, add_special_tokens=True))
-
             res = tokenizer.batch_encode_plus(text.split('\n\n'),
                                               max_length=max_len,
                                               pad_to_max_length=True,
