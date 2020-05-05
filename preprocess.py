@@ -83,7 +83,7 @@ def process_article(elem, train_label_tree, nlp, f):
     # process article content
     xml = ET.tostring(elem, encoding='utf-8', method='xml').decode()
     # replace anchor tags and whitespace with single space
-    text = re.sub(r'(<a.*>|</a>|\s{1,})', ' ', xml) 
+    text = re.sub(r'(<a.*?>|<\/a>|\s{1,})', ' ', xml) 
     paragraphs = re.findall(r'<p>(.*?)<\/p>', text)
     sents = [title]
     #split into sentences with spacy
