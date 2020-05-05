@@ -98,9 +98,8 @@ class HyperpartisanDataset(Dataset):
         data = pd.read_json(json_file, orient='records')
         self.docs = []
         self.masks = []
-        # currently not including title; might be better if we add it
         for text in data['text']:
-            res = tokenizer.batch_encode_plus(text.split('\n\n'),
+            res = tokenizer.batch_encode_plus(text.split('[SEP]'),
                                               max_length=max_len,
                                               pad_to_max_length=True,
                                               add_special_tokens=True,
