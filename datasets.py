@@ -33,30 +33,7 @@ class ParentDataset(Dataset):
         self.split_token = split_token
         self.device = device
 
-        data = self.__get_data()
-
-        self.docs = []
-        self.masks = []
-        for text in data[self.field_id]:
-            res = self.tokenizer.batch_encode_plus(text.split(self.split_token),
-                                              max_length=self.max_len,
-                                              pad_to_max_length=True,
-                                              add_special_tokens=True,
-                                              return_tensors='pt')
-            self.docs.append(res['input_ids'])
-            self.masks.append(res['attention_mask'])
-
-        self.y = self.__get_y(data)
-
-        self.__shuffle()
-
-    def __get_data(self):
-        pass
-
-    def __get_y(self, data):
-        pass
-
-    def __shuffle(self):
+    def shuffle(self):
         # Shuffle docs
         temp = list(zip(self.docs, self.masks, self.y))
         shuffle(temp)
@@ -64,6 +41,20 @@ class ParentDataset(Dataset):
         self.docs, self.masks, self.y = zip(*temp)
 
         self.idx = 0
+
+    def get_data(self, data):
+        docs = []
+        masks = []
+        for text in data[self.field_id]:
+            res = self.tokenizer.batch_encode_plus(text.split(self.split_token),
+                                              max_length=self.max_len,
+                                              pad_to_max_length=True,
+                                              add_special_tokens=True,
+                                              return_tensors='pt')
+            docs.append(res['input_ids'])
+            masks.append(res['attention_mask'])
+
+        return docs, masks
 
     def __len__(self):
         return ceil(len(self.y)/self.batch_size)
@@ -108,29 +99,43 @@ class ParentDataset(Dataset):
 
 class GCDC_Dataset(ParentDataset):
 
-    def __get_data(self):
-        return pd.read_csv(self.file)
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+        super(GCDC_Dataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+        
+        data = pd.read_csv(self.file)
+        
+        self.docs, self.masks = self.get_data(data)
 
-    def __get_y(self, data):
         y = data[['ratingA1', 'ratingA2', 'ratingA3']].mean(axis=1).to_numpy()
+        self.y = LongTensor(y >= 2)
 
-        return LongTensor(y >= 2)
+        self.shuffle()
 
 class HyperpartisanDataset(ParentDataset):
 
-    def __get_data(self):
-        return pd.read_json(self.file, orient='records')
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+        
+        data = pd.read_json(self.file, orient='records')
+        
+        self.docs, self.masks = self.get_data(data)
 
-    def __get_y(self, data):
-        return LongTensor((data['label'] == 'true').astype('int').to_numpy())
+        self.y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
+
+        self.shuffle()
 
 class PersuasivenessDataset(ParentDataset):
 
-    def __get_data(self):
-        return pd.read_json(self.file, orient='records')
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+        
+        data = pd.read_json(self.file, orient='records')
+        
+        self.docs, self.masks = self.get_data(data)
 
-    def __get_y(self, data):
-        return LongTensor(data['Persuasiveness'].to_numpy())
+        self.y = LongTensor(data['Persuasiveness'].to_numpy())
+
+        self.shuffle()
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
