@@ -5,6 +5,7 @@ from torch import nn, flatten
 from torch.utils.data import DataLoader
 
 from transformers import BertModel, BertTokenizer
+from doc_emb_models import *
 from datasets import get_dataset, collate_pad_fn
 from cnn_model import CNNModel
 from tqdm import tqdm
@@ -14,11 +15,11 @@ import os
 def _pad_sequence(t: torch.Tensor, to_seq_length=200):
     out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
 
-def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device, threshold=False):
+def train_model(conv_model, doc_embedder, dataset, loss, optim, device, threshold=False):
 
     # important for BatchNorm layer
     conv_model.train()
-    bert_model.train()
+    doc_embedder.train_bert()
 
     avg_loss = 0
 
@@ -31,31 +32,12 @@ def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device,
 
         # Compute output
 
-        # Encode sentences in documents
-
-        mask = flatten(mask, start_dim = 0, end_dim = 1)
-
-        # Output (Document x Sentence) x Token x EmbDim
-        x = bert_model(
-            flatten(
+        out = conv_model(
+            doc_embedder(
                 document,
-                start_dim = 0,
-                end_dim = 1
-            ),
-            attention_mask = mask
+                mask
+            )
         )
-
-        # Encode docs (average per sentence)
-        x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
-
-        # Split (Document x Sentence) dim
-        x = x.view(*document.shape[:2], *x.shape[1:])
-
-        # Channel in the middle
-        x = x.permute(0, 2, 1)
-        x = torch.nn.functional.pad(x, (0, args.max_len - x.size(2)))
-
-        out = conv_model(x)
 
         # Compute loss
         # grad = loss(out > 0.5 if threshold else out, labels)
@@ -76,19 +58,20 @@ def train_model(conv_model, bert_model: BertModel, dataset, loss, optim, device,
     return avg_loss
 
 
-def eval_model(bert_model, conv_model, dataset, device):
+def eval_model(doc_embedder, conv_model, dataset, device):
     conv_model.eval()
-    bert_model.eval()
+    doc_embedder.eval_bert()
     results = 0
     with torch.no_grad():
         for doc, mask, label in tqdm(dataset):
-            doc = doc[0]
-            mask = mask[0]
-            x = bert_model(doc, attention_mask=mask)
-            x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
-            x = x.unsqueeze(0).permute(0, 2, 1)
-            x = torch.nn.functional.pad(x, (0, args.max_len - x.size(2)))
-            out = conv_model(x).item()
+            out = torch.squeeze(
+                conv_model(
+                    doc_embedder(
+                        doc,
+                        mask
+                    )
+                )
+            ).item()
             results += ((out >= 0.5) == label.item())
 
     return results / len(dataset)
@@ -102,6 +85,12 @@ def main(args):
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, device)
     # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_pad_fn)
+
+    doc_embedder = None
+    if args.doc_emb_type == "max_batcher":
+        doc_embedder = BertMaxBatcher(bert_model, args.max_len)
+    # else if
+    assert doc_embedder is not None
 
     classifier = None
     if args.dataset_type == "gcdc":
@@ -117,7 +106,7 @@ def main(args):
 
     assert loss is not None
 
-    print(f'Accuracy at start: {eval_model(bert_model, conv_model, testset, device):.4f}')
+    print(f'Accuracy at start: {eval_model(doc_embedder, conv_model, testset, device):.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
@@ -126,10 +115,10 @@ def main(args):
 
         print("Epoch: ", epoch)
 
-        avg_loss = train_model(conv_model, bert_model, dataset, loss, optim, device=device)
+        avg_loss = train_model(conv_model, doc_embedder, dataset, loss, optim, device=device)
         print("Avg loss: ", avg_loss)
 
-        accuracy = eval_model(bert_model, conv_model, testset, device)
+        accuracy = eval_model(doc_embedder, conv_model, testset, device)
         print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
 
         if best_acc < accuracy:
@@ -151,6 +140,7 @@ if __name__ == "__main__":
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
+    parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
     parser.add_argument("--n_epochs", type=int, default=5, help="Number of epochs")

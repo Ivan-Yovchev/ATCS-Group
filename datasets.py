@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from torch import LongTensor, stack, float32 as tfloat32
+from torch import LongTensor, stack, float32 as tfloat32, squeeze
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from torch.nn import functional as F
@@ -13,7 +13,7 @@ from math import ceil
 
 def get_dataset(dataset_type, path, tokenizer, max_len, batch_size, device):
     if dataset_type == "gcdc":
-        return GCDC_Dataset(path, tokenizer, max_len)
+        return GCDC_Dataset(path, tokenizer, max_len, batch_size, device)
     elif dataset_type == "hyperpartisan":
         return HyperpartisanDataset(path, tokenizer, max_len)
     # else if
@@ -92,6 +92,8 @@ class GCDC_Dataset(Dataset):
         ).to(self.device)
 
         self.idx += 1
+
+        return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
 
 class HyperpartisanDataset(Dataset):
     def __init__(self, json_file, tokenizer: BertTokenizer, max_len):
