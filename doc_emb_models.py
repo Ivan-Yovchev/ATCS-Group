@@ -1,13 +1,14 @@
 import torch
 from torch import nn
 
-class BertMaxBatcher(nn.Module):
+class BertBatcher(nn.Module):
 
-    def __init__(self, bert_model, max_len):
+    def __init__(self, bert_model, max_len, mode="max"):
         super().__init__()
 
         self.bert = bert_model
         self.max_len = max_len
+        self.mode = mode
 
     def forward(self, document, mask):
 
@@ -26,7 +27,10 @@ class BertMaxBatcher(nn.Module):
         )
 
         # Encode docs (average per sentence)
-        x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
+        if self.mode == "max":
+            x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
+        elif self.mode == "mean":
+            x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)
 
         # Split (Document x Sentence) dim
         x = x.view(*document.shape[:2], *x.shape[1:])
@@ -40,4 +44,16 @@ class BertMaxBatcher(nn.Module):
 
     def eval_bert(self):
         return self.bert.eval()
+
+if __name__ == "__main__":
+
+    from transformers import BertModel
+
+    bert_model = BertModel.from_pretrained('bert-base-uncased')
+    model = BertMaxBatcher(bert_model, 200, "mean")
+
+    x = torch.LongTensor(2, 7, 200).random_(0, 3000)
+    mask = torch.LongTensor(2, 7, 200).random_(0, 2)
+
+    print(model(x, mask).shape)
 
