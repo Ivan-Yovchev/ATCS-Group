@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 import json
 import xml.etree.cElementTree as ET
+import spacy
 
 def get_label_data(article_id, label_tree):
     """ Get labels corresponding to an article
@@ -76,21 +77,26 @@ def parse_debate_dataset(filepath):
                                         'Justification', 
                                         'GE', 'LO', 'IS', 'UA', 'UJ', 'Persuasiveness'])
 
-def process_article(elem, train_label_tree, f):
+def process_article(elem, train_label_tree, nlp, f):
     article_id = elem.attrib.get('id')
     title = elem.attrib.get('title')
     # process article content
     xml = ET.tostring(elem, encoding='utf-8', method='xml').decode()
-    text = '\n\n'.join(re.findall(r'<p>(.*?)<\/p>', xml))
-    # remove anchor tags
-    text = re.sub(r'(<a.*>|</a>)', '', text)
+    # replace anchor tags and whitespace with single space
+    text = re.sub(r'(<a.*>|</a>|\s{1,})', ' ', xml) 
+    paragraphs = re.findall(r'<p>(.*?)<\/p>', text)
+    sents = [title]
+    #split into sentences with spacy
+    for p in paragraphs:
+        p_sents = [s.text for s in nlp(p).sents]
+        sents.extend(p_sents)
+    text = '[SEP]'.join(sents)
     label, bias, labeled_by = get_label_data(article_id, train_label_tree)
     return {
         'article_id': article_id,
         'label': label,
         'bias': bias,
         'labeled_by': labeled_by,
-        'title': title,
         'text': text,
     }
 
@@ -108,6 +114,8 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path):
     """
     data_tree = ET.iterparse(data_path, events=('start', 'end'))
     label_tree = ET.iterparse(labels_path, events=('start', 'end'))
+    nlp = spacy.load("en_core_web_sm", disable=["parser"]) 
+    nlp.add_pipe(nlp.create_pipe('sentencizer'))
 
     max_filesize = args.hp_max_filesize * 1024**2
     idx_file = 0
@@ -120,7 +128,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path):
         if event == 'start' and not root:
             root = elem
         if event == 'end' and elem.tag == 'article':
-            article = process_article(elem, label_tree, f)
+            article = process_article(elem, label_tree, nlp, f)
             json.dump(article, f, indent=2)
             f.write(',\n')
             # clear prev elements from memory
