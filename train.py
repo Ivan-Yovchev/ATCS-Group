@@ -88,7 +88,7 @@ def main(args):
 
     doc_embedder = None
     if args.doc_emb_type == "max_batcher":
-        doc_embedder = BertMaxBatcher(bert_model, args.max_len)
+        doc_embedder = BertBatcher(bert_model, args.max_len)
     # else if
     assert doc_embedder is not None
 
