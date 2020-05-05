@@ -119,7 +119,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path):
 
     max_filesize = args.hp_max_filesize * 1024**2
     idx_file = 0
-    filepath = f'{output_file_path}-{idx_file}.json'
+    filepath = f'{output_file_path}.json'
     f = open(filepath, 'w')
     f.write('[')
     i = 0
@@ -154,6 +154,9 @@ if __name__ == '__main__':
     parser.add_argument('--hp_valid_data', type=str, help='Hyperpartisan valid data', default='data/SemEval/articles-validation-20180831.xml')
     parser.add_argument('--hp_valid_labels', type=str, help='Hyperpartisan valid labels', default='data/SemEval/ground-truth-validation-20180831.xml')
     parser.add_argument('--hp_valid_output_prefix', type=str, help='Hyperpartisan valid output file prefix', default='data/SemEval/articles-valid')
+    parser.add_argument('--hp_byarticle_data', type=str, help='Hyperpartisan byarticles data', default='data/SemEval/articles-training-byarticle-20181122.xml')
+    parser.add_argument('--hp_byarticle_labels', type=str, help='Hyperpartisan byarticles labels', default='data/SemEval/ground-truth-training-byarticle-20181122.xml')
+    parser.add_argument('--hp_byarticle_output_prefix', type=str, help='Hyperpartisan byarticle dataset output file prefix', default='data/SemEval/dataset-byarticle')
     parser.add_argument('--hp_max_filesize', type=int, help='Maximum file size in MB for hyperpartisan dataset', default=400)
     parser.add_argument('--debate_datapath', type=str, help='Path to Debate Persuasiveness dataset', default='data/DebatePersuasiveness/DebateArguments.txt')
     parser.add_argument('--debate_output_file', type=str, help='Debate Persuasisveness output file', default='data/DebatePersuasiveness/persuasiveness_dataset.json')
@@ -164,6 +167,8 @@ if __name__ == '__main__':
     preprocess_hp_dataset(args.hp_train_data, args.hp_train_labels, args.hp_train_output_prefix)
     print('Preprocessing hyperpartisan validation dataset')
     preprocess_hp_dataset(args.hp_valid_data, args.hp_valid_labels, args.hp_valid_output_prefix)
+    print('Preprocessing hyperpartisan byarticle dataset')
+    preprocess_hp_dataset(args.hp_byarticle_data, args.hp_byarticle_labels, args.hp_byarticle_output_prefix)
 
     print('Preprocessing persuasiveness datasets')
     debates_df = parse_debate_dataset(args.debate_datapath)
