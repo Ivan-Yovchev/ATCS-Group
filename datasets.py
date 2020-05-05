@@ -21,47 +21,63 @@ def get_dataset(dataset_type, path, tokenizer, max_len, batch_size, device):
     # else if
     return None
 
-class GCDC_Dataset(Dataset):
-    def __init__(self, csv_file, tokenizer: BertTokenizer, max_len, batch_size, device):
-        super(GCDC_Dataset).__init__()
+class ParentDataset(Dataset):
+    """docstring for ParentDataset"""
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, device):
+        super(ParentDataset, self).__init__()
+        self.file = file
+        self.tokenizer = tokenizer
+        self.max_len = max_len
         self.batch_size = batch_size
         self.device = device
 
-        data = pd.read_csv(csv_file)
+        self.docs, self.masks, self.y = self.__get_data()
 
-        self.csv_file = csv_file
-        self.docs = []
-        self.masks = []
+        self.__shuffle()
+
+    def __get_data(self):
+        pass
+
+    def __shuffle(self):
+
+        # Shuffle docs
+        temp = list(zip(self.docs, self.masks, self.y))
+        shuffle(temp)
+
+        self.docs, self.masks, self.y = zip(*temp)
+
+        self.idx = 0
+
+    def __len__(self):
+        return ceil(len(self.y)/self.batch_size)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pass
+        
+
+class GCDC_Dataset(ParentDataset):
+
+    def __get_data(self):
+        data = pd.read_csv(self.file)
+
+        docs = []
+        masks = []
         for text in data['text']:
-            res = tokenizer.batch_encode_plus(text.split('\n\n'),
-                                              max_length=max_len,
+            res = self.tokenizer.batch_encode_plus(text.split('\n\n'),
+                                              max_length=self.max_len,
                                               pad_to_max_length=True,
                                               add_special_tokens=True,
                                               return_tensors='pt')
-            self.docs.append(res['input_ids'])
-            self.masks.append(res['attention_mask'])
+            docs.append(res['input_ids'])
+            masks.append(res['attention_mask'])
 
         # consider only expert ratings and start as a binary classification according to the google doc
         y = data[['ratingA1', 'ratingA2', 'ratingA3']].mean(axis=1).to_numpy()
-        self.y = LongTensor(y >= 2)
 
-        self.__shuffle()
-
-    def __shuffle(self):
-
-        # Shuffle docs
-        temp = list(zip(self.docs, self.masks, self.y))
-        shuffle(temp)
-
-        self.docs, self.masks, self.y = zip(*temp)
-
-        self.idx = 0
-
-    def __len__(self):
-        return ceil(len(self.y)/self.batch_size)
-
-    def __iter__(self):
-        return self
+        return docs, masks, LongTensor(y >= 2)
 
     def __next__(self):
 
@@ -98,42 +114,25 @@ class GCDC_Dataset(Dataset):
         return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
 
 
-class HyperpartisanDataset(Dataset):
-    def __init__(self, json_file, tokenizer: BertTokenizer, max_len, batch_size, device):
-        super(HyperpartisanDataset).__init__()
-        self.batch_size = batch_size
-        self.device = device
+class HyperpartisanDataset(ParentDataset):
 
-        data = pd.read_json(json_file, orient='records')
-        self.docs = []
-        self.masks = []
+    def __get_data(self):
+        data = pd.read_json(self.file, orient='records')
+
+        docs = []
+        masks = []
         for text in data['text']:
-            res = tokenizer.batch_encode_plus(text.split('[SEP]'),
-                                              max_length=max_len,
+            res = self.tokenizer.batch_encode_plus(text.split('[SEP]'),
+                                              max_length=self.max_len,
                                               pad_to_max_length=True,
                                               add_special_tokens=True,
                                               return_tensors='pt')
-            self.docs.append(res['input_ids'])
-            self.masks.append(res['attention_mask'])
+            docs.append(res['input_ids'])
+            masks.append(res['attention_mask'])
 
-        self.y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
+        y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
 
-        self.__shuffle()
-    def __shuffle(self):
-
-        # Shuffle docs
-        temp = list(zip(self.docs, self.masks, self.y))
-        shuffle(temp)
-
-        self.docs, self.masks, self.y = zip(*temp)
-
-        self.idx = 0
-
-    def __len__(self):
-        return ceil(len(self.y)/self.batch_size)
-
-    def __iter__(self):
-        return self
+        return docs, masks, y
 
     def __next__(self):
 
@@ -169,7 +168,7 @@ class HyperpartisanDataset(Dataset):
 
         return docs, masks, squeeze(LongTensor(ys).to(self.device, tfloat32))
 
-class PersuasivenessDataset(Dataset):
+class PersuasivenessDataset(ParentDataset):
     def __init__(self, json_file, tokenizer: BertTokenizer, max_len, batch_size, device):
         super(PersuasivenessDataset).__init__()
         self.batch_size = batch_size
@@ -192,22 +191,24 @@ class PersuasivenessDataset(Dataset):
 
         self.__shuffle()
 
-    def __shuffle(self):
+    def __get_data(self):
+        data = pd.read_json(self.file, orient='records')
 
-        # Shuffle docs
-        temp = list(zip(self.docs, self.masks, self.y))
-        shuffle(temp)
+        docs = []
+        masks = []
+        for text in data['Justification']:
+            res = self.tokenizer.batch_encode_plus(text.split('[SEP]'),
+                                              max_length=self.max_len,
+                                              pad_to_max_length=True,
+                                              add_special_tokens=True,
+                                              return_tensors='pt')
+            docs.append(res['input_ids'])
+            masks.append(res['attention_mask'])
 
-        self.docs, self.masks, self.y = zip(*temp)
+        y = LongTensor(data['Persuasiveness'].to_numpy())
 
-        self.idx = 0
-
-    def __len__(self):
-        return ceil(len(self.y)/self.batch_size)
-
-    def __iter__(self):
-        return self
-
+        return docs, masks, y
+    
     def __next__(self):
 
         if self.idx >= len(self):
