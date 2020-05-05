@@ -27,7 +27,7 @@ def get_label_data(article_id, label_tree):
                 root.clear()
     raise Exception(f'article_id: {article_id} not found')
 
-def parse_debate_dataset(filepath):
+def parse_debate_dataset(filepath, nlp):
     motions = []
     with open(filepath, 'r') as f:
         line = next(f)
@@ -55,6 +55,7 @@ def parse_debate_dataset(filepath):
                     justification += line
                 line = next(f)
             line = next(f)
+            justification = '[SEP]'.join([s.text for s in nlp(justification).sents])
             scores = re.findall(r'GE:(\d)\tLO:(\d)\tIS:(\d)\tUA:(\d)\tUJ:(\d)\tPersuasiveness:(\d)', line)[0]
             motions.append([
                 motion_id, 
@@ -76,6 +77,18 @@ def parse_debate_dataset(filepath):
                                         'Assertion', 
                                         'Justification', 
                                         'GE', 'LO', 'IS', 'UA', 'UJ', 'Persuasiveness'])
+
+def save_debates_ds(debates_df, args):
+    train_df = debates_df.sample(frac=0.6, random_state=42)
+    rest_df = debates_df.drop(train_df.index)
+    valid_df = rest_df.sample(frac=0.5, random_state=42)
+    test_df = rest_df.drop(valid_df.index)
+    train_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-train.json') 
+    valid_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-valid.json') 
+    test_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-test.json') 
+    train_df.to_json(train_path, orient='records', indent=2)
+    valid_df.to_json(valid_path, orient='records', indent=2)
+    test_df.to_json(test_path, orient='records', indent=2)
 
 def process_article(elem, train_label_tree, nlp, f):
     article_id = elem.attrib.get('id')
@@ -107,15 +120,13 @@ def close_hp_file(f):
     f.write(']')
     f.close()
 
-def preprocess_hp_dataset(data_path, labels_path, output_file_path):
+def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
     """ Combines data and groundtruth labels xml files in a single tsv file
         Output file format:
             article_id label bias labeled_by title text
     """
     data_tree = ET.iterparse(data_path, events=('start', 'end'))
     label_tree = ET.iterparse(labels_path, events=('start', 'end'))
-    nlp = spacy.load("en_core_web_sm", disable=["parser"]) 
-    nlp.add_pipe(nlp.create_pipe('sentencizer'))
 
     max_filesize = args.hp_max_filesize * 1024**2
     idx_file = 0
@@ -159,17 +170,21 @@ if __name__ == '__main__':
     parser.add_argument('--hp_byarticle_output_prefix', type=str, help='Hyperpartisan byarticle dataset output file prefix', default='data/SemEval/dataset-byarticle')
     parser.add_argument('--hp_max_filesize', type=int, help='Maximum file size in MB for hyperpartisan dataset', default=400)
     parser.add_argument('--debate_datapath', type=str, help='Path to Debate Persuasiveness dataset', default='data/DebatePersuasiveness/DebateArguments.txt')
-    parser.add_argument('--debate_output_file', type=str, help='Debate Persuasisveness output file', default='data/DebatePersuasiveness/persuasiveness_dataset.json')
+    parser.add_argument('--debate_output_dir', type=str, help='Path to Debate Persuasiveness output dir', default='data/DebatePersuasiveness/')
+    parser.add_argument('--debate_output_prefix', type=str, help='Debate Persuasisveness output file', default='persuasiveness_dataset')
 
     args = parser.parse_args()
 
-    print('Preprocessing hyperpartisan training dataset')
-    preprocess_hp_dataset(args.hp_train_data, args.hp_train_labels, args.hp_train_output_prefix)
-    print('Preprocessing hyperpartisan validation dataset')
-    preprocess_hp_dataset(args.hp_valid_data, args.hp_valid_labels, args.hp_valid_output_prefix)
+    nlp = spacy.load("en_core_web_sm", disable=["parser"]) 
+    nlp.add_pipe(nlp.create_pipe('sentencizer'))
+
+    # print('Preprocessing hyperpartisan training dataset')
+    # preprocess_hp_dataset(args.hp_train_data, args.hp_train_labels, args.hp_train_output_prefix, nlp)
+    # print('Preprocessing hyperpartisan validation dataset')
+    # preprocess_hp_dataset(args.hp_valid_data, args.hp_valid_labels, args.hp_valid_output_prefix, nlp)
     print('Preprocessing hyperpartisan byarticle dataset')
-    preprocess_hp_dataset(args.hp_byarticle_data, args.hp_byarticle_labels, args.hp_byarticle_output_prefix)
+    preprocess_hp_dataset(args.hp_byarticle_data, args.hp_byarticle_labels, args.hp_byarticle_output_prefix, nlp)
 
     print('Preprocessing persuasiveness datasets')
-    debates_df = parse_debate_dataset(args.debate_datapath)
-    debates_df.to_json(args.debate_output_file, orient='records', indent=2)
+    debates_df = parse_debate_dataset(args.debate_datapath, nlp)
+    save_debates_ds(debates_df, args)
