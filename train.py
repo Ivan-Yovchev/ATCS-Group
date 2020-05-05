@@ -15,7 +15,7 @@ import os
 def _pad_sequence(t: torch.Tensor, to_seq_length=200):
     out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
 
-def train_model(conv_model, doc_embedder, dataset, loss, optim, device, threshold=False):
+def train_model(conv_model, doc_embedder, dataset, loss, optim):
 
     # important for BatchNorm layer
     conv_model.train()
@@ -40,7 +40,6 @@ def train_model(conv_model, doc_embedder, dataset, loss, optim, device, threshol
         )
 
         # Compute loss
-        # grad = loss(out > 0.5 if threshold else out, labels)
         grad = loss(out.squeeze(), label)
 
         # Backpropagate and upate weights
@@ -58,7 +57,7 @@ def train_model(conv_model, doc_embedder, dataset, loss, optim, device, threshol
     return avg_loss
 
 
-def eval_model(doc_embedder, conv_model, dataset, device):
+def eval_model(doc_embedder, conv_model, dataset):
     conv_model.eval()
     doc_embedder.eval_bert()
     results = 0
@@ -78,17 +77,16 @@ def eval_model(doc_embedder, conv_model, dataset, device):
 
 
 def main(args):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
-    bert_model.to(device)
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, device)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, device)
-    # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_pad_fn)
+    bert_model.to(args.device)
+    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, args.device)
+    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, args.device)
 
     doc_embedder = None
     if args.doc_emb_type == "max_batcher":
-        doc_embedder = BertBatcher(bert_model, args.max_len)
+        doc_embedder = BertBatcher(bert_model, args.max_len, args.device)
     # else if
     assert doc_embedder is not None
 
@@ -98,7 +96,7 @@ def main(args):
     # else if
     assert classifier is not None
 
-    conv_model = CNNModel(args.embed_size, args.max_len, classifier, device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.max_len, classifier, args.device, n_filters=args.n_filters)
     loss = None
     if args.dataset_type == "gcdc":
         loss = nn.BCELoss()
@@ -106,7 +104,7 @@ def main(args):
 
     assert loss is not None
 
-    print(f'Accuracy at start: {eval_model(doc_embedder, conv_model, testset, device):.4f}')
+    print(f'Accuracy at start: {eval_model(doc_embedder, conv_model, testset):.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
@@ -115,10 +113,10 @@ def main(args):
 
         print("Epoch: ", epoch)
 
-        avg_loss = train_model(conv_model, doc_embedder, dataset, loss, optim, device=device)
+        avg_loss = train_model(conv_model, doc_embedder, dataset, loss, optim)
         print("Avg loss: ", avg_loss)
 
-        accuracy = eval_model(doc_embedder, conv_model, testset, device)
+        accuracy = eval_model(doc_embedder, conv_model, testset)
         print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
 
         if best_acc < accuracy:
