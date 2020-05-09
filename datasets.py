@@ -222,6 +222,7 @@ class EpisodeMaker(object):
         for i in range(len(allowed_classes)):
             final_split += random.sample(list(filter(lambda x: x[2]==allowed_classes[i], split)), int(k/len(allowed_classes)))
 
+        shuffle(final_split)
         docs, masks, y = zip(*final_split)
 
         return (docs, masks, y)
