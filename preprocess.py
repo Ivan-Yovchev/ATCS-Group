@@ -55,7 +55,7 @@ def parse_debate_dataset(filepath, nlp):
                     justification += line
                 line = next(f)
             line = next(f)
-            justification = '[SEP]'.join([s.text for s in nlp(justification).sents])
+            justification = split_sentences(justification, nlp)
             scores = re.findall(r'GE:(\d)\tLO:(\d)\tIS:(\d)\tUA:(\d)\tUJ:(\d)\tPersuasiveness:(\d)', line)[0]
             motions.append([
                 motion_id, 
@@ -98,12 +98,10 @@ def process_article(elem, train_label_tree, nlp, f):
     # replace anchor tags and whitespace with single space
     text = re.sub(r'(<a.*?>|<\/a>|\s{1,})', ' ', xml) 
     paragraphs = re.findall(r'<p>(.*?)<\/p>', text)
-    sents = [title]
     #split into sentences with spacy
+    text = title
     for p in paragraphs:
-        p_sents = [s.text for s in nlp(p).sents]
-        sents.extend(p_sents)
-    text = '[SEP]'.join(sents)
+        text = '[SEP]'.join([text, split_sentences(p, nlp)])
     label, bias, labeled_by = get_label_data(article_id, train_label_tree)
     return {
         'article_id': article_id,
@@ -156,6 +154,9 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
             i += 1
     close_hp_file(f)
 
+def split_sentences(text, nlp):
+    return '[SEP]'.join([s.text for s in nlp(text).sents])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Preprocess datasets')
@@ -172,6 +173,7 @@ if __name__ == '__main__':
     parser.add_argument('--debate_datapath', type=str, help='Path to Debate Persuasiveness dataset', default='data/DebatePersuasiveness/DebateArguments.txt')
     parser.add_argument('--debate_output_dir', type=str, help='Path to Debate Persuasiveness output dir', default='data/DebatePersuasiveness/')
     parser.add_argument('--debate_output_prefix', type=str, help='Debate Persuasisveness output file', default='persuasiveness_dataset')
+    parser.add_argument('--fake_news_rootdir', type=str, help='Path to FakeNews dataset', default='data/FakeNews')
 
     args = parser.parse_args()
 
@@ -188,3 +190,12 @@ if __name__ == '__main__':
     print('Preprocessing persuasiveness datasets')
     debates_df = parse_debate_dataset(args.debate_datapath, nlp)
     save_debates_ds(debates_df, args)
+    
+    print('Preprocessing FakeNews datasets')
+    for path, _, files in os.walk(args.fake_news_rootdir):
+        for name in files:
+            filename = os.path.join(path, name)
+            print(f'Processing {filename}')
+            dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
+            dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
+            dataset.to_csv(filename, sep='\t', index=False)

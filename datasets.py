@@ -18,8 +18,10 @@ def get_dataset(dataset_type, path, tokenizer, max_len, batch_size, device):
         return HyperpartisanDataset(path, tokenizer, max_len, batch_size, 'text', '[SEP]', device)
     elif dataset_type == "persuasiveness":
         return PersuasivenessDataset(path, tokenizer, max_len, batch_size, 'Justification', '[SEP]', device)
-    # else if
-    return None
+    elif dataset_type == "fake_news":
+        return FakeNewsDataset(path, tokenizer, max_len, batch_size, 'text', '[SEP]', device)
+    else:
+        raise ValueError(f'Unknown dataset type: {dataset_type}')
 
 class ParentDataset(Dataset):
     """docstring for ParentDataset"""
@@ -108,6 +110,18 @@ class GCDC_Dataset(ParentDataset):
 
         y = data[['ratingA1', 'ratingA2', 'ratingA3']].mean(axis=1).to_numpy()
         self.y = LongTensor(y >= 2)
+
+        self.shuffle()
+
+class FakeNewsDataset(ParentDataset):
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+        super(FakeNewsDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+        
+        data = pd.read_csv(self.file, sep='\t', header=0, names=['text', 'label'])
+        
+        self.docs, self.masks = self.get_data(data)
+
+        self.y = LongTensor(data['label'].to_numpy())
 
         self.shuffle()
 
