@@ -210,10 +210,7 @@ class EpisodeMaker(object):
 
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))
-        print(len(split))
-        print(allowed_classes)
-        split = list(map(lambda x: x, filter(lambda x: x[2] in allowed_classes, split)))
-        print(len(split))
+        split = list(filter(lambda x: x[2] in allowed_classes, split))
         split = random.sample(split, k)
         docs, masks, y = zip(*split)
 
