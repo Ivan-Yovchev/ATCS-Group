@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import random
 
 from torch import LongTensor, stack, float32 as tfloat32, squeeze
 from torch.utils.data import Dataset, DataLoader
@@ -44,6 +45,10 @@ class ParentDataset(Dataset):
 
         self.idx = 0
 
+    def get_n_classes(self):
+
+        return len(set([x.item() for x in self.y]))
+
     def get_data(self, data):
         docs = []
         masks = []
@@ -67,7 +72,7 @@ class ParentDataset(Dataset):
     def __next__(self):
 
         if self.idx >= len(self):
-            self.__shuffle()
+            self.shuffle()
             raise StopIteration
 
         # Get interval of current batch
@@ -151,7 +156,78 @@ class PersuasivenessDataset(ParentDataset):
 
         self.shuffle()
 
+class EpisodeMaker(object):
+    """docstring for EpisodeMaker"""
+    def __init__(self, tokenizer: BertTokenizer, max_len, device, datasets = [], gcdc_ext = ["Clinton", "Enron", "Yahoo", "Yelp"]):
+        super(EpisodeMaker, self).__init__()
+
+        assert(len(datasets) != 0)
+
+        self.datasets = {}
+        for dataset in datasets:
+            key = dataset["name"]
+
+            if key != "gcdc": 
+                self.datasets[key] = [{
+                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, 1, device),
+                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, 1, device)
+                }]
+            else:
+                path = dataset["train"]
+                if ".csv" in path:
+                    path = os.path.dirname(path)
+
+                self.datasets[key] = []
+                for ext in gcdc_ext:
+                    sub_gcdc = {
+                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, 1, device),
+                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, 1, device)
+                    }
+
+                    self.datasets[key].append(sub_gcdc)
+
+    def get_episode(self, dataset_type, classes = 2, n_train = 8, n_test = 4):
+        
+        dataset = random.sample(self.datasets[dataset_type], 1)[0]
+
+        n_classes = dataset["train"].get_n_classes()
+
+        allowed_classes = []
+        for _ in range(classes):
+            class_idx = random.randint(0, n_classes - 1)
+
+            while class_idx in allowed_classes:
+                class_idx = random.randint(0, n_classes - 1)
+
+            allowed_classes.append(class_idx)
+
+        return {
+                "support_set": self.__sample_dataset(dataset["train"], allowed_classes, n_train),
+                "query_set": self.__sample_dataset(dataset["test"], allowed_classes, n_test)
+                }
+
+    def __sample_dataset(self, split, allowed_classes, k):
+
+        split.shuffle()
+        split = list(zip(split.docs, split.masks, split.y))
+        print(len(split))
+        print(allowed_classes)
+        split = list(map(lambda x: x, filter(lambda x: x[2] in allowed_classes, split)))
+        print(len(split))
+        split = random.sample(split, k)
+        docs, masks, y = zip(*split)
+
+        return (docs, masks, y)
+
 def collate_pad_fn(batch):
     x, y = zip(*batch)
     x_pad = pad_sequence(x, batch_first=True)
     return x_pad, LongTensor(y)
+
+if __name__ == "__main__":
+    from transformers import BertModel, BertTokenizer
+    bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    a = {"name": "gcdc", "train": "./data/GCDC/", "test": "./data/GCDC"}
+    b = {"name": "persuasiveness", "train": "./data/DebatePersuasiveness/persuasiveness_dataset-train.json", "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"}
+    model = EpisodeMaker(bert_tokenizer, 200, 'cpu', [a,b])
+    model.get_episode('gcdc', 1)
