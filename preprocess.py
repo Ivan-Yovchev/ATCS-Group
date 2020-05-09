@@ -129,7 +129,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
     max_filesize = args.hp_max_filesize * 1024**2
     idx_file = 0
     filepath = f'{output_file_path}.json'
-    f = open(filepath, 'w')
+    f = open(filepath, 'w', encoding='utf-8')
     f.write('[')
     i = 0
     root = False
@@ -138,7 +138,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
             root = elem
         if event == 'end' and elem.tag == 'article':
             article = process_article(elem, label_tree, nlp, f)
-            json.dump(article, f, indent=2)
+            json.dump(article, f, indent=2, ensure_ascii=False)
             f.write(',\n')
             # clear prev elements from memory
             elem.clear()
@@ -147,7 +147,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
                 close_hp_file(f)
                 idx_file += 1
                 filepath = f'{output_file_path}-{idx_file}.json'
-                f = open(filepath, 'w')
+                f = open(filepath, 'w', encoding='utf-8')
                 f.write('[')
             if i != 0 and i % 10000 == 0:
                 print(f'Articles processed: {i}')
@@ -156,6 +156,15 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
 
 def split_sentences(text, nlp):
     return '[SEP]'.join([s.text for s in nlp(text).sents])
+
+def preprocess_fake_news(rootdir, nlp):
+    for path, _, files in os.walk(rootdir):
+        for name in files:
+            filename = os.path.join(path, name)
+            print(f'Processing {filename}')
+            dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
+            dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
+            dataset.to_csv(filename, sep='\t', index=False)
 
 
 if __name__ == '__main__':
@@ -192,10 +201,4 @@ if __name__ == '__main__':
     save_debates_ds(debates_df, args)
     
     print('Preprocessing FakeNews datasets')
-    for path, _, files in os.walk(args.fake_news_rootdir):
-        for name in files:
-            filename = os.path.join(path, name)
-            print(f'Processing {filename}')
-            dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
-            dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
-            dataset.to_csv(filename, sep='\t', index=False)
+    preprocess_fake_news(args.fake_news_rootdir, nlp)
