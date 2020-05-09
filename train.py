@@ -6,41 +6,44 @@ from torch.utils.data import DataLoader
 
 from transformers import BertModel, BertTokenizer
 from doc_emb_models import *
-from datasets import get_dataset, collate_pad_fn
+from datasets import get_dataset, collate_pad_fn, ParentDataset
 from cnn_model import CNNModel
 from tqdm import tqdm
 import transformers
 import os
 
+
 def _pad_sequence(t: torch.Tensor, to_seq_length=200):
     out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
 
-def train_model(conv_model, doc_embedder, dataset, loss, optim):
 
+def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
+                loss, optim):
     # important for BatchNorm layer
     conv_model.train()
     doc_embedder.train_bert()
+    task_classifier.train()
 
     avg_loss = 0
 
-    display_log = tqdm(dataset, total=0, position=2, bar_format='{desc}')
+    display_log = tqdm(dataset, total=0, position=1, bar_format='{desc}')
 
-    for i, (document, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=1):
-
+    for i, (document, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
         # Reset gradients
         optim.zero_grad()
 
         # Compute output
-
-        out = conv_model(
-            doc_embedder(
-                document,
-                mask
+        out = task_classifier(
+            conv_model(
+                doc_embedder(
+                    document,
+                    mask
+                )
             )
         )
 
         # Compute loss
-        grad = loss(out.squeeze(), label)
+        grad = loss(out, label)
 
         # Backpropagate and upate weights
         grad.backward()
@@ -51,33 +54,34 @@ def train_model(conv_model, doc_embedder, dataset, loss, optim):
         display_log.set_description_str(f"Current loss at {i:02d}: {grad.item():.4f}")
 
         # Do the job that the python garbage collector does?
-        del document, mask, label, grad
+        # del document, mask, label, grad
 
     display_log.close()
     return avg_loss
 
 
-def eval_model(doc_embedder, conv_model, dataset):
+def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module, dataset: ParentDataset):
     conv_model.eval()
+    task_classifier.eval()
     doc_embedder.eval_bert()
     results = 0
     with torch.no_grad():
         for doc, mask, label in tqdm(dataset):
             out = torch.squeeze(
-                conv_model(
-                    doc_embedder(
-                        doc,
-                        mask
+                task_classifier(
+                    conv_model(
+                        doc_embedder(
+                            doc,
+                            mask
+                        )
                     )
                 )
-            ).item()
-            results += ((out >= 0.5) == label.item())
-
+            )
+            results += (out.argmax().item() == label.item())
     return results / len(dataset)
 
 
 def main(args):
-
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
     bert_model.to(args.device)
@@ -90,45 +94,47 @@ def main(args):
     # else if
     assert doc_embedder is not None
 
-    classifier = None
+    task_classifier = None
     if args.dataset_type == "gcdc":
-        classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
+        task_classifier = nn.Linear(5 * args.n_filters, 3).to(args.device)
     # else if
-    assert classifier is not None
+    assert task_classifier is not None
 
-    conv_model = CNNModel(args.embed_size, args.max_len, classifier, args.device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
     loss = None
     if args.dataset_type == "gcdc":
-        loss = nn.BCELoss()
+        loss = nn.CrossEntropyLoss()
     # else if
 
     assert loss is not None
 
-    print(f'Accuracy at start: {eval_model(doc_embedder, conv_model, testset):.4f}')
+    print(f'Accuracy at start: {eval_model(conv_model, doc_embedder, task_classifier,testset) :.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
+    optim = transformers.optimization.AdamW(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
+    # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     for epoch in range(args.n_epochs):
 
         print("Epoch: ", epoch)
 
-        avg_loss = train_model(conv_model, doc_embedder, dataset, loss, optim)
+        avg_loss = train_model(conv_model, doc_embedder, task_classifier, dataset, loss, optim)
         print("Avg loss: ", avg_loss)
 
-        accuracy = eval_model(doc_embedder, conv_model, testset)
+        accuracy = eval_model(conv_model, doc_embedder, task_classifier, testset)
         print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
 
         if best_acc < accuracy:
-
             best_acc = accuracy
 
             with open(os.path.join('models', args.dataset_type + ".pt"), 'wb') as f:
                 torch.save({
                     'cnn_model': conv_model.state_dict(),
                     'bert_model': bert_model.state_dict(),
-                    'epoch': epoch + 1
+                    'task_classifier': task_classifier.state_dict(),
+                    'epoch': epoch
                 }, f)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -143,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
     parser.add_argument("--n_epochs", type=int, default=5, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
-
+    parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     args = parser.parse_args()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     main(args)
