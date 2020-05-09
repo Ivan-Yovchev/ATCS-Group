@@ -188,6 +188,12 @@ class EpisodeMaker(object):
 
     def get_episode(self, dataset_type, classes = 2, n_train = 8, n_test = 4):
         
+        if n_train % classes != 0:
+            n_train -= n_train % classes
+
+        if n_test % classes != 0:
+            n_test -= n_test % classes
+
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
 
         n_classes = dataset["train"].get_n_classes()
@@ -211,8 +217,12 @@ class EpisodeMaker(object):
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))
         split = list(filter(lambda x: x[2] in allowed_classes, split))
-        split = random.sample(split, k)
-        docs, masks, y = zip(*split)
+        
+        final_split = []
+        for i in range(len(allowed_classes)):
+            final_split += random.sample(list(filter(lambda x: x[2]==allowed_classes[i], split)), int(k/len(allowed_classes)))
+
+        docs, masks, y = zip(*final_split)
 
         return (docs, masks, y)
 
