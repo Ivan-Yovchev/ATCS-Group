@@ -152,7 +152,7 @@ class PersuasivenessDataset(ParentDataset):
 
         data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
-        self.y = LongTensor(data['Persuasiveness'].to_numpy())
+        self.y = LongTensor(data['Persuasiveness'].to_numpy() - 1)
 
         self.shuffle()
 
