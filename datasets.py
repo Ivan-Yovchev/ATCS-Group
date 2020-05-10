@@ -217,15 +217,13 @@ class EpisodeMaker(object):
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))
         split = list(filter(lambda x: x[2] in allowed_classes, split))
-        
+
         final_split = []
         for i in range(len(allowed_classes)):
             final_split += random.sample(list(filter(lambda x: x[2]==allowed_classes[i], split)), int(k/len(allowed_classes)))
 
         shuffle(final_split)
-        docs, masks, y = zip(*final_split)
-
-        return (docs, masks, y)
+        return final_split
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
