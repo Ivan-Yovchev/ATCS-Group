@@ -6,6 +6,8 @@ from datasets import EpisodeMaker
 from doc_emb_models import *
 from cnn_model import CNNModel
 
+from train import train_model
+
 from copy import deepcopy
 import argparse
 
@@ -45,7 +47,7 @@ class Common(nn.Module):
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
-        linear.weights = 2*C
+        linear.weights = nn.Parameter(2*C)
         linear.bias = nn.Parameter(-torch.diag(C @ C.T))
 
         linear.to(self.cnn.device)
@@ -89,25 +91,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         # Initialize optimizer for copy
         optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
 
-        # Train on task episode
-        for doc, mask, labels in ep["query_set"]:
-
-            optim.zero_grad()
-
-            # Compute output
-            out = task_classifier(
-                model_cp(
-                    doc,
-                    mask
-                )
-            )
-
-            # Compute loss
-            grad = task.loss(out, labels)
-
-            # Backpropagate and upate weights
-            grad.backward()
-            optim.step()
+        train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim)
 
         # Get gradients for main (oriinal) model update
 
@@ -126,13 +110,13 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             )
 
             # Compute loss
-            grad = task.loss(out, labels)
+            err = task.loss(out, labels)
 
             # Backpropagate and accumulate gradients (per batch)
-            grad.backward()
+            err.backward()
 
         # Accumulate gradients (per task)
-        for par_name, par in model_cp.state_dict():
+        for par_name, par in model_cp.state_dict().items():
 
             grad = par.grad/len(ep["query_set"])
 
@@ -142,7 +126,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
                 meta_grads[par_name] += grad
 
     # Apply gradients
-    for par_name, par in model.parameters():
+    for par_name, par in model.state_dict().items():
         par -= lr*meta_grad[par_name]
 
 def main(args):
