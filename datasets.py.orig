@@ -74,10 +74,15 @@ class ParentDataset(Dataset):
 
     def __next__(self):
 
+<<<<<<< HEAD
+        if self.idx >= len(self):
+            self.shuffle()
+=======
         if self.idx == 0:
             self.shuffle()
         elif self.idx >= len(self):
             self.idx = 0
+>>>>>>> master
             raise StopIteration
 
         # Get interval of current batch
@@ -156,6 +161,7 @@ class PersuasivenessDataset(ParentDataset):
 
         self.shuffle()
 
+<<<<<<< HEAD
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
     def __init__(self, tokenizer: BertTokenizer, max_len, device, datasets = [], gcdc_ext = ["Clinton", "Enron", "Yahoo", "Yelp"]):
@@ -226,6 +232,8 @@ class EpisodeMaker(object):
         docs, masks, y = zip(*final_split)
 
         return (docs, masks, y)
+=======
+>>>>>>> master
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
