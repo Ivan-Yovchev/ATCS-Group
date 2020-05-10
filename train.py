@@ -43,7 +43,10 @@ def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier:
         )
 
         # Compute loss
-        grad = loss(out, label)
+        if len(out.shape) == 1: #binary
+            grad = loss(out, label)
+        else: #multiclass
+            grad = loss(out.argmax(dim=-1), label)
 
         # Backpropagate and upate weights
         grad.backward()
@@ -77,14 +80,17 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
                     )
                 )
             )
-            results += (out.argmax().item() == label.item())
+            if len(out.shape) == 1: # binary
+                results += (out > 0.5).item() == label.item()
+            else: # multiclass
+                results += (out.argmax().item() == label.item())
     return results / len(dataset)
 
 
 def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
-    bert_model.to(args.device)
+
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, args.device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, args.device)
 
@@ -96,17 +102,26 @@ def main(args):
 
     task_classifier = None
     if args.dataset_type == "gcdc":
-        task_classifier = nn.Linear(5 * args.n_filters, 3).to(args.device)
-    # else if
+        task_classifier = nn.Linear(5 * args.n_filters, 3)
+    elif args.dataset_type in ["hyperpartisan", "fake_news"]:
+        task_classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
+    elif args.dataset_type == "persuasiveness":
+        task_classifier = nn.Linear(5 * args.n_filters, 6)
     assert task_classifier is not None
 
     conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+
     loss = None
-    if args.dataset_type == "gcdc":
+    if args.dataset_type in ["gcdc", "persuasiveness"]:
         loss = nn.CrossEntropyLoss()
-    # else if
+    elif args.dataset_type in ["hyperpartisan", "fake_news"]:
+        loss = nn.BCELoss()
 
     assert loss is not None
+
+    bert_model.to(args.device)
+    conv_model.to(args.device)
+    task_classifier.to(args.device)
 
     print(f'Accuracy at start: {eval_model(conv_model, doc_embedder, task_classifier,testset) :.4f}')
     best_acc = 0
