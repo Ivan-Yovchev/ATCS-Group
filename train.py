@@ -43,10 +43,7 @@ def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier:
         )
 
         # Compute loss
-        if len(out.shape) == 1: #binary
-            grad = loss(out, label)
-        else: #multiclass
-            grad = loss(out.argmax(dim=-1), label)
+        grad = loss(out, label)
 
         # Backpropagate and upate weights
         grad.backward()
@@ -80,7 +77,7 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
                     )
                 )
             )
-            if len(out.shape) == 1: # binary
+            if not out.shape: # binary
                 results += (out > 0.5).item() == label.item()
             else: # multiclass
                 results += (out.argmax().item() == label.item())
