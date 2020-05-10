@@ -105,13 +105,37 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             grad.backward()
             optim.step()
 
-        # Accumulate task gradients
+        # Get gradients for main (oriinal) model update
+
+        # Reset gradients
+        optim.zero_grad()
+
+        # Train on task episode
+        for doc, mask, labels in ep["query_set"]: # ISSUE this should be a different set
+
+            # Compute output
+            out = task_classifier(
+                model_cp(
+                    document,
+                    mask
+                )
+            )
+
+            # Compute loss
+            grad = task.loss(out, label)
+
+            # Backpropagate and accumulate gradients (per batch)
+            grad.backward()
+
+        # Accumulate gradients (per task)
         for par_name, par in model_cp.state_dict():
 
+            grad = par.grad/len(ep["query_set"])
+
             if par_name not in meta_grads:
-                meta_grads[par_name] = par.grad
+                meta_grads[par_name] = grad
             else:
-                meta_grads[par_name] += par.grad
+                meta_grads[par_name] += grad
 
     # Apply gradients
     for par_name, par in model.parameters():
