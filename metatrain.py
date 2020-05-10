@@ -1,4 +1,5 @@
 import torch
+import transformers
 from torch import nn
 from transformers import BertModel, BertTokenizer
 from datasets import EpisodeMaker
@@ -20,6 +21,8 @@ class Common(nn.Module):
         self.f = f
         self.n_filters = n_filters
 
+        self.f.to(self.cnn.device)
+
     def forward(self, *args):
         return self.cnn(self.encoder(*args))
 
@@ -35,7 +38,7 @@ class Common(nn.Module):
             idx = l2i[label.item()]
 
             # Accumulate latent vectors
-            C[idx] += self.f(self(doc, mask).detach())
+            C[idx] += self.f(self(doc, mask).detach()).squeeze().cpu()
 
         # Assume equal number of examples for each class
         C /= n_classes
@@ -43,13 +46,14 @@ class Common(nn.Module):
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
         linear.weights = 2*C
-        linear.bias = - torch.diag(C @ C.T)
+        linear.bias = nn.Parameter(-torch.diag(C @ C.T))
 
-        return lienar
+        linear.to(self.cnn.device)
+        return linear
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, mem):
 
-        enc_cp = deepcopy(self.enc)
+        enc_cp = deepcopy(self.encoder)
         cnn_cp = deepcopy(self.cnn)
 
         return Common(enc_cp, cnn_cp, self.f, self.n_filters)
@@ -83,7 +87,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         model_cp = deepcopy(model)
 
         # Initialize optimizer for copy
-        optim = init_optim(model_cp.parameters() + task_classifier.parameters())
+        optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
 
         # Train on task episode
         for doc, mask, labels in ep["query_set"]:
@@ -93,13 +97,13 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             # Compute output
             out = task_classifier(
                 model_cp(
-                    document,
+                    doc,
                     mask
                 )
             )
 
             # Compute loss
-            grad = task.loss(out, label)
+            grad = task.loss(out, labels)
 
             # Backpropagate and upate weights
             grad.backward()
@@ -116,13 +120,13 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             # Compute output
             out = task_classifier(
                 model_cp(
-                    document,
+                    doc,
                     mask
                 )
             )
 
             # Compute loss
-            grad = task.loss(out, label)
+            grad = task.loss(out, labels)
 
             # Backpropagate and accumulate gradients (per batch)
             grad.backward()
