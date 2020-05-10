@@ -1,9 +1,10 @@
 import torch
 from torch import nn
 
-class BertBatcher(nn.Module):
 
-    def __init__(self, bert_model, max_len, device, mode="max"):
+class BertManager(nn.Module):
+
+    def __init__(self, bert_model, max_len, device, mode="cls"):
         super().__init__()
 
         self.bert = bert_model
@@ -18,20 +19,22 @@ class BertBatcher(nn.Module):
         mask = mask.to(self.device)
         # Encode sentences in documents
 
-        mask = torch.flatten(mask, start_dim = 0, end_dim = 1)
+        mask = torch.flatten(mask, start_dim=0, end_dim=1)
 
         # Output (Document x Sentence) x Token x EmbDim
         x = self.bert(
             torch.flatten(
                 document,
-                start_dim = 0,
-                end_dim = 1
+                start_dim=0,
+                end_dim=1
             ),
-            attention_mask = mask
+            attention_mask=mask
         )
 
         # Encode docs (average per sentence)
-        if self.mode == "max":
+        if self.mode == "cls":
+            x = x[1]
+        elif self.mode == "max":
             x = torch.max(x[0] * mask.unsqueeze(-1), dim=1)[0]
         elif self.mode == "mean":
             x = torch.sum(x[0] * mask.unsqueeze(-1), dim=1) / mask.sum(dim=1).unsqueeze(-1)
@@ -49,17 +52,16 @@ class BertBatcher(nn.Module):
     def eval_bert(self):
         return self.bert.eval()
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     from transformers import BertModel
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     bert_model = BertModel.from_pretrained('bert-base-uncased')
-    model = BertBatcher(bert_model, 200, device, "mean")
+    model = BertManager(bert_model, 200, device)
 
     x = torch.LongTensor(2, 7, 20).random_(0, 3000)
     mask = torch.LongTensor(2, 7, 20).random_(0, 2)
 
     print(model(x, mask).shape)
-

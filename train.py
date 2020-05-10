@@ -1,9 +1,7 @@
 import torch
 import argparse
-
 from torch import nn, flatten
 from torch.utils.data import DataLoader
-
 from transformers import BertModel, BertTokenizer
 from doc_emb_models import *
 from datasets import get_dataset, collate_pad_fn, ParentDataset
@@ -13,19 +11,28 @@ import transformers
 import os
 
 
-def _pad_sequence(t: torch.Tensor, to_seq_length=200):
-    out_tensor = torch.zeros((t.size(0), to_seq_length, t.size(2)))
+def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
+                task_classifier: nn.Module, dataset: ParentDataset,
+                loss: nn.Module, optim: torch.optim.Optimizer) -> float:
+    """Performs an epoch of training on the provided model
 
+    :param conv_model: the ConvNet model. Takes care of transforming the sentence embeddings into a document embedding
+    :param sent_embedder: produces sentence embedding
+    :param task_classifier: the task-specific classifier. The output must be consistent with the task loss.
+    :param dataset: the dataset the models are trained on
+    :param loss: the loss function
+    :param optim: the optimizer the method should call after each batch
+    :return: the average loss
+    """
 
-def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
-                loss, optim):
     # important for BatchNorm layer
     conv_model.train()
-    doc_embedder.train_bert()
+    sent_embedder.train_bert()
     task_classifier.train()
 
     avg_loss = 0
 
+    # display line
     display_log = tqdm(dataset, total=0, position=1, bar_format='{desc}')
 
     for i, (document, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
@@ -35,7 +42,7 @@ def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier:
         # Compute output
         out = task_classifier(
             conv_model(
-                doc_embedder(
+                sent_embedder(
                     document,
                     mask
                 )
@@ -53,20 +60,22 @@ def train_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier:
         avg_loss = (avg_loss * i + grad.item()) / (i + 1)
         display_log.set_description_str(f"Current loss at {i:02d}: {grad.item():.4f}")
 
-        # Do the job that the python garbage collector does?
-        # del document, mask, label, grad
-
     display_log.close()
     return avg_loss
 
 
-def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module, dataset: ParentDataset):
+def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module,
+               dataset: ParentDataset) -> float:
+    # Set all models to evaluation mode
     conv_model.eval()
     task_classifier.eval()
     doc_embedder.eval_bert()
     results = 0
+
+    # Prevents the gradients from being computed
     with torch.no_grad():
         for doc, mask, label in tqdm(dataset):
+            # For each document compute the output
             out = torch.squeeze(
                 task_classifier(
                     conv_model(
@@ -77,9 +86,9 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
                     )
                 )
             )
-            if not out.shape: # binary
+            if not out.shape:  # binary
                 results += (out > 0.5).item() == label.item()
-            else: # multiclass
+            else:  # multiclass
                 results += (out.argmax().item() == label.item())
     return results / len(dataset)
 
@@ -91,11 +100,11 @@ def main(args):
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, 200, args.batch_size, args.device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, 200, 1, args.device)
 
-    doc_embedder = None
+    sent_embedder = None
     if args.doc_emb_type == "max_batcher":
-        doc_embedder = BertBatcher(bert_model, args.max_len, args.device)
+        sent_embedder = BertManager(bert_model, args.max_len, args.device)
     # else if
-    assert doc_embedder is not None
+    assert sent_embedder is not None
 
     task_classifier = None
     if args.dataset_type == "gcdc":
@@ -121,7 +130,7 @@ def main(args):
     conv_model.to(args.device)
     task_classifier.to(args.device)
 
-    print(f'Accuracy at start: {eval_model(conv_model, doc_embedder, task_classifier,testset) :.4f}')
+    print(f'Accuracy at start: {eval_model(conv_model, sent_embedder, task_classifier, testset) :.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = transformers.optimization.AdamW(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
@@ -131,10 +140,10 @@ def main(args):
 
         print("Epoch: ", epoch)
 
-        avg_loss = train_model(conv_model, doc_embedder, task_classifier, dataset, loss, optim)
+        avg_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
         print("Avg loss: ", avg_loss)
 
-        accuracy = eval_model(conv_model, doc_embedder, task_classifier, testset)
+        accuracy = eval_model(conv_model, sent_embedder, task_classifier, testset)
         print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
 
         if best_acc < accuracy:
