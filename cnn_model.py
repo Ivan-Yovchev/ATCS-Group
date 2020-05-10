@@ -30,7 +30,7 @@ class CNNModel(nn.Module):
         super(CNNModel, self).__init__()
 
         self.device = device
-        self.cnn_blocks = []
+        self.cnn_blocks = nn.ModuleList([])
         for f_size in filter_sizes:
             self.cnn_blocks.append(CNNBlock(embed_size, n_filters, f_size, max_len, momentum, device))
 
