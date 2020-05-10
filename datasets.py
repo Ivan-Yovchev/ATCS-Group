@@ -107,6 +107,17 @@ class ParentDataset(Dataset):
 
         return docs, masks, LongTensor(ys).to(self.device)
 
+class Manual_Dataset(ParentDataset):
+
+    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+
+        super().__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+
+        self.docs = docs
+        self.masks = masks
+        self.y = ys
+
+        self.shuffle()
 
 class GCDC_Dataset(ParentDataset):
 
@@ -214,6 +225,8 @@ class EpisodeMaker(object):
 
     def __sample_dataset(self, split, allowed_classes, k):
 
+        pars = split.file, split.tokenizer, split.max_len, split.batch_size, split.field_id, split.split_token, split.device
+
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))
         split = list(filter(lambda x: x[2] in allowed_classes, split))
@@ -223,7 +236,11 @@ class EpisodeMaker(object):
             final_split += random.sample(list(filter(lambda x: x[2]==allowed_classes[i], split)), int(k/len(allowed_classes)))
 
         shuffle(final_split)
-        return final_split
+
+        return Manual_Dataset(
+            *zip(*final_split),
+            *pars
+        )
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
