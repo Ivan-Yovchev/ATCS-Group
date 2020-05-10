@@ -13,15 +13,15 @@ from random import shuffle
 from math import ceil
 
 
-def get_dataset(dataset_type, path, tokenizer, max_len, batch_size, device):
+def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device):
     if dataset_type == "gcdc":
-        return GCDC_Dataset(path, tokenizer, max_len, batch_size, 'text', '\n\n', device)
+        return GCDC_Dataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '\n\n', device)
     elif dataset_type == "hyperpartisan":
-        return HyperpartisanDataset(path, tokenizer, max_len, batch_size, 'text', '[SEP]', device)
+        return HyperpartisanDataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '[SEP]', device)
     elif dataset_type == "persuasiveness":
-        return PersuasivenessDataset(path, tokenizer, max_len, batch_size, 'Justification', '[SEP]', device)
+        return PersuasivenessDataset(path, tokenizer, max_len, max_sent, batch_size, 'Justification', '[SEP]', device)
     elif dataset_type == "fake_news":
-        return FakeNewsDataset(path, tokenizer, max_len, batch_size, 'text', '[SEP]', device)
+        return FakeNewsDataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '[SEP]', device)
     else:
         raise ValueError(f'Unknown dataset type: {dataset_type}')
 
@@ -29,11 +29,12 @@ def get_dataset(dataset_type, path, tokenizer, max_len, batch_size, device):
 class ParentDataset(Dataset):
     """docstring for ParentDataset"""
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
         super(ParentDataset, self).__init__()
         self.file = file
         self.tokenizer = tokenizer
         self.max_len = max_len
+        self.max_sent = max_sent
         self.batch_size = batch_size
         self.field_id = field_id
         self.split_token = split_token
@@ -88,6 +89,7 @@ class ParentDataset(Dataset):
 
         # Pad docs (to have the same number of sentences)
         max_sent = max((doc.shape[0] for doc in docs))
+        max_sent = min(max_sent, self.max_sent)
 
         docs = stack(
             [
@@ -110,8 +112,8 @@ class ParentDataset(Dataset):
 
 class GCDC_Dataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
-        super(GCDC_Dataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+        super(GCDC_Dataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         data = pd.read_csv(self.file)
         self.docs, self.masks = self.get_data(data)
@@ -121,8 +123,8 @@ class GCDC_Dataset(ParentDataset):
 
 
 class FakeNewsDataset(ParentDataset):
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
-        super(FakeNewsDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+        super(FakeNewsDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         data = pd.read_csv(self.file, sep='\t', header=0, names=['text', 'label'])
 
@@ -135,8 +137,8 @@ class FakeNewsDataset(ParentDataset):
 
 class HyperpartisanDataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
-        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
@@ -147,8 +149,8 @@ class HyperpartisanDataset(ParentDataset):
 
 class PersuasivenessDataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
-        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
