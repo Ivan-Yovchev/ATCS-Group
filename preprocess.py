@@ -1,6 +1,7 @@
 import re
 import os
 import pandas as pd
+import numpy as np
 import argparse
 import json
 import xml.etree.cElementTree as ET
@@ -78,11 +79,14 @@ def parse_debate_dataset(filepath, nlp):
                                         'Justification', 
                                         'GE', 'LO', 'IS', 'UA', 'UJ', 'Persuasiveness'])
 
-def save_debates_ds(debates_df, args):
-    train_df = debates_df.sample(frac=0.6, random_state=42)
-    rest_df = debates_df.drop(train_df.index)
-    valid_df = rest_df.sample(frac=0.5, random_state=42)
-    test_df = rest_df.drop(valid_df.index)
+def split_dataset(dataset: pd.DataFrame, ratios: list, random_state=42):
+    return np.split(
+        dataset.sample(frac=1, random_state=random_state), 
+        [int(ratios[0]*len(dataset)), int((1-ratios[2])*len(dataset))]
+    )
+
+
+def save_debates_ds(train_df, valid_df, test_df, args):
     train_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-train.json') 
     valid_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-valid.json') 
     test_path = os.path.join(args.debate_output_dir, f'{args.debate_output_prefix}-test.json') 
@@ -129,7 +133,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
     max_filesize = args.hp_max_filesize * 1024**2
     idx_file = 0
     filepath = f'{output_file_path}.json'
-    f = open(filepath, 'w')
+    f = open(filepath, 'w', encoding='utf-8')
     f.write('[')
     i = 0
     root = False
@@ -138,7 +142,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
             root = elem
         if event == 'end' and elem.tag == 'article':
             article = process_article(elem, label_tree, nlp, f)
-            json.dump(article, f, indent=2)
+            json.dump(article, f, indent=2, ensure_ascii=False)
             f.write(',\n')
             # clear prev elements from memory
             elem.clear()
@@ -147,7 +151,7 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
                 close_hp_file(f)
                 idx_file += 1
                 filepath = f'{output_file_path}-{idx_file}.json'
-                f = open(filepath, 'w')
+                f = open(filepath, 'w', encoding='utf-8')
                 f.write('[')
             if i != 0 and i % 10000 == 0:
                 print(f'Articles processed: {i}')
@@ -156,6 +160,15 @@ def preprocess_hp_dataset(data_path, labels_path, output_file_path, nlp):
 
 def split_sentences(text, nlp):
     return '[SEP]'.join([s.text for s in nlp(text).sents])
+
+def preprocess_fake_news(rootdir, nlp):
+    for path, _, files in os.walk(rootdir):
+        for name in files:
+            filename = os.path.join(path, name)
+            print(f'Processing {filename}')
+            dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
+            dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
+            dataset.to_csv(filename, sep='\t', index=False)
 
 
 if __name__ == '__main__':
@@ -168,7 +181,7 @@ if __name__ == '__main__':
     parser.add_argument('--hp_valid_output_prefix', type=str, help='Hyperpartisan valid output file prefix', default='data/SemEval/articles-valid')
     parser.add_argument('--hp_byarticle_data', type=str, help='Hyperpartisan byarticles data', default='data/SemEval/articles-training-byarticle-20181122.xml')
     parser.add_argument('--hp_byarticle_labels', type=str, help='Hyperpartisan byarticles labels', default='data/SemEval/ground-truth-training-byarticle-20181122.xml')
-    parser.add_argument('--hp_byarticle_output_prefix', type=str, help='Hyperpartisan byarticle dataset output file prefix', default='data/SemEval/dataset-byarticle')
+    parser.add_argument('--hp_byarticle_output_prefix', type=str, help='Hyperpartisan byarticle dataset output file prefix', default='data/SemEval/byarticle')
     parser.add_argument('--hp_max_filesize', type=int, help='Maximum file size in MB for hyperpartisan dataset', default=400)
     parser.add_argument('--debate_datapath', type=str, help='Path to Debate Persuasiveness dataset', default='data/DebatePersuasiveness/DebateArguments.txt')
     parser.add_argument('--debate_output_dir', type=str, help='Path to Debate Persuasiveness output dir', default='data/DebatePersuasiveness/')
@@ -186,16 +199,16 @@ if __name__ == '__main__':
     # preprocess_hp_dataset(args.hp_valid_data, args.hp_valid_labels, args.hp_valid_output_prefix, nlp)
     print('Preprocessing hyperpartisan byarticle dataset')
     preprocess_hp_dataset(args.hp_byarticle_data, args.hp_byarticle_labels, args.hp_byarticle_output_prefix, nlp)
+    hp_dataset = pd.read_json(f'{args.hp_byarticle_output_prefix}.json', orient='records')
+    hp_train, hp_valid, hp_test = split_dataset(hp_dataset, [0.6,0.2,0.2])
+    hp_train.to_json(f'{args.hp_byarticle_output_prefix}-train.json', orient='records', indent=2)
+    hp_valid.to_json(f'{args.hp_byarticle_output_prefix}-valid.json', orient='records', indent=2)
+    hp_test.to_json(f'{args.hp_byarticle_output_prefix}-test.json', orient='records', indent=2)
 
     print('Preprocessing persuasiveness datasets')
     debates_df = parse_debate_dataset(args.debate_datapath, nlp)
-    save_debates_ds(debates_df, args)
+    train_df, valid_df, test_df = split_dataset(debates_df, [0.6, 0.2, 0.2])
+    save_debates_ds(train_df, valid_df, test_df, args)
     
     print('Preprocessing FakeNews datasets')
-    for path, _, files in os.walk(args.fake_news_rootdir):
-        for name in files:
-            filename = os.path.join(path, name)
-            print(f'Processing {filename}')
-            dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
-            dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
-            dataset.to_csv(filename, sep='\t', index=False)
+    preprocess_fake_news(args.fake_news_rootdir, nlp)
