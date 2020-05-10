@@ -112,7 +112,8 @@ def main(args):
     if args.dataset_type in ["gcdc", "persuasiveness"]:
         loss = nn.CrossEntropyLoss()
     elif args.dataset_type in ["hyperpartisan", "fake_news"]:
-        loss = nn.BCELoss()
+        criterion = nn.BCELoss()
+        loss = lambda x,y: criterion(x.squeeze(1), y.float())
 
     assert loss is not None
 
