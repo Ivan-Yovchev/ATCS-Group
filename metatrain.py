@@ -117,7 +117,9 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     # Apply gradients
     for par_name, par in dict(list(model.named_parameters())).items():
-        par -= lr*meta_grads[par_name]
+        par = par - lr*meta_grads[par_name]
+
+    model.zero_grad()
 
 def main(args):
 
