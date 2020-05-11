@@ -13,17 +13,14 @@ import argparse
 
 class Common(nn.Module):
 
-    def __init__(self, encoder, cnn, f, n_filters):
+    def __init__(self, encoder, cnn, n_filters):
         super().__init__()
 
         self.encoder = encoder
         self.cnn = cnn
 
         # Proto learner
-        self.f = f
         self.n_filters = n_filters
-
-        self.f.to(self.cnn.device)
 
     def forward(self, *args):
         return self.cnn(self.encoder(*args))
@@ -40,7 +37,7 @@ class Common(nn.Module):
             idx = l2i[label.item()]
 
             # Accumulate latent vectors
-            C[idx] += self.f(self(doc, mask).detach()).squeeze().cpu()
+            C[idx] += self(doc, mask).detach().squeeze().cpu()
 
         # Assume equal number of examples for each class
         C /= n_classes
@@ -52,13 +49,6 @@ class Common(nn.Module):
 
         linear.to(self.cnn.device)
         return linear
-
-    def __deepcopy__(self, mem):
-
-        enc_cp = deepcopy(self.encoder)
-        cnn_cp = deepcopy(self.cnn)
-
-        return Common(enc_cp, cnn_cp, self.f, self.n_filters)
 
 class Task:
     '''
@@ -89,11 +79,11 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         model_cp = deepcopy(model)
 
         # Initialize optimizer for copy
-        optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
+        optim = init_optim(model_cp.parameters())
 
         train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim)
 
-        # Get gradients for main (oriinal) model update
+        # Get gradients for main (original) model update
 
         # Reset gradients
         optim.zero_grad()
@@ -183,7 +173,6 @@ def main(args):
     model = Common(
         sent_embedder,
         conv_model,
-        nn.Linear(5*args.n_filters, 5*args.n_filters),
         5*args.n_filters
     )
 
