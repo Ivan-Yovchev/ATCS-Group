@@ -47,7 +47,7 @@ class Common(nn.Module):
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
-        linear.weights = nn.Parameter(2*C)
+        linear.weight = nn.Parameter(2*C)
         linear.bias = nn.Parameter(-torch.diag(C @ C.T))
 
         linear.to(self.cnn.device)
@@ -115,8 +115,10 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             # Backpropagate and accumulate gradients (per batch)
             err.backward()
 
+        import pdb
+        pdb.set_trace()
         # Accumulate gradients (per task)
-        for par_name, par in model_cp.state_dict().items():
+        for par_name, par in dict(list(model_cp.named_parameters())).items():
 
             grad = par.grad/len(ep["query_set"])
 
@@ -126,7 +128,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
                 meta_grads[par_name] += grad
 
     # Apply gradients
-    for par_name, par in model.state_dict().items():
+    for par_name, par in dict(list(model.named_parameters())).items():
         par -= lr*meta_grad[par_name]
 
 def main(args):
@@ -212,4 +214,5 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    # args.device = torch.device("cpu")
     main(args)
