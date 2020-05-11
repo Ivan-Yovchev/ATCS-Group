@@ -105,8 +105,6 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
             # Backpropagate and accumulate gradients (per batch)
             err.backward()
 
-        import pdb
-        pdb.set_trace()
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
 
@@ -119,7 +117,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     # Apply gradients
     for par_name, par in dict(list(model.named_parameters())).items():
-        par -= lr*meta_grad[par_name]
+        par -= lr*meta_grads[par_name]
 
 def main(args):
 
