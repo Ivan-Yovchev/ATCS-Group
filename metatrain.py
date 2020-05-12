@@ -40,7 +40,8 @@ class Common(nn.Module):
             C[idx] += self(doc, mask).detach().squeeze().cpu()
 
         # Assume equal number of examples for each class
-        C /= (len(S) / n_classes)
+        samples_per_class = len(S) / len(l2i)
+        C /= samples_per_class
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
