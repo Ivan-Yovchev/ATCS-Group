@@ -104,7 +104,77 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
     return results / len(dataset), avg_loss
 
 
+def hyperpartisan_kfold_train(args):
+    assert args.dataset_type in ["hyperpartisan"]
+
+    bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+    criterion = nn.BCELoss()
+    loss = lambda x, y: criterion(x.squeeze(1), y.float())
+
+    kfold_dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
+                                args.batch_size, args.device, hyperpartisan_10fold=True)
+
+    log_time = int(time.time())
+    accuracy_list = []
+    for fold, (trainset, testset) in enumerate(kfold_dataset):
+        # logs
+        writer = SummaryWriter(f'runs/{args.dataset_type}.{fold}_{log_time}')
+
+        # reinitialize all the stuff
+        task_classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
+        bert_model = BertModel.from_pretrained('bert-base-uncased')
+        sent_embedder = BertManager(bert_model, args.max_len, args.device)
+        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+        bert_model.to(args.device)
+        conv_model.to(args.device)
+        task_classifier.to(args.device)
+        best_acc = 0
+        optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr,
+                                 weight_decay=0.001)
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
+
+        # eval first time
+        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss)
+        print(f'Fold {fold}. Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
+        # start training
+        for epoch in range(args.n_epochs):
+            if optim.defaults['lr'] < 1e-6: break
+            print("Epoch: ", epoch)
+            train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, trainset, loss, optim)
+            print("Avg loss: ", train_loss)
+            valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss)
+            print(f'Fold {fold}. At {epoch:02d}: acc: {valid_acc:.4f}, loss: {valid_loss}')
+
+            lr_scheduler.step(valid_acc)
+
+            writer.add_scalar('train_acc', train_acc, epoch)
+            writer.add_scalar('train_loss', train_loss, epoch)
+            writer.add_scalar('valid_acc', valid_acc, epoch)
+            writer.add_scalar('valid_loss', valid_loss, epoch)
+
+            if best_acc < valid_acc:
+                best_acc = valid_acc
+
+                with open(os.path.join('models', args.dataset_type + f".{fold}_{log_time}.pt"), 'wb') as f:
+                    torch.save({
+                        'cnn_model': conv_model.state_dict(),
+                        'bert_model': bert_model.state_dict(),
+                        'task_classifier': task_classifier.state_dict(),
+                        'epoch': epoch
+                    }, f)
+        accuracy_list.append(best_acc)
+        del bert_model, task_classifier, conv_model
+    average = sum(accuracy_list) / len(accuracy_list)
+    print(f'average accuracy: {average}')
+    return accuracy_list
+
+
 def main(args):
+    if args.kfold:
+        hyperpartisan_kfold_train(args)
+        return
+
     writer = SummaryWriter(f'runs/{args.dataset_type}_{int(time.time())}')
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -113,12 +183,14 @@ def main(args):
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
 
+
     sent_embedder = None
     if args.doc_emb_type == "max_batcher":
         sent_embedder = BertManager(bert_model, args.max_len, args.device)
     # else if
     assert sent_embedder is not None
 
+    # loading task-specific classifier
     task_classifier = None
     if args.dataset_type == "gcdc":
         task_classifier = nn.Linear(5 * args.n_filters, 3)
@@ -135,7 +207,7 @@ def main(args):
         loss = nn.CrossEntropyLoss()
     elif args.dataset_type in ["hyperpartisan", "fake_news"]:
         criterion = nn.BCELoss()
-        loss = lambda x,y: criterion(x.squeeze(1), y.float())
+        loss = lambda x, y: criterion(x.squeeze(1), y.float())
 
     assert loss is not None
 
@@ -147,12 +219,13 @@ def main(args):
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = transformers.optimization.AdamW(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
+    optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
-    lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5)
+    # lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
 
     for epoch in range(args.n_epochs):
-        
+
         if optim.defaults['lr'] < 1e-6: break
 
         train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
@@ -188,11 +261,13 @@ if __name__ == "__main__":
     parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
+    parser.add_argument("--kfold", type=bool, default=False,
+                        help="10fold for hyperpartisan dataset. test_path value will be ignored")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
     parser.add_argument("--n_epochs", type=int, default=50, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
