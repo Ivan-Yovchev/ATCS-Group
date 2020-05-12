@@ -13,16 +13,18 @@ import transformers
 import os
 import time
 
-def get_acc(preds, targets, loss):
-    if type(loss) == nn.BCELoss:  # binary
-        preds = preds > 0.5
+
+def get_acc(preds, targets, binary=False):
+    if binary:  # binary
+        preds = (preds > 0.5).to(torch.long)
     else:  # multiclass
         preds = preds.argmax(dim=-1)
     return torch.mean((preds == targets).float()).item()
 
+
 def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
                 task_classifier: nn.Module, dataset: ParentDataset,
-                loss: nn.Module, optim: torch.optim.Optimizer) -> float:
+                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool) -> float:
     """Performs an epoch of training on the provided model
 
     :param conv_model: the ConvNet model. Takes care of transforming the sentence embeddings into a document embedding
@@ -67,7 +69,7 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
         optim.step()
 
         # Display results
-        acc = get_acc(out, label, loss)
+        acc = get_acc(out, label, binary)
         avg_acc = (avg_acc * i + acc) / (i + 1)
         avg_loss = (avg_loss * i + grad.item()) / (i + 1)
         display_log.set_description_str(f"Batch {i:02d}:0 acc: {acc:.4f} loss: {grad.item():.4f}")
@@ -77,7 +79,7 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
 
 
 def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module,
-               dataset: ParentDataset, loss: nn.Module) -> float:
+               dataset: ParentDataset, loss: nn.Module, binary: bool) -> float:
     # Set all models to evaluation mode
     conv_model.eval()
     task_classifier.eval()
@@ -98,14 +100,14 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
                 )
             )
             grad = loss(out, label)
-            
-            results += get_acc(out, label, loss)
+            results += get_acc(out, label, binary)
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
     return results / len(dataset), avg_loss
 
 
 def hyperpartisan_kfold_train(args):
     assert args.dataset_type in ["hyperpartisan"]
+    binary_classification = True
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -135,15 +137,18 @@ def hyperpartisan_kfold_train(args):
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
 
         # eval first time
-        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss)
+        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss,
+                                           binary=binary_classification)
         print(f'Fold {fold}. Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
         # start training
         for epoch in range(args.n_epochs):
             if optim.defaults['lr'] < 1e-6: break
             print("Epoch: ", epoch)
-            train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, trainset, loss, optim)
+            train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, trainset, loss, optim,
+                                                binary_classification)
             print("Avg loss: ", train_loss)
-            valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss)
+            valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss=loss,
+                                               binary=binary_classification)
             print(f'Fold {fold}. At {epoch:02d}: acc: {valid_acc:.4f}, loss: {valid_loss}')
 
             lr_scheduler.step(valid_acc)
@@ -180,9 +185,10 @@ def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
-
+    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
+                          args.batch_size, args.device)
+    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
+                          args.batch_size, args.device)
 
     sent_embedder = None
     if args.doc_emb_type == "max_batcher":
@@ -205,7 +211,9 @@ def main(args):
     loss = None
     if args.dataset_type in ["gcdc", "persuasiveness"]:
         loss = nn.CrossEntropyLoss()
+        binary_classification = False
     elif args.dataset_type in ["hyperpartisan", "fake_news"]:
+        binary_classification = True
         criterion = nn.BCELoss()
         loss = lambda x, y: criterion(x.squeeze(1), y.float())
 
@@ -214,8 +222,8 @@ def main(args):
     bert_model.to(args.device)
     conv_model.to(args.device)
     task_classifier.to(args.device)
-    
-    valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss)
+
+    valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss, binary=binary_classification)
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
@@ -228,11 +236,12 @@ def main(args):
 
         if optim.defaults['lr'] < 1e-6: break
 
-        train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
+        train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim, binary=binary_classification)
 
-        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss)
-        print(f'Epoch {epoch + 1:02d}: train acc: {train_acc:.4f} train loss: {train_loss:.4f} valid acc: {valid_acc:.4f} valid loss: {valid_loss:.4f}')
-        
+        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss, binary=binary_classification)
+        print(
+            f'Epoch {epoch + 1:02d}: train acc: {train_acc:.4f} train loss: {train_loss:.4f} valid acc: {valid_acc:.4f} valid loss: {valid_loss:.4f}')
+
         lr_scheduler.step(valid_acc)
 
         writer.add_scalar('train_acc', train_acc, epoch)
