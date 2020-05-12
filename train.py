@@ -13,6 +13,12 @@ import transformers
 import os
 import time
 
+def get_acc(preds, targets, loss):
+    if type(loss) == nn.BCELoss:  # binary
+        preds = preds > 0.5
+    else:  # multiclass
+        preds = preds.argmax(dim=-1)
+    return torch.mean((preds == targets).float()).item()
 
 def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
                 task_classifier: nn.Module, dataset: ParentDataset,
@@ -33,6 +39,7 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
     sent_embedder.train_bert()
     task_classifier.train()
 
+    avg_acc = 0
     avg_loss = 0
 
     # display line
@@ -60,24 +67,27 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
         optim.step()
 
         # Display results
+        acc = get_acc(out, label, loss)
+        avg_acc = (avg_acc * i + acc) / (i + 1)
         avg_loss = (avg_loss * i + grad.item()) / (i + 1)
-        display_log.set_description_str(f"Current loss at {i:02d}: {grad.item():.4f}")
+        display_log.set_description_str(f"Batch {i:02d}:0 acc: {acc:.4f} loss: {grad.item():.4f}")
 
     display_log.close()
-    return avg_loss
+    return avg_acc, avg_loss
 
 
 def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module,
-               dataset: ParentDataset) -> float:
+               dataset: ParentDataset, loss: nn.Module) -> float:
     # Set all models to evaluation mode
     conv_model.eval()
     task_classifier.eval()
     doc_embedder.eval_bert()
     results = 0
+    avg_loss = 0
 
     # Prevents the gradients from being computed
     with torch.no_grad():
-        for doc, mask, label in tqdm(dataset):
+        for i, (doc, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
             # For each document compute the output
             out = torch.squeeze(
                 task_classifier(
@@ -89,11 +99,10 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
                     )
                 )
             )
-            if not out.shape:  # binary
-                results += (out > 0.5).item() == label.item()
-            else:  # multiclass
-                results += (out.argmax().item() == label.item())
-    return results / len(dataset)
+            grad = loss(out.unsqueeze(0), label)
+
+            avg_loss = (avg_loss * i + grad.item()) / (i + 1)
+    return results / len(dataset), avg_loss
 
 
 def main(args):
@@ -134,8 +143,9 @@ def main(args):
     bert_model.to(args.device)
     conv_model.to(args.device)
     task_classifier.to(args.device)
-
-    print(f'Accuracy at start: {eval_model(conv_model, sent_embedder, task_classifier, testset) :.4f}')
+    
+    valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss)
+    print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = transformers.optimization.AdamW(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
@@ -146,21 +156,20 @@ def main(args):
         
         if optim.defaults['lr'] < 1e-6: break
 
-        print("Epoch: ", epoch)
+        train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
 
-        avg_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
-        print("Avg loss: ", avg_loss)
-
-        accuracy = eval_model(conv_model, sent_embedder, task_classifier, testset)
-        print(f'Accuracy at {epoch + 1:02d}: {accuracy:.4f}')
+        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset)
+        print(f'Epoch {epoch + 1:02d}: train acc: {train_acc:.4f} train loss: {train_loss:.4f} valid acc: {valid_acc:.4f} valid loss: {valid_loss:.4f}')
         
         lr_scheduler.step(accuracy)
 
-        writer.add_scalar('train_loss', avg_loss, epoch)
-        writer.add_scalar('valid_acc', accuracy, epoch)
+        writer.add_scalar('train_acc', train_acc, epoch)
+        writer.add_scalar('train_loss', train_loss, epoch)
+        writer.add_scalar('valid_acc', valid_acc, epoch)
+        writer.add_scalar('valid_loss', valid_loss, epoch)
 
-        if best_acc < accuracy:
-            best_acc = accuracy
+        if best_acc < valid_acc:
+            best_acc = valid_acc
 
             with open(os.path.join('models', args.dataset_type + ".pt"), 'wb') as f:
                 torch.save({
