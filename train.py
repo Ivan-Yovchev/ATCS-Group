@@ -62,7 +62,7 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
         # Compute loss
         grad = loss(out, label)
 
-        # Backpropagate and upate weights
+        # Backpropagate and update weights
         grad.backward()
         optim.step()
 
@@ -89,18 +89,17 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
     with torch.no_grad():
         for i, (doc, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
             # For each document compute the output
-            out = torch.squeeze(
-                task_classifier(
-                    conv_model(
-                        doc_embedder(
-                            doc,
-                            mask
-                        )
+            out = task_classifier(
+                conv_model(
+                    doc_embedder(
+                        doc,
+                        mask
                     )
                 )
             )
-            grad = loss(out.unsqueeze(0), label)
-
+            grad = loss(out, label)
+            
+            results += get_acc(out, label, loss)
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
     return results / len(dataset), avg_loss
 
@@ -112,7 +111,7 @@ def main(args):
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent, 1, args.device)
+    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent, args.batch_size, args.device)
 
     sent_embedder = None
     if args.doc_emb_type == "max_batcher":
@@ -158,10 +157,10 @@ def main(args):
 
         train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim)
 
-        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset)
+        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss)
         print(f'Epoch {epoch + 1:02d}: train acc: {train_acc:.4f} train loss: {train_loss:.4f} valid acc: {valid_acc:.4f} valid loss: {valid_loss:.4f}')
         
-        lr_scheduler.step(accuracy)
+        lr_scheduler.step(valid_acc)
 
         writer.add_scalar('train_acc', train_acc, epoch)
         writer.add_scalar('train_loss', train_loss, epoch)
