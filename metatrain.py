@@ -49,7 +49,7 @@ class Common(nn.Module):
         linear.bias = nn.Parameter(-torch.diag(C @ C.T))
 
         linear.to(self.cnn.device)
-        return linear
+        return linear, C.detach() # C should already be detached
 
 class Task:
     '''
@@ -74,7 +74,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         ep = task.get_episode()
 
         # Construct output layer
-        task_classifier = model.get_outputlayer(ep["support_set"], task.n_classes)
+        task_classifier, protos = model.get_outputlayer(ep["support_set"], task.n_classes)
 
         # Construct copy of doc_embedder to simulate training on current task
         model_cp = deepcopy(model)
@@ -83,6 +83,9 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         optim = init_optim(model_cp.parameters())
 
         train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim)
+
+        # Step 6 from FO-Proto MAML pdf
+        task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())        
 
         # Get gradients for main (original) model update
 
@@ -203,6 +206,6 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     args = parser.parse_args()
-    args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    # args.device = torch.device("cpu")
+    # args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    args.device = torch.device("cpu")
     main(args)
