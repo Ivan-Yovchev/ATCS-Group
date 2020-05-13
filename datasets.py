@@ -115,9 +115,9 @@ class ParentDataset(Dataset):
 
 class Manual_Dataset(ParentDataset):
 
-    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, batch_size, field_id, split_token, device):
+    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
 
-        super().__init__(file, tokenizer, max_len, batch_size, field_id, split_token, device)
+        super().__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         self.docs = docs
         self.masks = masks
@@ -216,7 +216,7 @@ class PersuasivenessDataset(ParentDataset):
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
-    def __init__(self, tokenizer: BertTokenizer, max_len, device, datasets=[],
+    def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
                  gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"]):
         super(EpisodeMaker, self).__init__()
 
@@ -228,8 +228,8 @@ class EpisodeMaker(object):
 
             if key != "gcdc":
                 self.datasets[key] = [{
-                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, 1, device),
-                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, 1, device)
+                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, max_sent, 1, device),
+                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, max_sent, 1, device)
                 }]
             else:
                 path = dataset["train"]
@@ -239,8 +239,8 @@ class EpisodeMaker(object):
                 self.datasets[key] = []
                 for ext in gcdc_ext:
                     sub_gcdc = {
-                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, 1, device),
-                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, 1, device)
+                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1, device),
+                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1, device)
                     }
 
                     self.datasets[key].append(sub_gcdc)
@@ -273,7 +273,7 @@ class EpisodeMaker(object):
 
     def __sample_dataset(self, split, allowed_classes, k):
 
-        pars = split.file, split.tokenizer, split.max_len, split.batch_size, split.field_id, split.split_token, split.device
+        pars = split.file, split.tokenizer, split.max_len, split.max_sent, split.batch_size, split.field_id, split.split_token, split.device
 
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))

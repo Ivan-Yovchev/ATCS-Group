@@ -63,6 +63,32 @@ class Task:
         self.n_classes = n_classes
         self.loss = loss
 
+def train_support(model: nn.Module, task: Task, init_optim):
+
+    # Get episode
+    ep = task.get_episode()
+
+    # Construct output layer
+    task_classifier, protos = model.get_outputlayer(ep["support_set"], task.n_classes)
+
+    # Construct copy of doc_embedder to simulate training on current task
+    model_cp = deepcopy(model)
+
+    # Initialize optimizer for copy
+    optim = init_optim(model_cp.parameters())
+
+    train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim, False)
+
+    # Step 6 from FO-Proto MAML pdf
+    task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())        
+
+    # Get gradients for main (original) model update
+
+    # Reset gradients
+    optim.zero_grad()
+
+    return model_cp, ep, task_classifier
+
 def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     # Store gradients for each simulated model (trained on each task in the given batch)
@@ -70,29 +96,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     for task in tasks:
 
-        assert isinstance(task, Task), "Task type not understood"
-
-        # Get episode
-        ep = task.get_episode()
-
-        # Construct output layer
-        task_classifier, protos = model.get_outputlayer(ep["support_set"], task.n_classes)
-
-        # Construct copy of doc_embedder to simulate training on current task
-        model_cp = deepcopy(model)
-
-        # Initialize optimizer for copy
-        optim = init_optim(model_cp.parameters())
-
-        train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim)
-
-        # Step 6 from FO-Proto MAML pdf
-        task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())        
-
-        # Get gradients for main (original) model update
-
-        # Reset gradients
-        optim.zero_grad()
+        model_cp, ep, task_classifier = train_support(model, task, init_optim)
 
         # Train on task episode
         for doc, mask, labels in ep["query_set"]: # ISSUE this should be a different set
@@ -145,7 +149,7 @@ def main(args):
         "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"
     }
 
-    ep_maker = EpisodeMaker(bert_tokenizer, args.max_len, args.device, [gcdc_desc, pers_desc])
+    ep_maker = EpisodeMaker(bert_tokenizer, args.max_len, args.max_sent, args.device, [gcdc_desc, pers_desc])
 
     # Define tasks
     tasks = [
@@ -191,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
+    parser.add_argument("--max_sent", type=int, default=15, help="Max number of sentences in a doc")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
