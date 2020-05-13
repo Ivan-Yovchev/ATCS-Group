@@ -8,7 +8,7 @@ from datasets import EpisodeMaker
 from doc_emb_models import *
 from cnn_model import CNNModel
 
-from train import train_model
+from train import train_model, eval_model
 
 from copy import deepcopy
 import argparse
@@ -131,6 +131,10 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     model.zero_grad()
 
+def meta_valid(model: nn.Module, task: Task, init_optim):
+    model_cp, ep, task_classifier = train_support(model, task, init_optim)
+    return eval_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["query_set"], task.loss, False)
+
 def main(args):
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -185,8 +189,15 @@ def main(args):
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
 
     # meta train
-    for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=5):
+    display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
+    for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
         run_task_batch(model, tasks, init_optim, args.lr)
+
+        # Meta Validation
+        acc, loss = meta_valid(model, tasks[0], init_optim)
+        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
+    display_log.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
