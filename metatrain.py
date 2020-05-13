@@ -1,5 +1,7 @@
 import torch
 import transformers
+
+from tqdm import tqdm
 from torch import nn
 from transformers import BertModel, BertTokenizer
 from datasets import EpisodeMaker
@@ -162,16 +164,6 @@ def main(args):
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.max_len, args.device)
 
-    # ISSUE why sigmoid for hyp and fake_news?#
-    # task_classifier = None
-    # if args.dataset_type == "gcdc":
-    #     task_classifier = nn.Linear(5 * args.n_filters, 3)
-    # elif args.dataset_type in ["hyperpartisan", "fake_news"]:
-    #     task_classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
-    # elif args.dataset_type == "persuasiveness":
-    #     task_classifier = nn.Linear(5 * args.n_filters, 6)
-    # assert task_classifier is not None
-
     # Init Conv layer
     conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
 
@@ -187,9 +179,10 @@ def main(args):
 
     # Define optimizer constructor
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
-    # optim = transformers.optimization.AdamW(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
 
-    run_task_batch(model, tasks, init_optim, args.lr)
+    # meta train
+    for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=5):
+        run_task_batch(model, tasks, init_optim, args.lr)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -205,6 +198,9 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", type=int, default=5, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
+
+    parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
+
     args = parser.parse_args()
     # args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     args.device = torch.device("cpu")
