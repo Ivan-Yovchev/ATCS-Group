@@ -34,7 +34,6 @@ class CNNModel(nn.Module):
         for f_size in filter_sizes:
             self.cnn_blocks.append(CNNBlock(embed_size, n_filters, f_size, max_len, momentum, device))
 
-        # self.classifier = classifier
         self.to(device)
 
     def forward(self, x):
@@ -43,16 +42,5 @@ class CNNModel(nn.Module):
             block_outs.append(block.forward(x))
 
         input_to_dense = torch.cat(block_outs, 1).flatten(start_dim=1)
-        # return self.classifier(input_to_dense)
+
         return input_to_dense
-
-
-if __name__ == "__main__":
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    dense = nn.Sequential(nn.Linear(5 * 128, 1), nn.Sigmoid())
-    dense.to(device=device)
-    model = CNNModel(768, 300, device=device)
-
-    x = torch.randn(8, 768, 300).to(device)
-
-    print(model(x))

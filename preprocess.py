@@ -193,10 +193,6 @@ if __name__ == '__main__':
     nlp = spacy.load("en_core_web_sm", disable=["parser"]) 
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
 
-    # print('Preprocessing hyperpartisan training dataset')
-    # preprocess_hp_dataset(args.hp_train_data, args.hp_train_labels, args.hp_train_output_prefix, nlp)
-    # print('Preprocessing hyperpartisan validation dataset')
-    # preprocess_hp_dataset(args.hp_valid_data, args.hp_valid_labels, args.hp_valid_output_prefix, nlp)
     print('Preprocessing hyperpartisan byarticle dataset')
     preprocess_hp_dataset(args.hp_byarticle_data, args.hp_byarticle_labels, args.hp_byarticle_output_prefix, nlp)
     hp_dataset = pd.read_json(f'{args.hp_byarticle_output_prefix}.json', orient='records')
