@@ -1,0 +1,42 @@
+from torch import nn
+import torch
+
+class Common(nn.Module):
+
+    def __init__(self, cnn, n_filters, encoder = lambda x : x):
+        super().__init__()
+
+        self.encoder = encoder
+        self.cnn = cnn
+
+        # Proto learner
+        self.n_filters = n_filters
+
+    def forward(self, *args):
+        return self.cnn(self.encoder(*args))
+
+    def get_outputlayer(self, S, n_classes):
+
+        C = torch.zeros(n_classes, self.n_filters)
+        l2i = {}
+
+        for doc, mask, label in S:
+
+            # Label to index
+            l2i[label.item()] = l2i.get(label.item(), len(l2i))
+            idx = l2i[label.item()]
+
+            # Accumulate latent vectors
+            C[idx] += self(doc, mask).detach().squeeze().cpu()
+
+        # Assume equal number of examples for each class
+        samples_per_class = len(S) / len(l2i)
+        C /= samples_per_class
+
+        # Replace W and b in linear layer
+        linear = nn.Linear(self.n_filters, n_classes)
+        linear.weight = nn.Parameter(2*C)
+        linear.bias = nn.Parameter(-torch.diag(C @ C.T))
+
+        linear.to(self.cnn.device)
+        return linear, C.detach() # C should already be detached
