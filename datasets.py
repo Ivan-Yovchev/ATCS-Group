@@ -270,8 +270,10 @@ class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
     def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
-                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"]):
+                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder = None):
         super(EpisodeMaker, self).__init__()
+
+        self.sent_embedder = sent_embedder
 
         assert (len(datasets) != 0)
 
@@ -339,10 +341,12 @@ class EpisodeMaker(object):
 
         shuffle(final_split)
 
-        return Manual_Dataset(
+        dataset = Manual_Dataset(
             *zip(*final_split),
             *pars
         )
+
+        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size = k)
 
 
 def collate_pad_fn(batch):
@@ -358,5 +362,5 @@ if __name__ == "__main__":
     a = {"name": "gcdc", "train": "./data/GCDC/", "test": "./data/GCDC"}
     b = {"name": "persuasiveness", "train": "./data/DebatePersuasiveness/persuasiveness_dataset-train.json",
          "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"}
-    model = EpisodeMaker(bert_tokenizer, 200, 'cpu', [a, b])
+    model = EpisodeMaker(bert_tokenizer, 50, 200, 'cpu', [a, b])
     model.get_episode('gcdc', 1)

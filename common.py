@@ -23,14 +23,17 @@ class Common(nn.Module):
         C = torch.zeros(n_classes, self.n_filters)
         l2i = {}
 
-        for doc, mask, label in S:
+        for x, label in S:
+            # import pdb
+            # pdb.set_trace()
+            # TODO: Optimize
+            for i in range(label.shape[0]):
+                # Label to index
+                l2i[label[i].item()] = l2i.get(label[i].item(), len(l2i))
+                idx = l2i[label[i].item()]
 
-            # Label to index
-            l2i[label.item()] = l2i.get(label.item(), len(l2i))
-            idx = l2i[label.item()]
-
-            # Accumulate latent vectors
-            C[idx] += self(doc, mask).detach().squeeze().cpu()
+                # Accumulate latent vectors
+                C[idx] += self(torch.unsqueeze(x[0][i], 0)).detach().squeeze().cpu()
 
         # Assume equal number of examples for each class
         samples_per_class = len(S) / len(l2i)

@@ -40,9 +40,10 @@ def train_support(model: nn.Module, task: Task, init_optim):
     # Initialize optimizer for copy
     optim = init_optim(model_cp.parameters())
 
-    train_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["support_set"], task.loss, optim, False)
+    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False)
 
     # Step 6 from FO-Proto MAML pdf
+    protos = protos.to(task_classifier.weight.device)
     task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())        
 
     # Get gradients for main (original) model update
@@ -62,13 +63,12 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         model_cp, ep, task_classifier = train_support(model, task, init_optim)
 
         # Train on task episode
-        for doc, mask, labels in ep["query_set"]: # ISSUE this should be a different set
+        for x, labels in ep["query_set"]: # ISSUE this should be a different set
 
             # Compute output
             out = task_classifier(
                 model_cp(
-                    doc,
-                    mask
+                    *x
                 )
             )
 
@@ -96,7 +96,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
 def meta_valid(model: nn.Module, task: Task, init_optim):
     model_cp, ep, task_classifier = train_support(model, task, init_optim)
-    return eval_model(model_cp.cnn, model_cp.encoder, task_classifier, ep["query_set"], task.loss, False)
+    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
 
 def main(args):
 
@@ -116,7 +116,17 @@ def main(args):
         "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"
     }
 
-    ep_maker = EpisodeMaker(bert_tokenizer, args.max_len, args.max_sent, args.device, [gcdc_desc, pers_desc])
+    # Init Bert layer
+    sent_embedder = BertManager(bert_model, args.max_len, args.device)
+
+    ep_maker = EpisodeMaker(
+                    bert_tokenizer, 
+                    args.max_len, 
+                    args.max_sent, 
+                    args.device, 
+                    datasets = [gcdc_desc, pers_desc],
+                    sent_embedder = sent_embedder if args.finetune else None
+                )
 
     # Define tasks
     tasks = [
@@ -132,9 +142,6 @@ def main(args):
         )
     ]
 
-    # Init Bert layer
-    sent_embedder = BertManager(bert_model, args.max_len, args.device)
-
     # Init Conv layer
     conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
 
@@ -142,7 +149,7 @@ def main(args):
     model = Common(
         conv_model,
         5*args.n_filters,
-        sent_embedder,
+        encoder = lambda x : x if args.finetune else sent_embedder,
     )
 
     bert_model.to(args.device)
@@ -179,8 +186,9 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
+    parser.add_argument("--finetune", type=lambda x : x.lower()=="true", default=True, help="Set to true to fine tune bert")
 
     args = parser.parse_args()
-    # args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    args.device = torch.device("cpu")
+    args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    # args.device = torch.device("cpu")
     main(args)
