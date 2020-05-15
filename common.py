@@ -3,7 +3,7 @@ import torch
 
 class Common(nn.Module):
 
-    def __init__(self, cnn, n_filters, encoder = lambda x : x):
+    def __init__(self, cnn, n_filters=None, encoder = lambda x : x):
         super().__init__()
 
         self.encoder = encoder
@@ -16,6 +16,9 @@ class Common(nn.Module):
         return self.cnn(self.encoder(*args))
 
     def get_outputlayer(self, S, n_classes):
+
+        if self.n_filters is None:
+            return None
 
         C = torch.zeros(n_classes, self.n_filters)
         l2i = {}
@@ -40,3 +43,19 @@ class Common(nn.Module):
 
         linear.to(self.cnn.device)
         return linear, C.detach() # C should already be detached
+
+    def train(self):
+
+        if hasattr(self.encoder, "train"):
+            self.encoder.train()
+
+        if hasattr(self.cnn, "train"):
+            self.cnn.train()
+
+    def eval(self):
+
+        if hasattr(self.encoder, "eval"):
+            self.encoder.eval()
+
+        if hasattr(self.cnn, "eval"):
+            self.cnn.eval()

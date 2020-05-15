@@ -46,10 +46,10 @@ class BertManager(nn.Module):
         x = x.permute(0, 2, 1)
         return torch.nn.functional.pad(x, (0, self.max_len - x.size(2)))
 
-    def train_bert(self):
+    def train(self):
         return self.bert.train()
 
-    def eval_bert(self):
+    def eval(self):
         return self.bert.eval()
 
 

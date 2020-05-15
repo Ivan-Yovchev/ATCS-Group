@@ -10,6 +10,7 @@ from datasets import get_dataset, collate_pad_fn, ParentDataset
 from cnn_model import CNNModel
 from tqdm import tqdm
 import transformers
+from common import Common
 import os
 import time
 
@@ -22,8 +23,7 @@ def get_acc(preds, targets, binary=False):
     return torch.mean((preds == targets).float()).item()
 
 
-def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
-                task_classifier: nn.Module, dataset: ParentDataset,
+def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
                 loss: nn.Module, optim: torch.optim.Optimizer, binary: bool) -> float:
     """Performs an epoch of training on the provided model
 
@@ -37,8 +37,7 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
     """
 
     # important for BatchNorm layer
-    conv_model.train()
-    sent_embedder.train_bert()
+    model.train()
     task_classifier.train()
 
     avg_acc = 0
@@ -53,11 +52,9 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
 
         # Compute output
         out = task_classifier(
-            conv_model(
-                sent_embedder(
-                    document,
-                    mask
-                )
+            model(
+                document,
+                mask
             )
         )
 
@@ -78,12 +75,12 @@ def train_model(conv_model: nn.Module, sent_embedder: nn.Module,
     return avg_acc, avg_loss
 
 
-def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: nn.Module,
+def eval_model(model: nn.Module, task_classifier: nn.Module,
                dataset: ParentDataset, loss: nn.Module, binary: bool) -> float:
     # Set all models to evaluation mode
-    conv_model.eval()
+    model.eval()
     task_classifier.eval()
-    doc_embedder.eval_bert()
+
     results = 0
     avg_loss = 0
 
@@ -92,16 +89,16 @@ def eval_model(conv_model: nn.Module, doc_embedder: nn.Module, task_classifier: 
         for i, (doc, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
             # For each document compute the output
             out = task_classifier(
-                conv_model(
-                    doc_embedder(
-                        doc,
-                        mask
-                    )
+                model(
+                    doc,
+                    mask
                 )
             )
+
             grad = loss(out, label)
             results += get_acc(out, label, binary)
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
+
     return results / len(dataset), avg_loss
 
 
@@ -219,16 +216,20 @@ def main(args):
 
     assert loss is not None
 
+    # construct common model
+    model = Common(conv_model, encoder = sent_embedder)
+
     bert_model.to(args.device)
     conv_model.to(args.device)
     task_classifier.to(args.device)
 
-    valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss, binary=binary_classification)
+    valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
+
     # lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
 
@@ -236,9 +237,9 @@ def main(args):
 
         if optim.defaults['lr'] < 1e-6: break
 
-        train_acc, train_loss = train_model(conv_model, sent_embedder, task_classifier, dataset, loss, optim, binary=binary_classification)
+        train_acc, train_loss = train_model(model, task_classifier, dataset, loss, optim, binary=binary_classification)
 
-        valid_acc, valid_loss = eval_model(conv_model, sent_embedder, task_classifier, testset, loss, binary=binary_classification)
+        valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
         print(
             f'Epoch {epoch + 1:02d}: train acc: {train_acc:.4f} train loss: {train_loss:.4f} valid acc: {valid_acc:.4f} valid loss: {valid_loss:.4f}')
 
