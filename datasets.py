@@ -111,7 +111,7 @@ class ParentDataset(Dataset):
 
         self.idx += 1
 
-        return docs, masks, LongTensor(ys).to(self.device)
+        return (docs, masks), LongTensor(ys).to(self.device)
 
 class Manual_Dataset(ParentDataset):
 

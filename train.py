@@ -46,15 +46,14 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
     # display line
     display_log = tqdm(dataset, total=0, position=1, bar_format='{desc}')
 
-    for i, (document, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
+    for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
         # Reset gradients
         optim.zero_grad()
 
         # Compute output
         out = task_classifier(
             model(
-                document,
-                mask
+                *x
             )
         )
 
@@ -86,12 +85,11 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
 
     # Prevents the gradients from being computed
     with torch.no_grad():
-        for i, (doc, mask, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
+        for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
             # For each document compute the output
             out = task_classifier(
                 model(
-                    doc,
-                    mask
+                    *x
                 )
             )
 
