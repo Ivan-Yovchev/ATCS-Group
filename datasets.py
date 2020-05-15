@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import numpy as np
 
-from torch import LongTensor, stack, float32 as tfloat32, squeeze
+from torch import LongTensor, stack, float32 as tfloat32, squeeze, Tensor
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from torch.nn import functional as F
@@ -212,6 +212,59 @@ class PersuasivenessDataset(ParentDataset):
 
         self.shuffle()
 
+class BertPreprocessor:
+
+    def __init__(self, decorated, encoder, batch_size=1):
+
+        self.device = decorated.device
+        self.batch_size = batch_size
+
+        first = encoder(*(next(decorated)[0]))
+        enc_shape = tuple(first.shape)
+        self.X = np.zeros((len(decorated.docs), *enc_shape))
+        self.X[0] = first.cpu().detach().numpy()
+
+        i = 1
+        for ((doc, mask), _) in decorated:
+            self.X[i] = encoder(doc, mask).cpu().detach().numpy()
+            i += 1
+
+        self.y = np.array(decorated.y)
+        self.shuffle()
+
+    def shuffle(self):
+        # Shuffle embeddings
+        temp = list(range(len(self.y)))
+        shuffle(temp)
+
+        self.X = self.X[temp]
+        self.y = self.y[temp]
+
+        self.idx = 0
+
+    def get_n_classes(self):
+
+        return len(set([x.item() for x in self.y]))
+
+    def __len__(self):
+        return ceil(len(self.y) / self.batch_size)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+
+        if self.idx == 0:
+            self.shuffle()
+        elif self.idx >= len(self):
+            self.idx = 0
+            raise StopIteration
+
+        # Get interval of current batch
+        idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
+        self.idx += 1
+
+        return [squeeze(Tensor(self.X[idx_start:idx_end]).to(self.device), dim=1)], LongTensor(self.y[idx_start:idx_end]).to(self.device)
 
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""

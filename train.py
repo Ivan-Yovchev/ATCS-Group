@@ -6,7 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import BertModel, BertTokenizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from doc_emb_models import *
-from datasets import get_dataset, collate_pad_fn, ParentDataset
+from datasets import *
 from cnn_model import CNNModel
 from tqdm import tqdm
 import transformers
@@ -181,9 +181,9 @@ def main(args):
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size, args.device)
+                          args.batch_size if args.finetune else 1, args.device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size, args.device)
+                          args.batch_size if args.finetune else 1, args.device)
 
     sent_embedder = None
     if args.doc_emb_type == "max_batcher":
@@ -215,7 +215,12 @@ def main(args):
     assert loss is not None
 
     # construct common model
-    model = Common(conv_model, encoder = sent_embedder)
+    if args.finetune:
+        model = Common(conv_model, encoder = sent_embedder)
+    else:
+        model = Common(conv_model)
+        dataset = BertPreprocessor(dataset, sent_embedder, batch_size = args.batch_size)
+        testset = BertPreprocessor(testset, sent_embedder, batch_size = args.batch_size)
 
     bert_model.to(args.device)
     conv_model.to(args.device)
@@ -277,6 +282,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", type=int, default=50, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
+    parser.add_argument("--finetune", type=lambda x : x.lower()=="true", default=True, help="Set to true to fine tune bert")
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     main(args)
