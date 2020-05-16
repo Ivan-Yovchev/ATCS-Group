@@ -106,7 +106,7 @@ def hyperpartisan_kfold_train(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     loss = loss_task_factory(args.dataset_type)
 
-    kfold_dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len,
+    kfold_dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
                                 args.batch_size, args.device, hyperpartisan_10fold=True)
 
     time_log = int(time.time())
@@ -184,10 +184,9 @@ def main(args):
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
-
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, 
+    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
                           args.batch_size if args.finetune else 1, args.device)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, 
+    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
                           args.batch_size if args.finetune else 1, args.device)
 
     sent_embedder = BertManager(bert_model, args.max_len, args.device)
@@ -281,7 +280,8 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
-    parser.add_argument("--max_len", type=int, default=50, help="Max number of sentences per document")
+    parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
+    parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--kfold", type=bool, default=False,
                         help="10fold for hyperpartisan dataset. test_path value will be ignored")
