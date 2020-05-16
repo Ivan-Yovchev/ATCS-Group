@@ -24,9 +24,7 @@ class Common(nn.Module):
         l2i = {}
 
         for x, label in S:
-            # import pdb
-            # pdb.set_trace()
-            # TODO: Optimize
+
             for i in range(label.shape[0]):
                 # Label to index
                 l2i[label[i].item()] = l2i.get(label[i].item(), len(l2i))

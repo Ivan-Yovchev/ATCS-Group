@@ -55,6 +55,16 @@ def train_support(model: nn.Module, task: Task, init_optim):
 
 def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
+    class EmptyOptim:
+
+        def step(self):
+            return
+
+        def zero_grad(self):
+            return
+
+    empty_optim = EmptyOptim()
+
     # Store gradients for each simulated model (trained on each task in the given batch)
     meta_grads = {}
 
@@ -63,20 +73,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
         model_cp, ep, task_classifier = train_support(model, task, init_optim)
 
         # Train on task episode
-        for x, labels in ep["query_set"]: # ISSUE this should be a different set
-
-            # Compute output
-            out = task_classifier(
-                model_cp(
-                    *x
-                )
-            )
-
-            # Compute loss
-            err = task.loss(out, labels)
-
-            # Backpropagate and accumulate gradients (per batch)
-            err.backward()
+        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
 
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
