@@ -25,13 +25,15 @@ class Common(nn.Module):
 
         for x, label in S:
 
+            outputs = self(*x).detach().squeeze().cpu()
+
             for i in range(label.shape[0]):
                 # Label to index
                 l2i[label[i].item()] = l2i.get(label[i].item(), len(l2i))
                 idx = l2i[label[i].item()]
 
                 # Accumulate latent vectors
-                C[idx] += self(torch.unsqueeze(x[0][i], 0)).detach().squeeze().cpu()
+                C[idx] += outputs[i]
 
         # Assume equal number of examples for each class
         samples_per_class = len(S) / len(l2i)

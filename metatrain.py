@@ -122,7 +122,7 @@ def main(args):
                     args.max_sent, 
                     args.device, 
                     datasets = [gcdc_desc, pers_desc],
-                    sent_embedder = sent_embedder if args.finetune else None
+                    sent_embedder = None if args.finetune else sent_embedder
                 )
 
     # Define tasks
@@ -146,7 +146,7 @@ def main(args):
     model = Common(
         conv_model,
         5*args.n_filters,
-        encoder = lambda x : x if args.finetune else sent_embedder,
+        encoder = sent_embedder if args.finetune else lambda x : x,
     )
 
     bert_model.to(args.device)
