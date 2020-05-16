@@ -300,26 +300,15 @@ class EpisodeMaker(object):
 
                     self.datasets[key].append(sub_gcdc)
 
-    def get_episode(self, dataset_type, classes=2, n_train=8, n_test=4):
-
-        if n_train % classes != 0:
-            n_train -= n_train % classes
-
-        if n_test % classes != 0:
-            n_test -= n_test % classes
+    def get_episode(self, dataset_type, n_train=8, n_test=4):
 
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
 
         n_classes = dataset["train"].get_n_classes()
 
-        allowed_classes = []
-        for _ in range(classes):
-            class_idx = random.randint(0, n_classes - 1)
-
-            while class_idx in allowed_classes:
-                class_idx = random.randint(0, n_classes - 1)
-
-            allowed_classes.append(class_idx)
+        # OPTIMIZE: maybe not true
+        # assume classes are always 0 .. n
+        allowed_classes = [idx for idx in range(n_classes)]
 
         return {
             "support_set": self.__sample_dataset(dataset["train"], allowed_classes, n_train),
@@ -335,10 +324,15 @@ class EpisodeMaker(object):
         split = list(filter(lambda x: x[2] in allowed_classes, split))
 
         final_split = []
-        for i in range(len(allowed_classes)):
-            final_split += random.sample(list(filter(lambda x: x[2] == allowed_classes[i], split)),
-                                         int(k / len(allowed_classes)))
+        sample_size = round(k / len(allowed_classes))
+        
+        for i, class_y in enumerate(allowed_classes):
 
+            if i == len(allowed_classes) - 1:
+                sample_size = k - i*sample_size
+        
+            final_split += random.sample(list(filter(lambda x: x[2] == class_y, split)), sample_size)
+        
         shuffle(final_split)
 
         dataset = Manual_Dataset(
@@ -347,7 +341,6 @@ class EpisodeMaker(object):
         )
 
         return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size = k)
-
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)
@@ -363,4 +356,4 @@ if __name__ == "__main__":
     b = {"name": "persuasiveness", "train": "./data/DebatePersuasiveness/persuasiveness_dataset-train.json",
          "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"}
     model = EpisodeMaker(bert_tokenizer, 50, 200, 'cpu', [a, b])
-    model.get_episode('gcdc', 1)
+    temp = model.get_episode('gcdc')
