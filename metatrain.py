@@ -26,10 +26,10 @@ class Task:
         self.n_classes = n_classes
         self.loss = loss
 
-def train_support(model: nn.Module, task: Task, init_optim):
+def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8):
 
     # Get episode
-    ep = task.get_episode()
+    ep = task.get_episode(n_train, n_test)
 
     # Construct output layer
     task_classifier, protos = model.get_outputlayer(ep["support_set"], task.n_classes)
@@ -53,7 +53,7 @@ def train_support(model: nn.Module, task: Task, init_optim):
 
     return model_cp, ep, task_classifier
 
-def run_task_batch(model: nn.Module, tasks, init_optim, lr):
+def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8):
 
     class EmptyOptim:
 
@@ -70,7 +70,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     for task in tasks:
 
-        model_cp, ep, task_classifier = train_support(model, task, init_optim)
+        model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
 
         # Train on task episode
         train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
@@ -91,8 +91,8 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr):
 
     model.zero_grad()
 
-def meta_valid(model: nn.Module, task: Task, init_optim):
-    model_cp, ep, task_classifier = train_support(model, task, init_optim)
+def meta_valid(model: nn.Module, task: Task, init_optim, query_set_size=8):
+    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_test=query_set_size)
     return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
 
 def main(args):
@@ -128,12 +128,12 @@ def main(args):
     # Define tasks
     tasks = [
         Task(
-            lambda : ep_maker.get_episode('gcdc', 1), # need to change this so that '1' changes over time
+            lambda m=8, n=8: ep_maker.get_episode('gcdc', n_train=m, n_test=n),
             nn.CrossEntropyLoss(),
             3
         ),
         Task(
-            lambda : ep_maker.get_episode('persuasiveness', 1), # need to change this so that '1' changes over time
+            lambda m=8, n=8: ep_maker.get_episode('persuasiveness', n_train=m, n_test=n),
             nn.CrossEntropyLoss(),
             6
         )
@@ -161,7 +161,7 @@ def main(args):
         run_task_batch(model, tasks, init_optim, args.lr)
 
         # Meta Validation
-        acc, loss = meta_valid(model, tasks[0], init_optim)
+        acc, loss = meta_valid(model, tasks[0], init_optim, query_set_size=100)
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
