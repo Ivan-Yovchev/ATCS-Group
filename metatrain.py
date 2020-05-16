@@ -119,7 +119,6 @@ def main(args):
     ep_maker = EpisodeMaker(
                     bert_tokenizer, 
                     args.max_len, 
-                    args.max_sent, 
                     args.device, 
                     datasets = [gcdc_desc, pers_desc],
                     sent_embedder = None if args.finetune else sent_embedder
@@ -172,8 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
-    parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
-    parser.add_argument("--max_sent", type=int, default=15, help="Max number of sentences in a doc")
+    parser.add_argument("--max_len", type=int, default=15, help="Max number of sents per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
