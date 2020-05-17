@@ -338,7 +338,7 @@ class EpisodeMaker(object):
 
             if i == len(allowed_classes) - 1:
                 sample_size = k - i * sample_size
-
+                
             final_split += random.sample(list(filter(lambda x: x[2] == class_y, split)), sample_size)
 
         shuffle(final_split)

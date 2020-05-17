@@ -40,7 +40,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     # Initialize optimizer for copy
     optim = init_optim(model_cp.parameters())
 
-    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False)
+    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, task.n_classes == 2)
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
@@ -73,7 +73,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
 
         # Train on task episode
-        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
+        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, task.n_classes == 2)
 
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
@@ -93,7 +93,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
 
 def meta_valid(model: nn.Module, task: Task, init_optim, query_set_size=8):
     model_cp, ep, task_classifier = train_support(model, task, init_optim, n_test=query_set_size)
-    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
+    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, task.n_classes == 2)
 
 def main(args):
 
@@ -113,6 +113,18 @@ def main(args):
         "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"
     }
 
+    partisan_desc = {
+        "name": "hyperpartisan",
+        "train": "./data/SemEval/byarticle-train.json",
+        "test": "./data/SemEval/byarticle-test.json",
+    }
+
+    fake_news_desc = {
+        "name": "fake_news",
+        "train": "./data/FakeNews/politifact/train.tsv",
+        "test": "./data/FakeNews/politifact/test.tsv",
+    }
+
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.max_len, args.device)
 
@@ -121,23 +133,31 @@ def main(args):
                     args.max_len, 
                     args.max_sent, 
                     args.device, 
-                    datasets = [gcdc_desc, pers_desc],
+                    datasets = [gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
                     sent_embedder = None if args.finetune else sent_embedder
                 )
 
     # Define tasks
-    tasks = [
-        Task(
+    gcdc = Task(
             lambda m=8, n=8: ep_maker.get_episode('gcdc', n_train=m, n_test=n),
             nn.CrossEntropyLoss(),
             3
-        ),
-        Task(
+        )
+    persuasiveness = Task(
             lambda m=8, n=8: ep_maker.get_episode('persuasiveness', n_train=m, n_test=n),
             nn.CrossEntropyLoss(),
             6
         )
-    ]
+    partisan = Task(
+            lambda m=8, n=8: ep_maker.get_episode('hyperpartisan', n_train=m, n_test=n),
+            nn.BCELoss(),
+            2
+        )
+    fake_news = Task(
+            lambda m=8, n=8: ep_maker.get_episode('fake_news', n_train=m, n_test=n),
+            nn.BCELoss(),
+            2
+        )
 
     # Init Conv layer
     conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
@@ -158,10 +178,10 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
-        run_task_batch(model, tasks, init_optim, args.lr)
+        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr)
 
         # Meta Validation
-        acc, loss = meta_valid(model, tasks[0], init_optim, query_set_size=100)
+        acc, loss = meta_valid(model, fake_news, init_optim, query_set_size=10)
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
