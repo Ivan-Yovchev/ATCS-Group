@@ -91,8 +91,8 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
 
     model.zero_grad()
 
-def meta_valid(model: nn.Module, task: Task, init_optim, query_set_size=8):
-    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_test=query_set_size)
+def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, query_set_size=8):
+    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size, n_test=query_set_size)
     return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
 
 def main(args):
@@ -178,22 +178,22 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
-        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr)
+        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
-        acc, loss = meta_valid(model, fake_news, init_optim, query_set_size='all')
+        acc, loss = meta_valid(model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
     # meta test
-    acc, loss = meta_valid(model, partisan, init_optim, query_set_size='all')
+    acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
     print("Final: ", acc, loss)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
@@ -207,7 +207,10 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
-    parser.add_argument("--finetune", type=lambda x : x.lower()=="true", default=True, help="Set to true to fine tune bert")
+    parser.add_argument("--finetune", type=lambda x : x.lower()=="true", default=False, help="Set to true to fine tune bert")
+    parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
+    parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
+    parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
 
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
