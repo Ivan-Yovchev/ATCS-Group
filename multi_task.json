@@ -1,0 +1,34 @@
+{
+  "gcdc.clinton": {
+    "test": "data/GCDC/Clinton_test.csv",
+    "train": "data/GCDC/Clinton_train.csv"
+  },
+  "gcdc.enron": {
+    "test": "data/GCDC/Enron_test.csv",
+    "train": "data/GCDC/Enron_train.csv"
+  },
+  "gcdc.yahoo": {
+    "test": "data/GCDC/Yahoo_test.csv",
+    "train": "data/GCDC/Yahoo_train.csv"
+  },
+  "gcdc.yelp": {
+    "test": "data/GCDC/Yelp_test.csv",
+    "train": "data/GCDC/Yelp_train.csv"
+  },
+  "hyperpartisan": {
+    "test": "data/SemEval/byarticle-test.json",
+    "train": "data/SemEval/byarticle-train.json"
+  },
+  "fake_news.gossipcop": {
+    "train": "data/FakeNews/gossipcop/train.tsv",
+    "test": "data/FakeNews/gossipcop/test.tsv"
+  },
+  "fake_news.politifact": {
+    "test": "data/FakeNews/politifact/test.tsv",
+    "train": "data/FakeNews/politifact/train.tsv"
+  },
+  "persuasiveness": {
+    "train": "data/DebatePersuasiveness/persuasiveness_dataset-train.json",
+    "test": "data/DebatePersuasiveness/persuasiveness_dataset-test.json"
+  }
+}

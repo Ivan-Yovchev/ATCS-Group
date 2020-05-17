@@ -14,7 +14,6 @@ from common import Common
 import os
 from datetime import datetime
 
-
 def get_acc(preds, targets, binary=False):
     if binary:  # binary
         preds = (preds > 0.5).to(torch.long)
@@ -121,8 +120,7 @@ def hyperpartisan_kfold_train(args):
         model.to(args.device)
         task_classifier.to(args.device)
         best_acc = 0
-        optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr,
-                                 weight_decay=0.05)
+        optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
         # eval first time
         valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss=loss, binary=binary_classification)
@@ -176,7 +174,7 @@ def main(args):
         return
 
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
-    writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
+    writer = SummaryWriter(f'runs/{args.dataset_type}/{args.batch_size}_{args.max_len}_{args.max_sent}_{args.lr}')
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
@@ -194,7 +192,7 @@ def main(args):
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
     # construct common model
-    model, dataset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, dataset, testset)
+    model, dataset, testset = construct_common_model(args, conv_model, sent_embedder, dataset, testset)
     model.to(args.device)
     task_classifier.to(args.device)
 
@@ -229,12 +227,15 @@ def main(args):
             save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
 
-def construct_common_model(finetune, conv_model, sent_embedder, dataset, testset):
-    if finetune:
+def construct_common_model(args, conv_model, sent_embedder, dataset, testset):
+    print('Making common')
+    if args.finetune:
         model = Common(conv_model, encoder=sent_embedder)
     else:
         model = Common(conv_model)
+        print('bertpreprocessing dataset')
         dataset = BertPreprocessor(dataset, sent_embedder, batch_size=args.batch_size)
+        print('bertpreprocessing testset')
         testset = BertPreprocessor(testset, sent_embedder, batch_size=args.batch_size)
     return model, dataset, testset
 
@@ -267,11 +268,11 @@ def task_classifier_factory(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
-    parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
-    parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
+    parser.add_argument("--max_len", type=int, default=100, help="Max number of words contained in a sentence")
+    parser.add_argument("--max_sent", type=int, default=50, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--kfold", type=lambda x: x.lower() == "true", default=False,
                         help="10fold for hyperpartisan dataset. test_path value will be ignored")
