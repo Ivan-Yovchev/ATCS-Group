@@ -181,7 +181,7 @@ def main(args):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr)
         
         # Meta Validation
-        acc, loss = meta_valid(model, fake_news, init_optim, query_set_size=10)
+        acc, loss = meta_valid(model, fake_news, init_optim, query_set_size='all')
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 

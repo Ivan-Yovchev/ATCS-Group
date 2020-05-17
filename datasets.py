@@ -300,7 +300,7 @@ class EpisodeMaker(object):
 
                     self.datasets[key].append(sub_gcdc)
 
-    def get_episode(self, dataset_type, n_train=8, n_test=4, classes_sampled="all"):
+    def get_episode(self, dataset_type, n_train=8, n_test=8, classes_sampled="all", batch_size_when_all=32):
 
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
 
@@ -317,9 +317,16 @@ class EpisodeMaker(object):
                 k = classes_sampled
             allowed_clases = random.sample(classes_tot, k)
 
+        support_set = self.__sample_dataset(dataset["train"], allowed_classes, n_train)
+
+        if isinstance(n_test, str) and n_test == "all":
+            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, batch_size=batch_size_when_all)
+        else:
+            query_set = self.__sample_dataset(dataset["test"], allowed_classes, n_test)
+
         return {
-            "support_set": self.__sample_dataset(dataset["train"], allowed_classes, n_train),
-            "query_set": self.__sample_dataset(dataset["test"], allowed_classes, n_test)
+            "support_set": support_set,
+            "query_set": query_set
         }
 
     def __sample_dataset(self, split, allowed_classes, k):
