@@ -14,7 +14,7 @@ from random import shuffle
 from math import ceil
 
 
-def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold = False):
+def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold=False):
     if dataset_type == "gcdc":
         return GCDC_Dataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '\n\n', device)
     elif dataset_type == "hyperpartisan":
@@ -117,10 +117,11 @@ class ParentDataset(Dataset):
 
         return (docs, masks), LongTensor(ys).to(self.device)
 
+
 class Manual_Dataset(ParentDataset):
 
-    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
-
+    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id,
+                 split_token, device):
         super().__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
 
         self.docs = docs
@@ -128,6 +129,7 @@ class Manual_Dataset(ParentDataset):
         self.y = ys
 
         self.shuffle()
+
 
 class GCDC_Dataset(ParentDataset):
 
@@ -158,11 +160,13 @@ class FakeNewsDataset(ParentDataset):
 
 class HyperpartisanDataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device,
+                 data=None):
         super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id,
                                                    split_token, device)
 
-        data = pd.read_json(self.file, orient='records')
+        if data is None:
+            data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
         self.y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
 
@@ -190,18 +194,7 @@ class Hyperpartisan10Fold:
         train_set = self.data.iloc[~mask]
         test_set = self.data.iloc[mask]
         self.k += 1
-        return HyperpartisanDatasetFold(train_set, *self.varg), HyperpartisanDatasetFold(test_set, *self.varg)
-
-
-class HyperpartisanDatasetFold(ParentDataset):
-    def __init__(self, data, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token,
-                 device):
-        super(HyperpartisanDatasetFold, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id,
-                                                       split_token, device)
-
-        self.docs, self.masks = self.get_data(data)
-        self.y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
-        self.shuffle()
+        return HyperpartisanDataset(*self.varg, data=train_set), HyperpartisanDataset(*self.varg, data=test_set)
 
 
 class PersuasivenessDataset(ParentDataset):
@@ -215,6 +208,7 @@ class PersuasivenessDataset(ParentDataset):
         self.y = LongTensor(data['Persuasiveness'].to_numpy() - 1)
 
         self.shuffle()
+
 
 class BertPreprocessor:
 
@@ -268,13 +262,15 @@ class BertPreprocessor:
         idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
         self.idx += 1
 
-        return [squeeze(Tensor(self.X[idx_start:idx_end]).to(self.device), dim=1)], LongTensor(self.y[idx_start:idx_end]).to(self.device)
+        return [squeeze(Tensor(self.X[idx_start:idx_end]).to(self.device), dim=1)], LongTensor(
+            self.y[idx_start:idx_end]).to(self.device)
+
 
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
     def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
-                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder = None):
+                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder=None):
         super(EpisodeMaker, self).__init__()
 
         self.sent_embedder = sent_embedder
@@ -329,14 +325,14 @@ class EpisodeMaker(object):
 
         final_split = []
         sample_size = round(k / len(allowed_classes))
-        
+
         for i, class_y in enumerate(allowed_classes):
 
             if i == len(allowed_classes) - 1:
-                sample_size = k - i*sample_size
-        
+                sample_size = k - i * sample_size
+
             final_split += random.sample(list(filter(lambda x: x[2] == class_y, split)), sample_size)
-        
+
         shuffle(final_split)
 
         dataset = Manual_Dataset(
@@ -344,7 +340,8 @@ class EpisodeMaker(object):
             *pars
         )
 
-        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size = k)
+        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size=k)
+
 
 def collate_pad_fn(batch):
     x, y = zip(*batch)

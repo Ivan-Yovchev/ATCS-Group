@@ -44,3 +44,8 @@ class CNNModel(nn.Module):
         input_to_dense = torch.cat(block_outs, 1).flatten(start_dim=1)
 
         return input_to_dense
+
+    def initialize_weights(self, init_function):
+        for t in self.parameters():
+            if len(t.shape) >= 2:
+                init_function(t)

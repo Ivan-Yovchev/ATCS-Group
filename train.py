@@ -12,7 +12,7 @@ from tqdm import tqdm
 import transformers
 from common import Common
 import os
-import time
+from datetime import datetime
 
 
 def get_acc(preds, targets, binary=False):
@@ -51,12 +51,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
         optim.zero_grad()
 
         # Compute output
-        out = task_classifier(
-            model(
-                *x
-            )
-        )
-
+        out = task_classifier(model(*x))
         # Compute loss
         grad = loss(out, label)
 
@@ -102,14 +97,13 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
 
 def hyperpartisan_kfold_train(args):
     assert args.dataset_type in ["hyperpartisan"]
-    binary_classification = True
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    loss = loss_task_factory(args.dataset_type)
+    binary_classification, loss = loss_task_factory(args.dataset_type)
 
     kfold_dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
                                 args.batch_size, args.device, hyperpartisan_10fold=True)
 
-    time_log = int(time.time())
+    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     accuracy_list = []
     for fold, (trainset, testset) in enumerate(kfold_dataset):
         # logs
@@ -120,14 +114,15 @@ def hyperpartisan_kfold_train(args):
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.max_len, args.device)
         conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+        conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
-        model, dataset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, trainset, testset)
+        model, trainset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, trainset, testset)
         model.to(args.device)
         task_classifier.to(args.device)
         best_acc = 0
         optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr,
-                                 weight_decay=0.001)
+                                 weight_decay=0.05)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
         # eval first time
         valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss=loss, binary=binary_classification)
@@ -142,19 +137,20 @@ def hyperpartisan_kfold_train(args):
             valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss,
                                                binary=binary_classification)
             # (model, task_classifier, testset, loss, binary=binary_classification
-            print(f'Fold {fold}. At {epoch:02d}: acc: {valid_acc:.4f}, loss: {valid_loss}')
-
+            print(f'Fold {fold}. Epoch {epoch:02d}: train acc: {train_acc:.4f}'
+                  f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
+                  f' valid loss: {valid_loss:.4f}')
             lr_scheduler.step(valid_acc)
 
-            writer.add_scalar('train_acc', train_acc, epoch)
-            writer.add_scalar('train_loss', train_loss, epoch)
-            writer.add_scalar('valid_acc', valid_acc, epoch)
-            writer.add_scalar('valid_loss', valid_loss, epoch)
+            writer.add_scalar('Train/accuracy', train_acc, epoch)
+            writer.add_scalar('Train/loss', train_loss, epoch)
+            writer.add_scalar('Valid/accuracy', valid_acc, epoch)
+            writer.add_scalar('Valid/loss', valid_loss, epoch)
 
             if best_acc < valid_acc:
                 best_acc = valid_acc
+                save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log, fold)
 
-                save_model(args, conv_model, task_classifier, epoch, time_log, fold)
         accuracy_list.append(best_acc)
         del bert_model, task_classifier, conv_model
     average = sum(accuracy_list) / len(accuracy_list)
@@ -179,7 +175,7 @@ def main(args):
         hyperpartisan_kfold_train(args)
         return
 
-    time_log = int(time.time())
+    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -194,6 +190,7 @@ def main(args):
     # loading task-specific classifier
     task_classifier = task_classifier_factory(args)
     conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
     # construct common model
@@ -222,21 +219,14 @@ def main(args):
 
         lr_scheduler.step(valid_acc)
 
-        writer.add_scalar('train_acc', train_acc, epoch)
-        writer.add_scalar('train_loss', train_loss, epoch)
-        writer.add_scalar('valid_acc', valid_acc, epoch)
-        writer.add_scalar('valid_loss', valid_loss, epoch)
+        writer.add_scalar('Train/accuracy', train_acc, epoch)
+        writer.add_scalar('Train/loss', train_loss, epoch)
+        writer.add_scalar('Valid/accuracy', valid_acc, epoch)
+        writer.add_scalar('Valid/loss', valid_loss, epoch)
 
         if best_acc < valid_acc:
             best_acc = valid_acc
-
-            with open(os.path.join('models', f"{args.dataset_type}.{time_log}.pt"), 'wb') as f:
-                torch.save({
-                    'cnn_model': conv_model.state_dict(),
-                    'bert_model': bert_model.state_dict(),
-                    'task_classifier': task_classifier.state_dict(),
-                    'epoch': epoch
-                }, f)
+            save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
 
 def construct_common_model(finetune, conv_model, sent_embedder, dataset, testset):
@@ -283,12 +273,12 @@ if __name__ == "__main__":
     parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
-    parser.add_argument("--kfold", type=bool, default=False,
+    parser.add_argument("--kfold", type=lambda x: x.lower() == "true", default=False,
                         help="10fold for hyperpartisan dataset. test_path value will be ignored")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--n_epochs", type=int, default=50, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
