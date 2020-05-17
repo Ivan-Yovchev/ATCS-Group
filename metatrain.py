@@ -40,7 +40,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     # Initialize optimizer for copy
     optim = init_optim(model_cp.parameters())
 
-    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, task.n_classes == 2)
+    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False)
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
@@ -73,7 +73,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
 
         # Train on task episode
-        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, task.n_classes == 2)
+        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
 
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
@@ -93,7 +93,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
 
 def meta_valid(model: nn.Module, task: Task, init_optim, query_set_size=8):
     model_cp, ep, task_classifier = train_support(model, task, init_optim, n_test=query_set_size)
-    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, task.n_classes == 2)
+    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
 
 def main(args):
 
@@ -150,12 +150,12 @@ def main(args):
         )
     partisan = Task(
             lambda m=8, n=8: ep_maker.get_episode('hyperpartisan', n_train=m, n_test=n),
-            nn.BCELoss(),
+            nn.CrossEntropyLoss(),
             2
         )
     fake_news = Task(
             lambda m=8, n=8: ep_maker.get_episode('fake_news', n_train=m, n_test=n),
-            nn.BCELoss(),
+            nn.CrossEntropyLoss(),
             2
         )
 
@@ -179,7 +179,7 @@ def main(args):
     display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr)
-
+        
         # Meta Validation
         acc, loss = meta_valid(model, fake_news, init_optim, query_set_size=10)
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")

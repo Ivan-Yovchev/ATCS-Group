@@ -52,6 +52,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
 
         # Compute output
         out = task_classifier(model(*x))
+    
         # Compute loss
         grad = loss(out, label)
 
