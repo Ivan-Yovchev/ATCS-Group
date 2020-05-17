@@ -185,6 +185,10 @@ def main(args):
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
+    # meta test
+    acc, loss = meta_valid(model, partisan, init_optim, query_set_size='all')
+    print("Final: ", acc, loss)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
