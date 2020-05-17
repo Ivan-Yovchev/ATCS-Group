@@ -270,11 +270,10 @@ class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
     def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
-                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], classes_sampled="all", sent_embedder=None):
+                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder=None):
         super(EpisodeMaker, self).__init__()
 
         self.sent_embedder = sent_embedder
-        self.classes_sampled = "all"
 
         assert (len(datasets) != 0)
 
@@ -301,7 +300,7 @@ class EpisodeMaker(object):
 
                     self.datasets[key].append(sub_gcdc)
 
-    def get_episode(self, dataset_type, n_train=8, n_test=4):
+    def get_episode(self, dataset_type, n_train=8, n_test=4, classes_sampled="all"):
 
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
 
@@ -309,13 +308,13 @@ class EpisodeMaker(object):
 
         # OPTIMIZE: maybe not true
         # assume classes are always 0 .. n
-        if isinstance(self.classes_sampled, str) and self.classes_sampled == "all":
+        if isinstance(classes_sampled, str) and classes_sampled == "all":
             allowed_classes = classes_tot
         else:
-            if not isinstance(self.classes_sampled, int):
-                k = floor(len(classes_tot*self.classes_sampled))
+            if not isinstance(classes_sampled, int):
+                k = floor(len(classes_tot*classes_sampled))
             else:
-                k = self.classes_sampled
+                k = classes_sampled
             allowed_clases = random.sample(classes_tot, k)
 
         return {
