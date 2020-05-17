@@ -270,10 +270,11 @@ class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
     def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
-                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder=None):
+                 gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], classes_sampled="all", sent_embedder=None):
         super(EpisodeMaker, self).__init__()
 
         self.sent_embedder = sent_embedder
+        self.classes_sampled = "all"
 
         assert (len(datasets) != 0)
 
@@ -304,11 +305,18 @@ class EpisodeMaker(object):
 
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
 
-        n_classes = dataset["train"].get_n_classes()
+        classes_tot = list(range(dataset["train"].get_n_classes()))
 
         # OPTIMIZE: maybe not true
         # assume classes are always 0 .. n
-        allowed_classes = [idx for idx in range(n_classes)]
+        if isinstance(self.classes_sampled, str) and self.classes_sampled == "all":
+            allowed_classes = classes_tot
+        else:
+            if not isinstance(self.classes_sampled, int):
+                k = floor(len(classes_tot*self.classes_sampled))
+            else:
+                k = self.classes_sampled
+            allowed_clases = random.sample(classes_tot, k)
 
         return {
             "support_set": self.__sample_dataset(dataset["train"], allowed_classes, n_train),
