@@ -114,7 +114,7 @@ def hyperpartisan_kfold_train(args):
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.max_len, args.device)
-        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters, batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
@@ -122,8 +122,7 @@ def hyperpartisan_kfold_train(args):
         model.to(args.device)
         task_classifier.to(args.device)
         best_acc = 0
-        optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr,
-                                 weight_decay=0.05)
+        optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
         # eval first time
         valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss=loss, binary=binary_classification)
@@ -203,7 +202,7 @@ def main(args):
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr, weight_decay=0.02)
     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
@@ -279,7 +278,7 @@ if __name__ == "__main__":
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--n_epochs", type=int, default=50, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=0.00005, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
