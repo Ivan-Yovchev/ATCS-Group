@@ -213,9 +213,9 @@ class PersuasivenessDataset(ParentDataset):
 
 class BertPreprocessor:
 
-    def __init__(self, decorated, encoder, batch_size=1, device="cuda:0"):
+    def __init__(self, decorated, encoder, batch_size=1):
 
-        self.device = torch.device(device)
+        self.device = decorated.device
         self.batch_size = batch_size
 
         first = encoder(*(next(decorated)[0]))

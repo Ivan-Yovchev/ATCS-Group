@@ -12,9 +12,9 @@ class BertManager(nn.Module):
         self.mode = mode
         self.device = device
 
-    def forward(self, document, mask):
+        self.to(device)
 
-        self.bert.to(self.device)
+    def forward(self, document, mask):
 
         document = document.to(self.device)
         mask = mask.to(self.device)
@@ -31,8 +31,6 @@ class BertManager(nn.Module):
             ),
             attention_mask=mask
         )
-
-        self.bert.cpu()
 
         # Encode docs (average per sentence)
         if self.mode == "cls":
