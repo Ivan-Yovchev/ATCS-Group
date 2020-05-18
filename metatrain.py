@@ -23,7 +23,7 @@ class Task:
     def __init__(self, get_episode, loss, n_classes):
 
         self.get_episode = get_episode # should be a lambda
-        self.n_classes = n_classes
+        self.n_classes = n_classes 
         self.loss = loss
 
 def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8):
@@ -36,6 +36,10 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
 
     # Construct copy of doc_embedder to simulate training on current task
     model_cp = deepcopy(model)
+
+    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    model_cp.to(device)
+    task_classifier.to(device)
 
     # Initialize optimizer for copy
     optim = init_optim(model_cp.parameters())
@@ -75,6 +79,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         # Train on task episode
         train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
 
+
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
 
@@ -85,15 +90,27 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
             else:
                 meta_grads[par_name] += grad
 
+        del model_cp
+        del task_classifier
+        del ep
+        torch.cuda.empty_cache()
+
     # Apply gradients
     for par_name, par in dict(list(model.named_parameters())).items():
-        par = par - lr*meta_grads[par_name]
+        par = par - lr*meta_grads[par_name].cpu()
 
     model.zero_grad()
 
 def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, query_set_size=8):
     model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size, n_test=query_set_size)
-    return eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
+    results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
+
+    del model_cp
+    del ep
+    del task_classifier
+    torch.cuda.empty_cache()
+
+    return results
 
 def main(args):
 
@@ -170,7 +187,7 @@ def main(args):
     )
 
     bert_model.to(args.device)
-    conv_model.to(args.device)
+    conv_model.to(torch.device("cpu"))
 
     # Define optimizer constructor
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
@@ -181,7 +198,7 @@ def main(args):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
-        acc, loss = meta_valid(model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
+        acc, loss = meta_valid(model, fake_news, init_optim, support_set_size=args.shots, query_set_size=20)
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 

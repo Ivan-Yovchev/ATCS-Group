@@ -25,7 +25,8 @@ class Common(nn.Module):
 
         for x, label in S:
 
-            outputs = self(*x).detach().squeeze().cpu()
+            x[0] = x[0].cpu()
+            outputs = self(*x).detach().squeeze()
 
             for i in range(label.shape[0]):
                 # Label to index
