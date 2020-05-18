@@ -177,7 +177,7 @@ def main(args):
         )
 
     # Init Conv layer
-    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.max_len, torch.device("cpu"), n_filters=args.n_filters)
 
     # Build unified model
     model = Common(
@@ -185,9 +185,6 @@ def main(args):
         5*args.n_filters,
         encoder = sent_embedder if args.finetune else lambda x : x,
     )
-
-    bert_model.to(args.device)
-    conv_model.to(torch.device("cpu"))
 
     # Define optimizer constructor
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
