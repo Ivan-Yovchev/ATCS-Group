@@ -14,6 +14,7 @@ from common import Common
 import os
 from datetime import datetime
 
+
 def get_acc(preds, targets, binary=False):
     if binary:  # binary
         preds = (preds > 0.5).to(torch.long)
@@ -69,7 +70,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
 
 
 def eval_model(model: nn.Module, task_classifier: nn.Module,
-               dataset: ParentDataset, loss: nn.Module, binary: bool) -> float:
+               dataset: Dataset, loss: nn.Module, binary: bool) -> float:
     # Set all models to evaluation mode
     model.eval()
     task_classifier.eval()
@@ -107,7 +108,8 @@ def hyperpartisan_kfold_train(args):
     for fold, (trainset, testset) in enumerate(kfold_dataset):
         # logs
         writer = SummaryWriter(f'runs/{args.dataset_type}.{fold}_{time_log}')
-
+        trainset.to(args.device)
+        testset.to(args.device)
         # reinitialize all the stuff
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
@@ -228,7 +230,7 @@ def main(args):
 
 
 def construct_common_model(args, conv_model, sent_embedder, dataset, testset):
-    print('Making common')
+    # print('Making common')
     if args.finetune:
         model = Common(conv_model, encoder=sent_embedder)
     else:
@@ -253,13 +255,16 @@ def loss_task_factory(dataset_type):
     return binary_classification, loss
 
 
-def task_classifier_factory(args):
+def task_classifier_factory(args, dataset_type=None):
     task_classifier = None
-    if args.dataset_type == "gcdc":
+    if dataset_type is None:
+        dataset_type = args.dataset_type
+
+    if dataset_type == "gcdc":
         task_classifier = nn.Linear(5 * args.n_filters, 3)
-    elif args.dataset_type in ["hyperpartisan", "fake_news"]:
+    elif dataset_type in ["hyperpartisan", "fake_news"]:
         task_classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
-    elif args.dataset_type == "persuasiveness":
+    elif dataset_type == "persuasiveness":
         task_classifier = nn.Linear(5 * args.n_filters, 6)
     assert task_classifier is not None, 'task not recognized'
     return task_classifier

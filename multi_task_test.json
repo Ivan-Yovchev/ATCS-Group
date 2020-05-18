@@ -1,0 +1,6 @@
+{
+  "gcdc.clinton": {
+    "test": "data/GCDC/Clinton_test.csv",
+    "train": "data/GCDC/Clinton_train.csv"
+  }
+}

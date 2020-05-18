@@ -4,24 +4,48 @@ from datetime import datetime
 import pickle as pkl
 import os
 
+
 def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
     filename = f'temp/{ds_name}.pt'
     if os.path.isfile(filename):
         with open(filename, 'rb') as f:
             return torch.load(f)
-        
+
     dataset_type = ds_name.split('.')[0]
     dataset = get_dataset(dataset_type, ds_paths['train'], tokenizer, args.max_len, args.max_sent,
-                        args.batch_size if args.finetune else 1, args.device)
+                          args.batch_size if args.finetune else 1, args.device)
     testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
-                        args.batch_size if args.finetune else 1, args.device)
+                          args.batch_size if args.finetune else 1, args.device)
     dataset = BertPreprocessor(dataset, sent_embedder, batch_size=args.batch_size)
     testset = BertPreprocessor(testset, sent_embedder, batch_size=args.batch_size)
-    
+
     with open(filename, 'wb') as f:
         torch.save([dataset, testset], f)
-    
+
     return dataset, testset
+
+
+def mmap_dataset(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
+    trainfname = f'temp/{ds_name}-train.npz'
+    testfname = f'temp/{ds_name}-test.npz'
+    dataset_type = ds_name.split('.')[0]
+
+    if os.path.isfile(trainfname):
+        dataset = NumpyBackedDataset(trainfname, args.device)
+    else:
+        dataset = get_dataset(dataset_type, ds_paths['train'], tokenizer, args.max_len, args.max_sent,
+                              args.batch_size if args.finetune else 1, args.device)
+        dataset = NumpyBackedDataset(trainfname, args.device, create=True, *just_apply_bert(dataset, sent_embedder))
+
+    if os.path.isfile(trainfname):
+        testset = NumpyBackedDataset(testfname, args.device)
+    else:
+        testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
+                              args.batch_size if args.finetune else 1, args.device)
+        testset = NumpyBackedDataset(testfname, args.device, create=True, *just_apply_bert(testset, sent_embedder))
+
+    return dataset, testset
+
 
 def train(args):
     valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
@@ -61,21 +85,57 @@ def train(args):
                     'epoch': epoch
                 }, f)
 
+
+def train_multitask(args, ds_names, ds_dict):
+    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
+    # writer = SummaryWriter(f'runs/{args.dataset_type}/{args.batch_size}_{args.max_len}_{args.max_sent}_{args.lr}')
+    # dataset types
+    d_types = set((name.split('.')[0] for name in ds_names))
+    class_and_loss = {d_type: (task_classifier_factory(args, d_type), loss_task_factory(d_type)) for d_type in d_types}
+    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+
+    # imagine a task sampling here
+    dataset_name = ds_names[0]
+
+    trainset, testset = ds_dict[dataset_name]
+    dataset_type = dataset_name.split('.')[0]
+    # create losses and task-specific classifiers
+    task_classifier, (binary_classification, loss) = class_and_loss[dataset_type]
+
+    conv_model.to(args.device)
+    task_classifier.to(args.device)
+
+    valid_acc, valid_loss = eval_model(conv_model, task_classifier, testset, loss, binary=binary_classification)
+    print(valid_acc, valid_loss)
+
+
+    trainset, testset = ds_dict[dataset_name]
+    # for x, y in testset:
+    #     print(x, y)
+
+
 def main(args):
-    for f in os.listdir(args.temp_dir):
-        os.remove(os.path.join(args.temp_dir, f))
+    # for f in os.listdir(args.temp_dir):
+    #     os.remove(os.path.join(args.temp_dir, f))
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     writer = SummaryWriter(f'runs/multitask/{args.batch_size}_{args.max_len}_{args.max_sent}_{args.lr}')
-    
+
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     sent_embedder = BertManager(bert_model, args.max_len, args.device)
 
+    # for ds_name, ds_paths in args.dataset_paths.items():
+    #     trainset, testset = load_datasets(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)
+    #     print('ts', len(trainset), trainset.get_n_classes(), len(testset), testset.get_n_classes())
+
+    datasets_dict = {}
     for ds_name, ds_paths in args.dataset_paths.items():
-        trainset, testset = load_datasets(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)
-        print('ts', len(trainset), trainset.get_n_classes(), len(testset), testset.get_n_classes())
- 
+        trainset, testset = mmap_dataset(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)
+        datasets_dict[ds_name] = (trainset, testset)
+
+    train_multitask(args, list(args.dataset_paths.keys()), datasets_dict)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -96,8 +156,7 @@ if __name__ == "__main__":
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
     os.makedirs(args.temp_dir, exist_ok=True)
-    with open('multi_task.json', 'r') as f:
+    with open('multi_task_test.json', 'r') as f:
         args.dataset_paths = json.load(f)
     # print('args', args)
     main(args)
-

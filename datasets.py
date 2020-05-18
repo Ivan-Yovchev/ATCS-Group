@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import random
 import numpy as np
+import torch
 
 from torch import LongTensor, stack, float32 as tfloat32, squeeze, Tensor
 from torch.utils.data import Dataset, DataLoader
@@ -140,7 +141,6 @@ class GCDC_Dataset(ParentDataset):
         data = pd.read_csv(self.file)
         self.docs, self.masks = self.get_data(data)
         self.y = LongTensor(data['labelA'] - 1)
-
         self.shuffle()
 
 
@@ -150,11 +150,8 @@ class FakeNewsDataset(ParentDataset):
                                               device)
 
         data = pd.read_csv(self.file, sep='\t', header=0, names=['text', 'label'])
-
         self.docs, self.masks = self.get_data(data)
-
         self.y = LongTensor(data['label'].to_numpy())
-
         self.shuffle()
 
 
@@ -169,7 +166,6 @@ class HyperpartisanDataset(ParentDataset):
             data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
         self.y = LongTensor((data['label'] == 'true').astype('int').to_numpy())
-
         self.shuffle()
 
 
@@ -196,18 +192,37 @@ class Hyperpartisan10Fold:
         self.k += 1
         return HyperpartisanDataset(*self.varg, data=train_set), HyperpartisanDataset(*self.varg, data=test_set)
 
+    def to(self, device):
+        self.device = device
+
 
 class PersuasivenessDataset(ParentDataset):
 
     def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
         super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id,
                                                     split_token, device)
-
         data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
         self.y = LongTensor(data['Persuasiveness'].to_numpy() - 1)
-
         self.shuffle()
+
+
+
+class NumpyBackedDataset(Dataset):
+    def __init__(self, filename, device, create=False, numpy_features=None, numpy_labels=None):
+        if create:
+            np.savez(filename, X=numpy_features, Y=numpy_labels)
+            del numpy_features, numpy_labels
+        self.npfile = np.load(filename, mmap_mode='r')
+        self.device = device
+
+    def __len__(self):
+        return self.npfile['X'].shape[0]
+
+    def __getitem__(self, idx):
+        x = torch.from_numpy(self.npfile['X'][idx]).to(self.device).unsqueeze(dim=0)
+        y = torch.tensor(self.npfile['Y'][idx]).to(self.device).unsqueeze(dim=0)
+        return x, y
 
 
 class BertPreprocessor:
@@ -234,10 +249,8 @@ class BertPreprocessor:
         # Shuffle embeddings
         temp = list(range(len(self.y)))
         shuffle(temp)
-
         self.X = self.X[temp]
         self.y = self.y[temp]
-
         self.idx = 0
 
     def get_n_classes(self):
@@ -347,6 +360,16 @@ def collate_pad_fn(batch):
     x, y = zip(*batch)
     x_pad = pad_sequence(x, batch_first=True)
     return x_pad, LongTensor(y)
+
+
+def just_apply_bert(dataset: ParentDataset, bert):
+    with torch.no_grad():
+        X = []
+        for (d, m), _ in dataset:
+            X.append(bert(d, m).cpu())
+        X = torch.stack(X).numpy()
+        Y = np.array(dataset.y)
+    return X, Y
 
 
 if __name__ == "__main__":
