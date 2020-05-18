@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import random
 import numpy as np
+import torch
 
 from torch import LongTensor, stack, float32 as tfloat32, squeeze, Tensor
 from torch.utils.data import Dataset, DataLoader
@@ -212,9 +213,9 @@ class PersuasivenessDataset(ParentDataset):
 
 class BertPreprocessor:
 
-    def __init__(self, decorated, encoder, batch_size=1):
+    def __init__(self, decorated, encoder, batch_size=1, device="cuda:0"):
 
-        self.device = decorated.device
+        self.device = torch.device(device)
         self.batch_size = batch_size
 
         first = encoder(*(next(decorated)[0]))
