@@ -4,11 +4,10 @@ from torch import nn
 
 class BertManager(nn.Module):
 
-    def __init__(self, bert_model, max_len, device, mode="cls"):
+    def __init__(self, bert_model, device, mode="cls"):
         super().__init__()
 
         self.bert = bert_model
-        self.max_len = max_len
         self.mode = mode
         self.device = device
 
@@ -44,8 +43,7 @@ class BertManager(nn.Module):
         x = x.view(*document.shape[:2], *x.shape[1:])
 
         # Channel in the middle
-        x = x.permute(0, 2, 1)
-        return torch.nn.functional.pad(x, (0, self.max_len - x.size(2)))
+        return x.permute(0, 2, 1)
 
     def train(self):
         return self.bert.train()
