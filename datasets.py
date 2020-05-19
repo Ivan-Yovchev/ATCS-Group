@@ -213,20 +213,16 @@ class PersuasivenessDataset(ParentDataset):
 
 class BertPreprocessor:
 
-    def __init__(self, decorated, encoder, batch_size=1, device = None):
+    def __init__(self, decorated, encoder, max_kernel, batch_size=1, device = None):
 
         self.device = decorated.device if device is None else device
         self.batch_size = batch_size
+        self.max_kernel = max_kernel
 
-        first = encoder(*(next(decorated)[0]))
-        enc_shape = tuple(first.shape)
-        self.X = np.zeros((len(decorated.docs), *enc_shape))
-        self.X[0] = first.cpu().detach().numpy()
+        self.X = []
 
-        i = 1
         for ((doc, mask), _) in decorated:
-            self.X[i] = encoder(doc, mask).cpu().detach().numpy()
-            i += 1
+            self.X.append(np.squeeze(encoder(doc, mask).cpu().detach().numpy(), axis=0))
 
         self.y = np.array(decorated.y)
         self.shuffle()
@@ -236,7 +232,7 @@ class BertPreprocessor:
         temp = list(range(len(self.y)))
         shuffle(temp)
 
-        self.X = self.X[temp]
+        self.X = [self.X[i] for i in temp]
         self.y = self.y[temp]
 
         self.idx = 0
@@ -262,9 +258,24 @@ class BertPreprocessor:
         # Get interval of current batch
         idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
         self.idx += 1
+ 
+        # sample jagged batch
+        samples = self.X[idx_start:idx_end]
 
-        return [squeeze(Tensor(self.X[idx_start:idx_end]).to(self.device), dim=1)], LongTensor(
-            self.y[idx_start:idx_end]).to(self.device)
+        # get embeddings dim
+        dim = self.X[0].shape[0]
+
+        # get max length in batch
+        pad = max([i.shape[1] for i in samples])
+
+        # make sure max length is not smaller than largest kernel
+        if pad < self.max_kernel:
+            pad = self.max_kernel
+
+        # pad batch
+        batch = np.array([np.hstack((i, np.zeros((dim, pad-i.shape[1])))) for i in samples])
+        
+        return [Tensor(batch).to(self.device)], LongTensor(self.y[idx_start:idx_end]).to(self.device)
 
 
 class EpisodeMaker(object):
