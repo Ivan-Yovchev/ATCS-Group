@@ -145,7 +145,7 @@ def main(args):
     }
 
     # Init Bert layer
-    sent_embedder = BertManager(bert_model, args.max_len, args.device)
+    sent_embedder = BertManager(bert_model, args.device)
 
     ep_maker = EpisodeMaker(
                     bert_tokenizer, 
@@ -179,7 +179,7 @@ def main(args):
         )
 
     # Init Conv layer
-    conv_model = CNNModel(args.embed_size, args.max_len, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels)
+    conv_model = CNNModel(args.embed_size, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels)
 
     # Build unified model
     model = Common(
