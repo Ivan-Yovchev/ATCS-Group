@@ -44,6 +44,8 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     # Initialize optimizer for copy
     optim = init_optim(model_cp.parameters())
     
+    # import pdb
+    # pdb.set_trace()
     train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False)
 
     # Step 6 from FO-Proto MAML pdf
@@ -149,7 +151,7 @@ def main(args):
                     bert_tokenizer, 
                     args.max_len, 
                     args.max_sent, 
-                    torch.device("cpu"), 
+                    args.device, 
                     datasets = [gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
                     sent_embedder = None if args.finetune else sent_embedder
                 )

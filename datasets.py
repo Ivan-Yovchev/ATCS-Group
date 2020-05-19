@@ -213,9 +213,9 @@ class PersuasivenessDataset(ParentDataset):
 
 class BertPreprocessor:
 
-    def __init__(self, decorated, encoder, batch_size=1):
+    def __init__(self, decorated, encoder, batch_size=1, device = None):
 
-        self.device = decorated.device
+        self.device = decorated.device if device is None else device
         self.batch_size = batch_size
 
         first = encoder(*(next(decorated)[0]))
@@ -275,6 +275,8 @@ class EpisodeMaker(object):
         super(EpisodeMaker, self).__init__()
 
         self.sent_embedder = sent_embedder
+        self.device = device
+        self.cpu_device = torch.device("cpu")
 
         assert (len(datasets) != 0)
 
@@ -284,8 +286,8 @@ class EpisodeMaker(object):
 
             if key != "gcdc":
                 self.datasets[key] = [{
-                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, max_sent, 1, device),
-                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, max_sent, 1, device)
+                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, max_sent, 1, self.cpu_device),
+                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, max_sent, 1, self.cpu_device)
                 }]
             else:
                 path = dataset["train"]
@@ -295,8 +297,8 @@ class EpisodeMaker(object):
                 self.datasets[key] = []
                 for ext in gcdc_ext:
                     sub_gcdc = {
-                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1, device),
-                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1, device)
+                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1, self.cpu_device),
+                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1, self.cpu_device)
                     }
 
                     self.datasets[key].append(sub_gcdc)
@@ -321,7 +323,7 @@ class EpisodeMaker(object):
         support_set = self.__sample_dataset(dataset["train"], allowed_classes, n_train)
 
         if isinstance(n_test, str) and n_test == "all":
-            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, batch_size=batch_size_when_all)
+            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, batch_size_when_all, self.device)
         else:
             query_set = self.__sample_dataset(dataset["test"], allowed_classes, n_test)
 
@@ -355,7 +357,7 @@ class EpisodeMaker(object):
             *pars
         )
 
-        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size=k)
+        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, k, self.device)
 
 
 def collate_pad_fn(batch):
