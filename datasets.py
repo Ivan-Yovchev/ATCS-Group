@@ -89,7 +89,7 @@ class ParentDataset(Dataset):
             self.idx = 0
             raise StopIteration
 
-        # Get interval of current batch
+        # Get interval of current batch 
         idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
 
         # Get batch lists
@@ -286,12 +286,13 @@ class BertPreprocessor(ParentDataset):
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
 
-    def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, device, datasets=[],
+    def __init__(self, tokenizer: BertTokenizer, max_len, max_sent, max_kernel, device, datasets=[],
                  gcdc_ext=["Clinton", "Enron", "Yahoo", "Yelp"], sent_embedder=None):
         super(EpisodeMaker, self).__init__()
 
         self.sent_embedder = sent_embedder
         self.device = device
+        self.max_kernel = max_kernel
         self.cpu_device = torch.device("cpu")
 
         assert (len(datasets) != 0)
@@ -339,7 +340,7 @@ class EpisodeMaker(object):
         support_set = self.__sample_dataset(dataset["train"], allowed_classes, n_train)
 
         if isinstance(n_test, str) and n_test == "all":
-            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, batch_size_when_all, self.device)
+            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, self.max_kernel, batch_size_when_all, self.device)
         else:
             query_set = self.__sample_dataset(dataset["test"], allowed_classes, n_test)
 
@@ -373,7 +374,7 @@ class EpisodeMaker(object):
             *pars
         )
 
-        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, k, self.device)
+        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, self.max_kernel, k, self.device)
 
 
 def collate_pad_fn(batch):
