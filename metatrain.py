@@ -195,7 +195,7 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
-        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr, n_train=args.train_size_support, n_test=args.train_size_query)
+        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.meta_lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
         acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
@@ -220,7 +220,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
     parser.add_argument("--n_epochs", type=int, default=5, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate for training model in specific episode")
+    parser.add_argument("--meta_lr", type=float, default=0.0001, help="Learning rate for updateing meta model")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
