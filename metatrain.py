@@ -197,12 +197,12 @@ def main(args):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
-        acc, loss = meta_valid(model, fake_news, init_optim, support_set_size=args.shots, query_set_size=20)
+        acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size=20)
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
     # meta test
-    acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
+    acc, loss = meta_valid(model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
     print("Final: ", acc, loss)
 
 
