@@ -54,9 +54,11 @@ class ParentDataset(Dataset):
 
         self.idx = 0
 
-    def get_n_classes(self):
+    def get_classes(self):
+        return set([x.item() for x in self.y])
 
-        return len(set([x.item() for x in self.y]))
+    def get_n_classes(self):
+        return len(self.get_classes())
 
     def get_data(self, data):
         docs = []
@@ -211,18 +213,28 @@ class PersuasivenessDataset(ParentDataset):
         self.shuffle()
 
 
-class BertPreprocessor:
+class BertPreprocessor(ParentDataset):
 
     def __init__(self, decorated, encoder, max_kernel, batch_size=1, device = None):
+        super(BertPreprocessor, self).__init__(
+                                                decorated.file, 
+                                                decorated.tokenizer,
+                                                decorated.max_len,
+                                                decorated.max_sent,
+                                                decorated.batch_size,
+                                                decorated.field_id,
+                                                decorated.split_token,
+                                                decorated.device
+                                            )
 
         self.device = decorated.device if device is None else device
         self.batch_size = batch_size
         self.max_kernel = max_kernel
 
-        self.X = []
+        self.docs = []
 
         for ((doc, mask), _) in decorated:
-            self.X.append(np.squeeze(encoder(doc, mask).cpu().detach().numpy(), axis=0))
+            self.docs.append(np.squeeze(encoder(doc, mask).cpu().detach().numpy(), axis=0))
 
         self.y = np.array(decorated.y)
         self.shuffle()
@@ -232,20 +244,13 @@ class BertPreprocessor:
         temp = list(range(len(self.y)))
         shuffle(temp)
 
-        self.X = [self.X[i] for i in temp]
+        self.docs = [self.docs[i] for i in temp]
         self.y = self.y[temp]
 
         self.idx = 0
 
-    def get_n_classes(self):
-
-        return len(set([x.item() for x in self.y]))
-
-    def __len__(self):
-        return ceil(len(self.y) / self.batch_size)
-
-    def __iter__(self):
-        return self
+    def get_data(self, data):
+        pass
 
     def __next__(self):
 
@@ -260,13 +265,13 @@ class BertPreprocessor:
         self.idx += 1
  
         # sample jagged batch
-        samples = self.X[idx_start:idx_end]
+        samples = self.docs[idx_start:idx_end]
 
         # get embeddings dim
-        dim = self.X[0].shape[0]
+        dim = self.docs[0].shape[0]
 
         # get max length in batch
-        pad = max([i.shape[1] for i in samples])
+        pad = max([doc.shape[1] for doc in samples])
 
         # make sure max length is not smaller than largest kernel
         if pad < self.max_kernel:
