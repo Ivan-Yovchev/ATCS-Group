@@ -113,8 +113,8 @@ def hyperpartisan_kfold_train(args):
         # reinitialize all the stuff
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
-        sent_embedder = BertManager(bert_model, args.max_len, args.device)
-        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters, batch_norm_eval=True)
+        sent_embedder = BertManager(bert_model, args.device)
+        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
@@ -185,11 +185,11 @@ def main(args):
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
                           args.batch_size if args.finetune else 1, args.device)
 
-    sent_embedder = BertManager(bert_model, args.max_len, args.device)
+    sent_embedder = BertManager(bert_model, args.device)
 
     # loading task-specific classifier
     task_classifier = task_classifier_factory(args)
-    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters)
 
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
@@ -234,8 +234,8 @@ def construct_common_model(finetune, conv_model, sent_embedder, dataset, testset
         model = Common(conv_model, encoder=sent_embedder)
     else:
         model = Common(conv_model)
-        dataset = BertPreprocessor(dataset, sent_embedder, batch_size=args.batch_size)
-        testset = BertPreprocessor(testset, sent_embedder, batch_size=args.batch_size)
+        dataset = BertPreprocessor(dataset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
+        testset = BertPreprocessor(testset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
     return model, dataset, testset
 
 
