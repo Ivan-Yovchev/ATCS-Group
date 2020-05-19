@@ -179,12 +179,12 @@ def main(args):
         )
 
     # Init Conv layer
-    conv_model = CNNModel(args.embed_size, args.max_len, torch.device("cpu"), n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.max_len, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels)
 
     # Build unified model
     model = Common(
         conv_model,
-        5*args.n_filters,
+        conv_model.get_n_blocks()*args.n_filters,
         encoder = sent_embedder if args.finetune else lambda x : x,
     )
 
@@ -227,6 +227,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
+    parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6", help="Kernel sizes per cnn block")
 
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")

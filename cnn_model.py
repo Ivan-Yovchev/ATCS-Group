@@ -67,3 +67,6 @@ class CNNModel(nn.Module):
         for t in self.parameters():
             if len(t.shape) >= 2:
                 init_function(t)
+
+    def get_n_blocks(self):
+        return len(self.cnn_blocks)
