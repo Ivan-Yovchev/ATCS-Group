@@ -15,14 +15,21 @@ class Common(nn.Module):
     def forward(self, *args):
         return self.cnn(self.encoder(*args))
 
-    def get_outputlayer(self, S, n_classes):
+    def get_outputlayer(self, S):
 
         if self.n_filters is None:
             return None
 
+        class_set = S.get_classes()
+        n_classes = len(class_set)
+
+        assert (n_classes == len(class_set))
+
+        relabeled = self.__relabel(sorted(class_set))
+
         C = torch.zeros(n_classes, self.n_filters)
         l2i = {}
-
+        
         for x, label in S:
 
             x[0] = x[0].cpu()
@@ -30,8 +37,9 @@ class Common(nn.Module):
 
             for i in range(label.shape[0]):
                 # Label to index
-                l2i[label[i].item()] = l2i.get(label[i].item(), len(l2i))
-                idx = l2i[label[i].item()]
+                new_label = relabeled[label[i].item()]
+                l2i[new_label] = l2i.get(new_label, len(l2i))
+                idx = l2i[new_label]
 
                 # Accumulate latent vectors
                 C[idx] += outputs[i]
@@ -47,6 +55,9 @@ class Common(nn.Module):
 
         linear.to(self.cnn.device)
         return linear, C.detach() # C should already be detached
+
+    def __relabel(self, sorted_classes):
+        return {label: new_label for new_label, label in enumerate(sorted_classes)}
 
     def train(self):
 

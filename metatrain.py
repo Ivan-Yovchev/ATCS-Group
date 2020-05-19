@@ -32,7 +32,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     ep = task.get_episode(n_train, n_test)
 
     # Construct output layer
-    task_classifier, protos = model.get_outputlayer(ep["support_set"], task.n_classes)
+    task_classifier, protos = model.get_outputlayer(ep["support_set"])
 
     # Construct copy of doc_embedder to simulate training on current task
     model_cp = deepcopy(model)
@@ -147,10 +147,21 @@ def main(args):
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.device)
 
+    # Init Conv layer
+    conv_model = CNNModel(args.embed_size, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels)
+
+    # Build unified model
+    model = Common(
+        conv_model,
+        conv_model.get_n_blocks()*args.n_filters,
+        encoder = sent_embedder if args.finetune else lambda x : x,
+    )
+
     ep_maker = EpisodeMaker(
                     bert_tokenizer, 
                     args.max_len, 
-                    args.max_sent, 
+                    args.max_sent,
+                    model.cnn.get_max_kernel(),
                     args.device, 
                     datasets = [gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
                     sent_embedder = None if args.finetune else sent_embedder
@@ -178,16 +189,6 @@ def main(args):
             2
         )
 
-    # Init Conv layer
-    conv_model = CNNModel(args.embed_size, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels)
-
-    # Build unified model
-    model = Common(
-        conv_model,
-        conv_model.get_n_blocks()*args.n_filters,
-        encoder = sent_embedder if args.finetune else lambda x : x,
-    )
-
     # Define optimizer constructor
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
 
@@ -197,7 +198,7 @@ def main(args):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
-        acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size=20)
+        acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
