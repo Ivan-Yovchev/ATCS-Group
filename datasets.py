@@ -241,7 +241,7 @@ class NumpyBackedDataset(Dataset):
     def __getitem__(self, idx):
         shard = np.searchsorted(self.indices, idx)
         shardwise_idx = idx % self.max_shard_size
-        x = torch.from_numpy(self.shards[shard]['X'][shardwise_idx]).squeeze()
+        x = torch.from_numpy(self.shards[shard]['X'][shardwise_idx].astype(np.float32)).squeeze()
         y = torch.tensor(self.shards[shard]['Y'][shardwise_idx]).squeeze()
         return x, y
 

@@ -21,7 +21,7 @@
   },
   "fake_news.gossipcop": {
     "train": "data/FakeNews/gossipcop/train.tsv",
-    "test": "data/FakeNews/gossipcop/test.tsv"
+    "test": "data/FakeNews/gossipcop/val.tsv"
   },
   "fake_news.politifact": {
     "test": "data/FakeNews/politifact/test.tsv",
