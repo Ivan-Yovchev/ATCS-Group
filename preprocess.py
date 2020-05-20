@@ -56,14 +56,14 @@ def parse_debate_dataset(filepath, nlp):
                     justification += line
                 line = next(f)
             line = next(f)
-            justification = split_sentences(justification, nlp)
+            # concatenate assertion and justification as per original paper
+            text = split_sentences(f'{assertion.strip()}. {justification.strip()}', nlp)
             scores = re.findall(r'GE:(\d)\tLO:(\d)\tIS:(\d)\tUA:(\d)\tUJ:(\d)\tPersuasiveness:(\d)', line)[0]
             motions.append([
                 motion_id, 
                 instance_id, 
                 motion.strip(), 
-                assertion.strip(), 
-                justification.strip(), 
+                text, 
                 *[int(score) for score in scores]
             ])
             try:
@@ -75,8 +75,7 @@ def parse_debate_dataset(filepath, nlp):
     return pd.DataFrame(motions, columns=['MotionID',
                                         'InstanceID',
                                         'Motion',
-                                        'Assertion', 
-                                        'Justification', 
+                                        'text', 
                                         'GE', 'LO', 'IS', 'UA', 'UJ', 'Persuasiveness'])
 
 def split_dataset(dataset: pd.DataFrame, ratios: list, random_state=42):
