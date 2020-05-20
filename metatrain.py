@@ -42,7 +42,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     task_classifier.to(device)
 
     # Initialize optimizer for copy
-    optim = init_optim(model_cp.parameters())
+    optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
     
     # import pdb
     # pdb.set_trace()
@@ -50,7 +50,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
-    task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())        
+    task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())
 
     # Get gradients for main (original) model update
 

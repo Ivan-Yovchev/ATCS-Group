@@ -51,11 +51,11 @@ class Common(nn.Module):
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
-        linear.weight = nn.Parameter(2*C)
-        linear.bias = nn.Parameter(-torch.diag(C @ C.T))
+        linear.weight = nn.Parameter(2*C.detach())
+        linear.bias = nn.Parameter(-torch.diag(C.detach() @ C.detach().T))
 
         linear.to(self.cnn.device)
-        return linear, C.detach() # C should already be detached
+        return linear, C # C should already be detached
 
     def __relabel(self, sorted_classes):
         return {label: new_label for new_label, label in enumerate(sorted_classes)}
