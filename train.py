@@ -70,7 +70,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
 
 
 def eval_model(model: nn.Module, task_classifier: nn.Module,
-               dataset: Dataset, loss: nn.Module, binary: bool) -> float:
+               dataset: Dataset, loss: nn.Module, binary: bool, device='cuda') -> float:
     # Set all models to evaluation mode
     model.eval()
     task_classifier.eval()
@@ -81,13 +81,9 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
     # Prevents the gradients from being computed
     with torch.no_grad():
         for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0):
+            x, label = x.to(device), label.to(device)
             # For each document compute the output
-            out = task_classifier(
-                model(
-                    *x
-                )
-            )
-
+            out = task_classifier(model(x))
             grad = loss(out, label)
             results += get_acc(out, label, binary)
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
@@ -114,7 +110,8 @@ def hyperpartisan_kfold_train(args):
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.max_len, args.device)
-        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters, batch_norm_eval=True)
+        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters,
+                              batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
@@ -202,7 +199,7 @@ def main(args):
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr, weight_decay=0.02)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)

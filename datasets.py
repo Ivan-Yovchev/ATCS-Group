@@ -13,6 +13,7 @@ from transformers import BertTokenizer
 
 from random import shuffle
 from math import ceil
+import json
 
 
 def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold=False):
@@ -207,21 +208,41 @@ class PersuasivenessDataset(ParentDataset):
         self.shuffle()
 
 
-
 class NumpyBackedDataset(Dataset):
-    def __init__(self, filename, device, create=False, numpy_features=None, numpy_labels=None):
+    def __init__(self, filename_prefix, device, create=False, numpy_features=None, numpy_labels=None):
+        self.max_shard_size = 1000
         if create:
-            np.savez(filename, X=numpy_features, Y=numpy_labels)
+            numpy_features = numpy_features.astype(np.float16)
+            length = numpy_features.shape[0]
+            n_shards = int(np.ceil(numpy_features.shape[0] / self.max_shard_size))
+            indices = np.arange(1, n_shards) * self.max_shard_size
+            for shard, (X, Y) in enumerate(zip(np.split(numpy_features, indices), np.split(numpy_labels, indices))):
+                np.savez(filename_prefix + f".{shard:02d}.npz", X=X, Y=Y)
+            indices = indices.tolist()
+            with open(filename_prefix + '.json', 'w') as f:
+                json.dump({"len": length, "indices": indices, "n_shards": n_shards}, f)
             del numpy_features, numpy_labels
-        self.npfile = np.load(filename, mmap_mode='r')
-        self.device = device
+
+        with open(filename_prefix + '.json', 'r') as f:
+            k = json.load(f)
+            self.length = k['len']
+            self.indices = np.array(k['indices'])
+            self.n_shards = k['n_shards']
+
+        self.shards = []
+        for shard in range(self.n_shards):
+            self.shards.append(np.load(filename_prefix + f".{shard:02d}.npz", mmap_mode='r'))
+        # self.npfile = np.load(filename_prefix, mmap_mode='r')
+        # self.device = device
 
     def __len__(self):
-        return self.npfile['X'].shape[0]
+        return self.length
 
     def __getitem__(self, idx):
-        x = torch.from_numpy(self.npfile['X'][idx]).to(self.device).unsqueeze(dim=0)
-        y = torch.tensor(self.npfile['Y'][idx]).to(self.device).unsqueeze(dim=0)
+        shard = np.searchsorted(self.indices, idx)
+        shardwise_idx = idx % self.max_shard_size
+        x = torch.from_numpy(self.shards[shard]['X'][shardwise_idx]).squeeze()
+        y = torch.tensor(self.shards[shard]['Y'][shardwise_idx]).squeeze()
         return x, y
 
 
