@@ -27,7 +27,7 @@ class Common(nn.Module):
 
         relabeled = self.__relabel(sorted(class_set))
 
-        C = torch.zeros(n_classes, self.n_filters)
+        C = [torch.zeros(self.n_filters) for _ in range(n_classes)]
         counts = torch.zeros(n_classes, 1)
         l2i = {}
         
@@ -43,11 +43,11 @@ class Common(nn.Module):
                 idx = l2i[new_label]
 
                 # Accumulate latent vectors
-                C[idx] += outputs[i]
+                C[idx] = C[idx] + outputs[i]
                 counts[idx, :] += 1
 
         # Assume equal number of examples for each class
-        C /= counts
+        C = torch.stack(C)/counts
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
