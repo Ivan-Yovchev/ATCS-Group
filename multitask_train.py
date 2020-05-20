@@ -102,7 +102,7 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
     # dataset types
     d_types = set((name.split('.')[0] for name in ds_names))
     class_and_loss = {d_type: (task_classifier_factory(args, d_type), loss_task_factory(d_type)) for d_type in d_types}
-    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters, batch_norm_eval=True)
+    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, batch_norm_eval=True)
     logging.info('Models created.')
 
     # move to device
@@ -241,7 +241,7 @@ def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
-    sent_embedder = BertManager(bert_model, args.max_len, args.device)
+    sent_embedder = BertManager(bert_model, args.device)
 
     # for ds_name, ds_paths in args.dataset_paths.items():
     #     trainset, testset = load_datasets(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)

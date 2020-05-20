@@ -246,22 +246,28 @@ class NumpyBackedDataset(Dataset):
         return x, y
 
 
-class BertPreprocessor:
+class BertPreprocessor(ParentDataset):
 
-    def __init__(self, decorated, encoder, batch_size=1):
+    def __init__(self, decorated, encoder, max_kernel, batch_size=1, device=None):
+        super(BertPreprocessor, self).__init__(
+            decorated.file,
+            decorated.tokenizer,
+            decorated.max_len,
+            decorated.max_sent,
+            decorated.batch_size,
+            decorated.field_id,
+            decorated.split_token,
+            decorated.device
+        )
 
-        self.device = decorated.device
+        self.device = decorated.device if device is None else device
         self.batch_size = batch_size
+        self.max_kernel = max_kernel
 
-        first = encoder(*(next(decorated)[0]))
-        enc_shape = tuple(first.shape)
-        self.X = np.zeros((len(decorated.docs), *enc_shape))
-        self.X[0] = first.cpu().detach().numpy()
+        self.docs = []
 
-        i = 1
         for ((doc, mask), _) in decorated:
-            self.X[i] = encoder(doc, mask).cpu().detach().numpy()
-            i += 1
+            self.docs.append(np.squeeze(encoder(doc, mask).cpu().detach().numpy(), axis=0))
 
         self.y = np.array(decorated.y)
         self.shuffle()
@@ -270,19 +276,14 @@ class BertPreprocessor:
         # Shuffle embeddings
         temp = list(range(len(self.y)))
         shuffle(temp)
-        self.X = self.X[temp]
+
+        self.docs = [self.docs[i] for i in temp]
         self.y = self.y[temp]
+
         self.idx = 0
 
-    def get_n_classes(self):
-
-        return len(set([x.item() for x in self.y]))
-
-    def __len__(self):
-        return ceil(len(self.y) / self.batch_size)
-
-    def __iter__(self):
-        return self
+    def get_data(self, data):
+        pass
 
     def __next__(self):
 
@@ -296,8 +297,23 @@ class BertPreprocessor:
         idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
         self.idx += 1
 
-        return [squeeze(Tensor(self.X[idx_start:idx_end]).to(self.device), dim=1)], LongTensor(
-            self.y[idx_start:idx_end]).to(self.device)
+        # sample jagged batch
+        samples = self.docs[idx_start:idx_end]
+
+        # get embeddings dim
+        dim = self.docs[0].shape[0]
+
+        # get max length in batch
+        pad = max([doc.shape[1] for doc in samples])
+
+        # make sure max length is not smaller than largest kernel
+        if pad < self.max_kernel:
+            pad = self.max_kernel
+
+        # pad batch
+        batch = np.array([np.hstack((i, np.zeros((dim, pad - i.shape[1])))) for i in samples])
+
+        return Tensor(batch).to(self.device), LongTensor(self.y[idx_start:idx_end]).to(self.device)
 
 
 class EpisodeMaker(object):

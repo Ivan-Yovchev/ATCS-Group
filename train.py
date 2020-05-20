@@ -13,6 +13,7 @@ import transformers
 from common import Common
 import os
 from datetime import datetime
+import logging
 
 
 def get_acc(preds, targets, binary=False):
@@ -51,7 +52,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
         optim.zero_grad()
 
         # Compute output
-        out = task_classifier(model(*x))
+        out = task_classifier(model(x))
         # Compute loss
         grad = loss(out, label)
 
@@ -104,13 +105,13 @@ def hyperpartisan_kfold_train(args):
     for fold, (trainset, testset) in enumerate(kfold_dataset):
         # logs
         writer = SummaryWriter(f'runs/{args.dataset_type}.{fold}_{time_log}')
-        trainset.to(args.device)
-        testset.to(args.device)
+        # trainset.to(args.device)
+        # testset.to(args.device
         # reinitialize all the stuff
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
-        sent_embedder = BertManager(bert_model, args.max_len, args.device)
-        conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters,
+        sent_embedder = BertManager(bert_model, args.device)
+        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters,
                               batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
@@ -182,18 +183,21 @@ def main(args):
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
                           args.batch_size if args.finetune else 1, args.device)
 
-    sent_embedder = BertManager(bert_model, args.max_len, args.device)
+    sent_embedder = BertManager(bert_model, args.device)
+
+    logging.info('sentence embedder created.')
 
     # loading task-specific classifier
     task_classifier = task_classifier_factory(args)
-    conv_model = CNNModel(args.embed_size, args.max_len, args.device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters)
 
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
     # construct common model
-    model, dataset, testset = construct_common_model(args, conv_model, sent_embedder, dataset, testset)
+    model, dataset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, dataset, testset)
     model.to(args.device)
     task_classifier.to(args.device)
+    logging.info('Common model built')
 
     valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
@@ -226,16 +230,16 @@ def main(args):
             save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
 
-def construct_common_model(args, conv_model, sent_embedder, dataset, testset):
+def construct_common_model(finetune, conv_model, sent_embedder, dataset, testset):
     # print('Making common')
-    if args.finetune:
+    if finetune:
         model = Common(conv_model, encoder=sent_embedder)
     else:
         model = Common(conv_model)
-        print('bertpreprocessing dataset')
-        dataset = BertPreprocessor(dataset, sent_embedder, batch_size=args.batch_size)
-        print('bertpreprocessing testset')
-        testset = BertPreprocessor(testset, sent_embedder, batch_size=args.batch_size)
+        logging.info('bertpreprocessing dataset')
+        dataset = BertPreprocessor(dataset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
+        logging.info('bertpreprocessing testset')
+        testset = BertPreprocessor(testset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
     return model, dataset, testset
 
 
@@ -268,9 +272,10 @@ def task_classifier_factory(args, dataset_type=None):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=100, help="Max number of words contained in a sentence")
