@@ -30,9 +30,10 @@ def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer
     return dataset, testset
 
 
-def mmap_dataset(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
-    trainfname = f'temp/{ds_name}-train'
-    testfname = f'temp/{ds_name}-test'
+def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: BertTokenizer, dir='temp'):
+    trainfname = os.path.join(dir, ds_name)
+    # testfname = os.path.join(dir, f'{ds_name}-test')
+    # testfname = f'temp/{ds_name}-test'
     dataset_type = ds_name.split('.')[0]
 
     if os.path.isfile(trainfname + '.json'):
@@ -40,20 +41,20 @@ def mmap_dataset(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer:
         dataset = NumpyBackedDataset(trainfname, args.device)
     else:
         logging.info("File %s not found. Creating it.", trainfname)
-        dataset = get_dataset(dataset_type, ds_paths['train'], tokenizer, args.max_len, args.max_sent,
-                              args.batch_size if args.finetune else 1, args.device)
+        dataset = get_dataset(dataset_type, ds_path, tokenizer, args.max_len, args.max_sent, 1, args.device)
         dataset = NumpyBackedDataset(trainfname, args.device, True, *just_apply_bert(dataset, sent_embedder))
-
-    if os.path.isfile(testfname + '.json'):
-        logging.info("Found file %s. Loading it.", testfname)
-        testset = NumpyBackedDataset(testfname, args.device)
-    else:
-        logging.info("File %s not found. Creating it.", testfname)
-        testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
-                              args.batch_size if args.finetune else 1, args.device)
-        testset = NumpyBackedDataset(testfname, args.device, True, *just_apply_bert(testset, sent_embedder))
-
-    return dataset, testset
+    return dataset
+    #
+    # if os.path.isfile(testfname + '.json'):
+    #     logging.info("Found file %s. Loading it.", testfname)
+    #     testset = NumpyBackedDataset(testfname, args.device)
+    # else:
+    #     logging.info("File %s not found. Creating it.", testfname)
+    #     testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
+    #                           args.batch_size if args.finetune else 1, args.device)
+    #     testset = NumpyBackedDataset(testfname, args.device, True, *just_apply_bert(testset, sent_embedder))
+    #
+    # return dataset, testset
 
 
 # def train(args):
@@ -127,16 +128,19 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
         'hyperpartisan': DataLoader(dataset=ds_dict['hyperpartisan'][0],
                                     shuffle=True,
                                     # num_workers=args.n_workers,
-                                    batch_size=args.batch_size),
+                                    batch_size=args.batch_size,
+                                    collate_fn=NumpyBackedDataset.collate_fn),
         'fake_news': DataLoader(
             dataset=ConcatDataset([v[0] for k, v in ds_dict.items() if k.split('.')[0] == 'fake_news']),
             shuffle=False,
             # num_workers=args.n_workers,
-            batch_size=args.batch_size),
+            batch_size=args.batch_size,
+            collate_fn=NumpyBackedDataset.collate_fn),
         'persuasiveness': DataLoader(dataset=ds_dict['persuasiveness'][0],
                                      shuffle=True,
                                      # num_workers=args.n_workers,
-                                     batch_size=args.batch_size)
+                                     batch_size=args.batch_size,
+                                     collate_fn=NumpyBackedDataset.collate_fn)
     }
     logging.info('Dataloaders created.')
 
@@ -149,34 +153,38 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
 
     # test them before training
 
+
     # imagine a task sampling here
-    # dataset_name = random.choice(ds_names)
-    dataset_name = 'gcdc.clinton'
-    dataset_type = dataset_name.split('.')[0]
-    dl_iter = train_dl_iters[dataset_type]
+    for _ in tqdm(range(50)):
+        dataset_name = random.choice(ds_names)
+        # dataset_name = 'hyperpartisan'
+        dataset_type = dataset_name.split('.')[0]
+        dl_iter = train_dl_iters[dataset_type]
 
-    logging.info('Sampled dataset: %s', dataset_name)
+        logging.info('Sampled dataset: %s', dataset_name)
 
-    try:
-        batch = next(dl_iter)
-    except StopIteration:
-        epoch_counter[dataset_type] += 1
-        dl_iter = iter(train_dataloaders[dataset_type])
-        train_dl_iters[dataset_type] = dl_iter
-        batch = next(dl_iter)
+        try:
+            batch = next(dl_iter)
+        except StopIteration:
+            epoch_counter[dataset_type] += 1
+            dl_iter = iter(train_dataloaders[dataset_type])
+            train_dl_iters[dataset_type] = dl_iter
+            batch = next(dl_iter)
 
-    logging.info("Batch retrieved %s, %s", str(batch[0].shape), str(batch[1].shape))
+        logging.info("Batch retrieved %s, %s", str(batch[0].shape), str(batch[1].shape))
 
-    task_classifier, (binary_classification, loss) = class_and_loss[dataset_type]
-    logging.info("Class and loss retrieved.")
-    train_one_batch(batch, model=conv_model, task_classifier=task_classifier, loss=loss, optim=optim,
-                    device=args.device)
+        task_classifier, (binary_classification, loss) = class_and_loss[dataset_type]
+        logging.info("Class and loss retrieved.")
+        train_one_batch(batch, model=conv_model, task_classifier=task_classifier, loss=loss, optim=optim,
+                        device=args.device)
     from pprint import pprint
-    pprint(eval_model_on_all(conv_model, class_and_loss, testsets_dict))
+    from tabulate import tabulate
+    ev = eval_model_on_all(conv_model, class_and_loss, testsets_dict, batch_size=args.batch_size)
+    print(tabulate(ev, headers='keys'))
 
 
 def eval_model_on_all(model: nn.Module, classifiers_and_losses: Mapping[str, Tuple[nn.Module, nn.Module]],
-                      testsets: Mapping[str, Dataset]) -> Mapping[str, Tuple[float, float]]:
+                      testsets: Mapping[str, Dataset], batch_size: int) -> Mapping[str, Tuple[float, float]]:
     """
 
     :param model: the model
@@ -187,8 +195,11 @@ def eval_model_on_all(model: nn.Module, classifiers_and_losses: Mapping[str, Tup
     """
     d = {}
     for t, dt in testsets.items():
+        if t.startswith('fake_news.gossipcop'):
+            continue
         tsc, (binary_class, loss) = classifiers_and_losses[t.split('.')[0]]
-        d[t] = eval_model(model, tsc, DataLoader(dt, batch_size=8, collate_fn=NumpyBackedDataset.collate_fn), loss=loss,
+        d[t] = eval_model(model, tsc, DataLoader(dt, batch_size=batch_size, collate_fn=NumpyBackedDataset.collate_fn),
+                          loss=loss,
                           binary=binary_class)
         logging.info('Results on %s: %.4f %.4f', t, *d[t])
     return d
@@ -230,7 +241,10 @@ def main(args):
 
     datasets_dict = {}
     for ds_name, ds_paths in args.dataset_paths.items():
-        trainset, testset = mmap_dataset(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)
+        trainset = mmap_dataset(f'{ds_name}-train', ds_paths['train'], args, sent_embedder, bert_tokenizer,
+                                dir=args.temp_dir)
+        testset = mmap_dataset(f'{ds_name}-test', ds_paths['test'], args, sent_embedder, bert_tokenizer,
+                               dir=args.temp_dir)
         datasets_dict[ds_name] = (trainset, testset)
 
     train_multitask(args, list(args.dataset_paths.keys()), datasets_dict)
