@@ -31,7 +31,8 @@ class CNNBlock(nn.Module):
         self.to(device)
 
     def forward(self, x):
-        return torch.max(self.block(x), axis=2).values
+        x = self.block(x)
+        return torch.max(x, axis=2).values
 
 
 class CNNModel(nn.Module):

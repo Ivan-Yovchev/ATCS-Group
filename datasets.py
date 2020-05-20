@@ -210,40 +210,63 @@ class PersuasivenessDataset(ParentDataset):
 
 class NumpyBackedDataset(Dataset):
     def __init__(self, filename_prefix, device, create=False, numpy_features=None, numpy_labels=None):
-        self.max_shard_size = 1000
+        self.max_shard_size = 1024
         if create:
-            numpy_features = numpy_features.astype(np.float16)
-            length = numpy_features.shape[0]
-            n_shards = int(np.ceil(numpy_features.shape[0] / self.max_shard_size))
-            indices = np.arange(1, n_shards) * self.max_shard_size
-            for shard, (X, Y) in enumerate(zip(np.split(numpy_features, indices), np.split(numpy_labels, indices))):
-                np.savez(filename_prefix + f".{shard:02d}.npz", X=X, Y=Y)
-            indices = indices.tolist()
+            length = len(numpy_features)
+            n_shards = int(np.ceil(length / self.max_shard_size))
+            # indices = np.arange(1, n_shards) * self.max_shard_size
+
+            for shard in range(n_shards):
+                start = shard * self.max_shard_size
+                end = min(length, start + self.max_shard_size)
+
+                X = numpy_features[start:end]
+                max_length = max(arr.shape[2] for arr in X)
+                X_new = []
+                lengths = []
+                for x in X:
+                    l = x.shape[2]
+                    X_new.append(np.pad(x, pad_width=((0, 0), (0, 0), (0, max_length - l))))
+                    lengths.append(l)
+
+                Y = numpy_labels[start:end]
+                np.savez(filename_prefix + f".{shard:02d}.npz", X=np.array(X_new), L=np.array(lengths), Y=Y)
+
+            # indices = indices.tolist()
             with open(filename_prefix + '.json', 'w') as f:
-                json.dump({"len": length, "indices": indices, "n_shards": n_shards}, f)
+                json.dump({"len": length, "n_shards": n_shards}, f)
             del numpy_features, numpy_labels
 
         with open(filename_prefix + '.json', 'r') as f:
             k = json.load(f)
             self.length = k['len']
-            self.indices = np.array(k['indices'])
+            # self.indices = np.array(k['indices'])
             self.n_shards = k['n_shards']
 
         self.shards = []
         for shard in range(self.n_shards):
             self.shards.append(np.load(filename_prefix + f".{shard:02d}.npz", mmap_mode='r'))
-        # self.npfile = np.load(filename_prefix, mmap_mode='r')
-        # self.device = device
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx):
-        shard = np.searchsorted(self.indices, idx)
+        shard = idx // self.max_shard_size
         shardwise_idx = idx % self.max_shard_size
-        x = torch.from_numpy(self.shards[shard]['X'][shardwise_idx].astype(np.float32)).squeeze()
-        y = torch.tensor(self.shards[shard]['Y'][shardwise_idx]).squeeze()
+        true_length = self.shards[shard]['L'][shardwise_idx]
+        x = torch.from_numpy(self.shards[shard]['X'][shardwise_idx][:, :, :true_length]).squeeze(dim=0)
+        y = torch.tensor(self.shards[shard]['Y'][shardwise_idx]).squeeze(dim=0)
         return x, y
+
+    @staticmethod
+    def collate_fn(batch):
+        X, Y = zip(*batch)
+        # need to make the max-length at least the minimum kernelgit
+        max_length = max(6, max(arr.shape[1] for arr in X))
+        X_new = [np.pad(x, pad_width=((0, 0), (0, max_length - x.shape[1]))) for x in X]
+        X_new = np.array(X_new)
+        Y = np.array(Y)
+        return torch.from_numpy(X_new), torch.from_numpy(Y)
 
 
 class BertPreprocessor(ParentDataset):
@@ -393,18 +416,12 @@ class EpisodeMaker(object):
         return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, batch_size=k)
 
 
-def collate_pad_fn(batch):
-    x, y = zip(*batch)
-    x_pad = pad_sequence(x, batch_first=True)
-    return x_pad, LongTensor(y)
-
-
 def just_apply_bert(dataset: ParentDataset, bert):
     with torch.no_grad():
         X = []
         for (d, m), _ in dataset:
             X.append(bert(d, m).cpu())
-        X = torch.stack(X).numpy()
+        # X = torch.stack(X).numpy()
         Y = np.array(dataset.y)
     return X, Y
 
