@@ -17,3 +17,8 @@ conda install -c conda-forge transformers
 ```
 or by following the manual [installation instructions](https://github.com/huggingface/transformers)
 
+Get spacy English language pack:
+```
+python -m spacy download en_core_web_sm
+```
+
