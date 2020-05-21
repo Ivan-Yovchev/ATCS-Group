@@ -137,3 +137,4 @@ data/
 papers/
 runs/**
 models/**
+temp/*
