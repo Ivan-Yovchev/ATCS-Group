@@ -224,16 +224,10 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
-    parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=15, help="Max number of sentences in a doc")
-    parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
-    parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
-    parser.add_argument("--n_epochs", type=int, default=5, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate for training model in specific episode")
     parser.add_argument("--meta_lr", type=float, default=0.0001, help="Learning rate for updateing meta model")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
@@ -247,5 +241,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    # args.device = torch.device("cpu")
+    
     main(args)
