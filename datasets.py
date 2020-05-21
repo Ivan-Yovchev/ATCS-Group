@@ -404,7 +404,8 @@ class EpisodeMaker(object):
             if class_y == len(allowed_classes) - 1:
                 sample_size = k - class_y * sample_size
 
-            final_split += random.sample(list(filter(lambda x: x[2] == class_y, split)), sample_size)
+            population = list(filter(lambda x: x[2] == class_y, split))
+            final_split += random.sample(population, min(sample_size, len(population)))
 
         shuffle(final_split)
 
