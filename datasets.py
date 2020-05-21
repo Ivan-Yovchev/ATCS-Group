@@ -282,6 +282,28 @@ class BertPreprocessor(ParentDataset):
         
         return [Tensor(batch).to(self.device)], LongTensor(self.y[idx_start:idx_end]).to(self.device)
 
+class Scheduler(object):
+    """scheduler to pick classes and keep track of epoch for EpisodeMaker"""
+
+    def __init__(self, epochs, sampler):
+
+        self.epoch = 0
+        self.epochs = epochs
+        self.sampler = sampler
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+
+        if self.epoch >= self.epochs:
+            raise StopIteration
+
+        classes = self.sampler(self.epoch, self.epochs)
+
+        self.epoch += 1
+        return classes
+
 
 class EpisodeMaker(object):
     """docstring for EpisodeMaker"""
@@ -330,6 +352,8 @@ class EpisodeMaker(object):
         # assume classes are always 0 .. n
         if isinstance(classes_sampled, str) and classes_sampled == "all":
             allowed_classes = classes_tot
+        elif isinstance(classes_sampled, Scheduler):
+            allowed_classes = next(classes_sampled)
         elif isinstance(classes_smapled, (list, tuple)):
             allowed_classes = classes_sampled
         else:
@@ -375,11 +399,11 @@ class EpisodeMaker(object):
         final_split = []
         sample_size = round(k / len(allowed_classes))
 
-        for i, class_y in enumerate(allowed_classes):
+        for class_y in range(len(allowed_classes)):
 
-            if i == len(allowed_classes) - 1:
-                sample_size = k - i * sample_size
-                
+            if class_y == len(allowed_classes) - 1:
+                sample_size = k - class_y * sample_size
+
             final_split += random.sample(list(filter(lambda x: x[2] == class_y, split)), sample_size)
 
         shuffle(final_split)

@@ -4,7 +4,8 @@ import transformers
 from tqdm import tqdm
 from torch import nn
 from transformers import BertModel, BertTokenizer
-from datasets import EpisodeMaker
+from datasets import EpisodeMaker, Scheduler
+from utils import persuasiveness_scheduler
 from doc_emb_models import *
 from cnn_model import CNNModel
 
@@ -169,25 +170,36 @@ def main(args):
 
     # Define tasks
     gcdc = Task(
-            lambda m=8, n=8: ep_maker.get_episode('gcdc', n_train=m, n_test=n),
-            nn.CrossEntropyLoss(),
-            3
-        )
+        lambda m=8, n=8: ep_maker.get_episode('gcdc', n_train=m, n_test=n),
+        nn.CrossEntropyLoss(),
+        3
+    )
+
     persuasiveness = Task(
-            lambda m=8, n=8: ep_maker.get_episode('persuasiveness', n_train=m, n_test=n),
-            nn.CrossEntropyLoss(),
-            6
-        )
+        lambda m=8, n=8: ep_maker.get_episode(
+            'persuasiveness',
+            n_train=m,
+            n_test=n,
+            classes_sampled = Scheduler(
+                epochs = args.meta_epochs,
+                sampler = persuasiveness_scheduler
+            )
+        ),
+        nn.CrossEntropyLoss(),
+        6
+    )
+
     partisan = Task(
-            lambda m=8, n=8: ep_maker.get_episode('hyperpartisan', n_train=m, n_test=n),
-            nn.CrossEntropyLoss(),
-            2
-        )
+        lambda m=8, n=8: ep_maker.get_episode('hyperpartisan', n_train=m, n_test=n),
+        nn.CrossEntropyLoss(),
+        2
+    )
+
     fake_news = Task(
-            lambda m=8, n=8: ep_maker.get_episode('fake_news', n_train=m, n_test=n),
-            nn.CrossEntropyLoss(),
-            2
-        )
+        lambda m=8, n=8: ep_maker.get_episode('fake_news', n_train=m, n_test=n),
+        nn.CrossEntropyLoss(),
+        2
+    )
 
     # Define optimizer constructor
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
