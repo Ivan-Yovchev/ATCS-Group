@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, ConcatDataset
 import os
 from typing import Mapping, Tuple, List
 import logging
+from tabulate import tabulate
 
 
 def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
@@ -32,7 +33,7 @@ def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer
 
 def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: BertTokenizer, dir='temp'):
     trainfname = os.path.join(dir, ds_name)
-    dataset_type = ds_name.split('.')[0]
+    dataset_type = ds_name.split('.')[0] if '.' in ds_name else ds_name.split('-')[0]
 
     if os.path.isfile(trainfname + '.json'):
         logging.info("Found file %s. Loading it.", trainfname)
@@ -124,8 +125,6 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
         logging.info("Class and loss retrieved.")
         train_one_batch(batch, model=conv_model, task_classifier=task_classifier, loss=loss, optim=optim,
                         device=args.device)
-    from pprint import pprint
-    from tabulate import tabulate
     ev = eval_model_on_all(conv_model, class_and_loss, testsets_dict, batch_size=args.batch_size)
     print(tabulate(ev, headers='keys'))
 
