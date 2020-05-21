@@ -47,7 +47,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     
     # import pdb
     # pdb.set_trace()
-    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False)
+    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False, False)
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
@@ -80,8 +80,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
 
         # Train on task episode
-        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False)
-
+        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False, False)
 
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
@@ -106,7 +105,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
 
 def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, query_set_size=8):
     model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size, n_test=query_set_size)
-    results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False)
+    results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False, False)
 
     del model_cp
     del ep
@@ -207,13 +206,13 @@ def main(args):
     init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
 
     # meta train
-    display_log = tqdm(range(args.meta_epochs), total=0, position=9, bar_format='{desc}')
-    for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=8):
+    display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
+    for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
         run_task_batch(model, [gcdc, persuasiveness], init_optim, args.meta_lr, n_train=args.train_size_support, n_test=args.train_size_query)
         
         # Meta Validation
         acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
-        print(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
+        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
     # meta test
