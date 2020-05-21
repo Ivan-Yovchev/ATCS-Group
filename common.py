@@ -23,14 +23,10 @@ class Common(nn.Module):
         class_set = S.get_classes()
         n_classes = len(class_set)
 
-        assert (n_classes == len(class_set))
-
-        relabeled = self.__relabel(sorted(class_set))
-
         C = [torch.zeros(self.n_filters) for _ in range(n_classes)]
         counts = torch.zeros(n_classes, 1)
         l2i = {}
-        
+
         for x, label in S:
 
             x = (el.cpu() for el in x)
@@ -38,7 +34,7 @@ class Common(nn.Module):
 
             for i in range(label.shape[0]):
                 # Label to index
-                new_label = relabeled[label[i].item()]
+                new_label = label[i].item()
                 l2i[new_label] = l2i.get(new_label, len(l2i))
                 idx = l2i[new_label]
 
@@ -51,18 +47,16 @@ class Common(nn.Module):
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
-        
+
         weight = 2*C.detach()
         bias = -torch.diag(C.detach() @ C.detach().T)
-        # normalize 
+
+        # normalize
         linear.weight = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
         linear.bias = nn.Parameter(bias / bias.abs().sum())
 
         linear.to(self.cnn.device)
         return linear, C # C should already be detached
-
-    def __relabel(self, sorted_classes):
-        return {label: new_label for new_label, label in enumerate(sorted_classes)}
 
     def train(self):
 
