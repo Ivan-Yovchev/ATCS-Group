@@ -25,13 +25,19 @@ class CNNBlock(nn.Module):
             # nn.Dropout(p=0.2),
             nn.Conv1d(in_channels=in_c, out_channels=out_c, kernel_size=k_size),
             nn.ReLU(),
-            EvalModeBatchNorm1d(num_features=out_c, momentum=momentum) if batch_norm_eval else nn.BatchNorm1d(
-                num_features=out_c, momentum=momentum)
+        )
+        self.bnorm = EvalModeBatchNorm1d(num_features=out_c, momentum=momentum) if batch_norm_eval else nn.BatchNorm1d(
+            num_features=out_c, momentum=momentum
         )
         self.to(device)
 
     def forward(self, x):
-        return torch.max(self.block(x), axis=2).values
+       conv = torch.max(self.block(x), axis=2).values
+
+       conv_shape = conv.shape
+       if conv_shape[0]>1 and conv_shape[-1]>1:
+           return self.bnorm(conv)
+       return conv
 
     def train(self, mode: bool = True):
         self.block.train()
