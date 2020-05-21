@@ -175,15 +175,17 @@ def main(args):
         3
     )
 
+    scheduler  = Scheduler(
+        epochs = args.meta_epochs,
+        sampler = persuasiveness_scheduler
+    )
+
     persuasiveness = Task(
         lambda m=8, n=8: ep_maker.get_episode(
             'persuasiveness',
             n_train=m,
             n_test=n,
-            classes_sampled = Scheduler(
-                epochs = args.meta_epochs,
-                sampler = persuasiveness_scheduler
-            )
+            classes_sampled = scheduler,
         ),
         nn.CrossEntropyLoss(),
         6
