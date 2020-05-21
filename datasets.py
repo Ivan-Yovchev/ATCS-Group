@@ -330,6 +330,8 @@ class EpisodeMaker(object):
         # assume classes are always 0 .. n
         if isinstance(classes_sampled, str) and classes_sampled == "all":
             allowed_classes = classes_tot
+        elif isinstance(classes_smapled, (list, tuple)):
+            allowed_classes = classes_sampled
         else:
             if not isinstance(classes_sampled, int):
                 k = floor(len(classes_tot*classes_sampled))
