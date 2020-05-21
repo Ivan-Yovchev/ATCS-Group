@@ -32,8 +32,6 @@ def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer
 
 def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: BertTokenizer, dir='temp'):
     trainfname = os.path.join(dir, ds_name)
-    # testfname = os.path.join(dir, f'{ds_name}-test')
-    # testfname = f'temp/{ds_name}-test'
     dataset_type = ds_name.split('.')[0]
 
     if os.path.isfile(trainfname + '.json'):
@@ -44,56 +42,7 @@ def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: 
         dataset = get_dataset(dataset_type, ds_path, tokenizer, args.max_len, args.max_sent, 1, args.device)
         dataset = NumpyBackedDataset(trainfname, args.device, True, *just_apply_bert(dataset, sent_embedder))
     return dataset
-    #
-    # if os.path.isfile(testfname + '.json'):
-    #     logging.info("Found file %s. Loading it.", testfname)
-    #     testset = NumpyBackedDataset(testfname, args.device)
-    # else:
-    #     logging.info("File %s not found. Creating it.", testfname)
-    #     testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
-    #                           args.batch_size if args.finetune else 1, args.device)
-    #     testset = NumpyBackedDataset(testfname, args.device, True, *just_apply_bert(testset, sent_embedder))
-    #
-    # return dataset, testset
 
-
-# def train(args):
-#     valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
-#     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
-#     best_acc = 0
-#     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-#     optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
-#     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
-#
-#     lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
-#     # lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
-#
-#     for epoch in range(args.n_epochs):
-#
-#         if optim.defaults['lr'] < 1e-6: break
-#         train_acc, train_loss = train_model(model, task_classifier, dataset, loss, optim, binary=binary_classification)
-#         valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
-#         print(f'Epoch {epoch:02d}: train acc: {train_acc:.4f}'
-#               f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
-#               f' valid loss: {valid_loss:.4f}')
-#
-#         lr_scheduler.step(valid_acc)
-#
-#         writer.add_scalar('train_acc', train_acc, epoch)
-#         writer.add_scalar('train_loss', train_loss, epoch)
-#         writer.add_scalar('valid_acc', valid_acc, epoch)
-#         writer.add_scalar('valid_loss', valid_loss, epoch)
-#
-#         if best_acc < valid_acc:
-#             best_acc = valid_acc
-#
-#             with open(os.path.join('models', f"{args.dataset_type}.{time_log}.pt"), 'wb') as f:
-#                 torch.save({
-#                     'cnn_model': conv_model.state_dict(),
-#                     'bert_model': bert_model.state_dict(),
-#                     'task_classifier': task_classifier.state_dict(),
-#                     'epoch': epoch
-#                 }, f)
 
 
 def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
@@ -132,7 +81,7 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
                                     collate_fn=NumpyBackedDataset.collate_fn),
         'fake_news': DataLoader(
             dataset=ConcatDataset([v[0] for k, v in ds_dict.items() if k.split('.')[0] == 'fake_news']),
-            shuffle=False,
+            shuffle=True,
             # num_workers=args.n_workers,
             batch_size=args.batch_size,
             collate_fn=NumpyBackedDataset.collate_fn),
@@ -171,8 +120,6 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
             train_dl_iters[dataset_type] = dl_iter
             batch = next(dl_iter)
 
-        logging.info("Batch retrieved %s, %s", str(batch[0].shape), str(batch[1].shape))
-
         task_classifier, (binary_classification, loss) = class_and_loss[dataset_type]
         logging.info("Class and loss retrieved.")
         train_one_batch(batch, model=conv_model, task_classifier=task_classifier, loss=loss, optim=optim,
@@ -195,8 +142,8 @@ def eval_model_on_all(model: nn.Module, classifiers_and_losses: Mapping[str, Tup
     """
     d = {}
     for t, dt in testsets.items():
-        if t.startswith('fake_news.gossipcop'):
-            continue
+        # if t.startswith('fake_news.gossipcop'):
+            # continue
         tsc, (binary_class, loss) = classifiers_and_losses[t.split('.')[0]]
         d[t] = eval_model(model, tsc, DataLoader(dt, batch_size=batch_size, collate_fn=NumpyBackedDataset.collate_fn),
                           loss=loss,
@@ -225,8 +172,6 @@ def train_one_batch(batch, model: nn.Module, task_classifier: nn.Module, loss: n
 
 
 def main(args):
-    # for f in os.listdir(args.temp_dir):
-    #     os.remove(os.path.join(args.temp_dir, f))
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     writer = SummaryWriter(f'runs/multitask/{args.batch_size}_{args.max_len}_{args.max_sent}_{args.lr}')
 
@@ -234,10 +179,6 @@ def main(args):
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     sent_embedder = BertManager(bert_model, args.device)
-
-    # for ds_name, ds_paths in args.dataset_paths.items():
-    #     trainset, testset = load_datasets(ds_name, ds_paths, args, sent_embedder, bert_tokenizer)
-    #     print('ts', len(trainset), trainset.get_n_classes(), len(testset), testset.get_n_classes())
 
     datasets_dict = {}
     for ds_name, ds_paths in args.dataset_paths.items():
