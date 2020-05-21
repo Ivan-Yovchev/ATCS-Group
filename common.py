@@ -51,8 +51,12 @@ class Common(nn.Module):
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
-        linear.weight = nn.Parameter(2*C.detach())
-        linear.bias = nn.Parameter(-torch.diag(C.detach() @ C.detach().T))
+        
+        weight = 2*C.detach()
+        bias = -torch.diag(C.detach() @ C.detach().T)
+        # normalize 
+        linear.weight = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
+        linear.bias = nn.Parameter(bias / bias.abs().sum())
 
         linear.to(self.cnn.device)
         return linear, C # C should already be detached
