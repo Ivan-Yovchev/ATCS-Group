@@ -359,6 +359,19 @@ class EpisodeMaker(object):
         split = list(zip(split.docs, split.masks, split.y))
         split = list(filter(lambda x: x[2] in allowed_classes, split))
 
+        # Relabel remaining classes into progressive indices
+
+        relabel = {k : v for v,k in enumerate(allowed_classes)}
+
+        split = list(
+            map(
+                lambda x : (x[0], x[1], x[2]*0 + relabel[x[2].item()]),
+                split
+            )
+        )
+
+        # Sample datapoints per class
+
         final_split = []
         sample_size = round(k / len(allowed_classes))
 
