@@ -39,9 +39,6 @@ class CNNBlock(nn.Module):
            return self.bnorm(conv)
        return conv
 
-    def train(self, mode: bool = True):
-        self.block.train()
-        self.block.parameters()
 
 
 class CNNModel(nn.Module):
