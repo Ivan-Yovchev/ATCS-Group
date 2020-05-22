@@ -101,8 +101,9 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         torch.cuda.empty_cache()
 
     # Apply gradients
-    for par_name, par in dict(list(model.named_parameters())).items():
-        par = par - lr*meta_grads[par_name].cpu()
+    with torch.no_grad():
+        for par_name, par in dict(list(model.named_parameters())).items():
+            par -= lr*meta_grads[par_name].cpu()
 
     model.zero_grad()
 
