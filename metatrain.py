@@ -85,6 +85,9 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
         # Accumulate gradients (per task)
         for par_name, par in dict(list(model_cp.named_parameters())).items():
 
+            if par.grad is None:
+                continue
+
             grad = par.grad/len(ep["query_set"])
 
             if par_name not in meta_grads:
