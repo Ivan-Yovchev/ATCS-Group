@@ -58,18 +58,11 @@ class Common(nn.Module):
         linear.to(self.cnn.device)
         return linear, C # C should already be detached
 
-    def train(self):
+    def train(self, mode: bool = True):
 
         if hasattr(self.encoder, "train"):
-            self.encoder.train()
+            self.encoder.train(mode)
 
         if hasattr(self.cnn, "train"):
-            self.cnn.train()
+            self.cnn.train(mode)
 
-    def eval(self):
-
-        if hasattr(self.encoder, "eval"):
-            self.encoder.eval()
-
-        if hasattr(self.cnn, "eval"):
-            self.cnn.eval()
