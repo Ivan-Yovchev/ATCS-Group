@@ -24,7 +24,7 @@ def get_acc(preds, targets, binary=False):
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
-                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool=True) -> float:
+                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool = True) -> float:
     """Performs an epoch of training on the provided model
 
     :param conv_model: the ConvNet model. Takes care of transforming the sentence embeddings into a document embedding
@@ -44,15 +44,16 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
     avg_loss = 0
 
     # display line
-    display_log = tqdm(dataset, total=0, position=1, bar_format='{desc}', disable = not disp_tqdm)
+    display_log = tqdm(dataset, total=0, position=1, bar_format='{desc}', disable=not disp_tqdm)
 
-    for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0, disable = not disp_tqdm):
+    for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0, disable=not disp_tqdm):
         # Reset gradients
         optim.zero_grad()
 
         # Compute output
-        out = task_classifier(model(*x))
-    
+        # x will be unpacked for compatibility with the finetuning mode
+        out = task_classifier(model(x))
+
         # Compute loss
         grad = loss(out, label)
 
@@ -81,13 +82,9 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
 
     # Prevents the gradients from being computed
     with torch.no_grad():
-        for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0, disable = not disp_tqdm):
+        for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0, disable=not disp_tqdm):
             # For each document compute the output
-            out = task_classifier(
-                model(
-                    *x
-                )
-            )
+            out = task_classifier(model(x))
 
             grad = loss(out, label)
             results += get_acc(out, label, binary)
@@ -267,7 +264,7 @@ def task_classifier_factory(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")

@@ -1,9 +1,10 @@
 from torch import nn
 import torch
 
+
 class Common(nn.Module):
 
-    def __init__(self, cnn, n_filters=None, encoder = lambda x : x):
+    def __init__(self, cnn, n_filters=None, encoder=lambda x: x):
         super().__init__()
 
         self.encoder = encoder
@@ -12,8 +13,16 @@ class Common(nn.Module):
         # Proto learner
         self.n_filters = n_filters
 
-    def forward(self, *args):
-        return self.cnn(self.encoder(*args))
+    def forward(self, x):
+        """Forward method of nn.Module. Takes in input a list or a tuple of tensors.
+
+        :param x: a list or a tuple that will be fed to the encoder.
+        If there is no finetuning, a singleton containing the output of BERT is passed.
+        If there is finetuning, the encoder will be the BERT model and it will require (indices, mask) produced by the
+        tokenizer.
+        :return:
+        """
+        return self.cnn(self.encoder(*x))
 
     def get_outputlayer(self, S):
 
@@ -43,12 +52,12 @@ class Common(nn.Module):
                 counts[idx, :] += 1
 
         # Assume equal number of examples for each class
-        C = torch.stack(C)/counts
+        C = torch.stack(C) / counts
 
         # Replace W and b in linear layer
         linear = nn.Linear(self.n_filters, n_classes)
 
-        weight = 2*C.detach()
+        weight = 2 * C.detach()
         bias = -torch.diag(C.detach() @ C.detach().T)
 
         # normalize
@@ -56,7 +65,7 @@ class Common(nn.Module):
         linear.bias = nn.Parameter(bias / bias.abs().sum())
 
         linear.to(self.cnn.device)
-        return linear, C # C should already be detached
+        return linear, C  # C should already be detached
 
     def train(self, mode: bool = True):
 
@@ -65,4 +74,3 @@ class Common(nn.Module):
 
         if hasattr(self.cnn, "train"):
             self.cnn.train(mode)
-
