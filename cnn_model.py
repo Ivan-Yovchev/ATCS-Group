@@ -32,13 +32,13 @@ class CNNBlock(nn.Module):
         self.to(device)
 
     def forward(self, x):
-       conv = torch.max(self.block(x), axis=2).values
-
-       conv_shape = conv.shape
-       if conv_shape[0]>1 and conv_shape[-1]>1:
-           return self.bnorm(conv)
-       return conv
-
+        conv = self.block(x)
+        conv_shape = conv.shape
+        if conv_shape[0] > 1 and conv_shape[-1] > 1:
+            conv = self.bnorm(conv)
+        values = torch.max(conv, axis=2).values
+        assert len(values.shape) == 2
+        return values
 
 
 class CNNModel(nn.Module):
@@ -62,7 +62,7 @@ class CNNModel(nn.Module):
         block_outs = []
         for block in self.cnn_blocks:
             block_outs.append(block.forward(x))
- 
+
         input_to_dense = torch.cat(block_outs, 1)
 
         return input_to_dense
