@@ -45,7 +45,7 @@ class CNNModel(nn.Module):
     """docstring for CNNModel"""
 
     def __init__(self, embed_size, device, n_filters=128, momentum=0.7, filter_sizes=[2, 3, 4, 5, 6],
-                 batch_norm_eval=False):
+                 batch_norm_eval=True):
         super(CNNModel, self).__init__()
 
         self.device = device

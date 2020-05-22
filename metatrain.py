@@ -222,7 +222,7 @@ def main(args):
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
-            best_model = model
+            best_model = deepcopy(model)
 
         display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
