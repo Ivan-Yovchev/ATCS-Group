@@ -1,7 +1,9 @@
 import argparse
+from datetime import datetime
 from typing import Tuple
 
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from transformers import BertTokenizer, BertModel
 
 from cnn_model import CNNModel
@@ -25,8 +27,10 @@ class TaskClassifier(nn.Module):
     def forward(self, input):
         out = self.linear(input)
         # the last two outputs are for two binary tasks, they need to be sigmoided
-        out[:, 9:] = torch.sigmoid(out[:, 9:])
-        return out
+        not_bin_part = torch.narrow(out, 1, 0, 9)
+        bin_part = torch.sigmoid(torch.narrow(out, 1, 9, 2))
+        k = torch.cat((not_bin_part, bin_part), dim=1)
+        return k
 
 
 # TODO will change if we change the classes on which we run it
@@ -79,12 +83,16 @@ def main(args):
 
     task_classifier = task_classifier.to(args.device)
     model = model.to(args.device)
-    optim = torch.optim.SGD(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
 
+    import random
     logging.info('Multitask training starting.')
+    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
+    # writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
     for batch_nr in range(args.n_epochs):
         optim.zero_grad()
         dataset_type = dataset_types[batch_nr % 4]
+        # dataset_type = random.choice(dataset_types) # tried, didn't improve
         one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type)['support_set']
         binary, loss = loss_task_factory(dataset_type)
         tcw = TaskClassifierWrapper(task_classifier, dataset_type)
@@ -92,7 +100,8 @@ def main(args):
         res = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
         logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, *res)
         logging.debug("max of gradients of task_classifier: %f",
-                      max(p.grad.max() for p in task_classifier.parameters()))
+                      max(p.grad.max() for p in
+                          task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
         logging.debug("avg of gradients of model: %f",
                       sum(p.grad.mean() for p in model.parameters() if p.grad is not None))
 
