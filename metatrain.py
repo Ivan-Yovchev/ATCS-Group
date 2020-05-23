@@ -15,20 +15,22 @@ from common import Common
 
 from copy import deepcopy
 import argparse
+import json
 
 
 class Task:
     '''
     contains all data needed with regards to a specific task
     '''
-    def __init__(self, get_episode, loss, n_classes):
 
-        self.get_episode = get_episode # should be a lambda
-        self.n_classes = n_classes 
+    def __init__(self, get_episode, loss, n_classes):
+        assert callable(get_episode)
+        self.get_episode = get_episode  # should be a lambda
+        self.n_classes = n_classes
         self.loss = loss
 
-def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8):
 
+def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8):
     # Get episode
     ep = task.get_episode(n_train, n_test)
 
@@ -44,7 +46,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
 
     # Initialize optimizer for copy
     optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
-    
+
     # import pdb
     # pdb.set_trace()
     train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False, False)
@@ -60,8 +62,8 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
 
     return model_cp, ep, task_classifier
 
-def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8):
 
+def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8):
     class EmptyOptim:
 
         def step(self):
@@ -88,7 +90,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
             if par.grad is None:
                 continue
 
-            grad = par.grad/len(ep["query_set"])
+            grad = par.grad / len(ep["query_set"])
 
             if par_name not in meta_grads:
                 meta_grads[par_name] = grad
@@ -103,12 +105,14 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
     # Apply gradients
     with torch.no_grad():
         for par_name, par in dict(list(model.named_parameters())).items():
-            par -= lr*meta_grads[par_name].cpu()
+            par -= lr * meta_grads[par_name].cpu()
 
     model.zero_grad()
 
+
 def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, query_set_size=8):
-    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size, n_test=query_set_size)
+    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size,
+                                                  n_test=query_set_size)
     results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False, False)
 
     del model_cp
@@ -118,35 +122,19 @@ def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, que
 
     return results
 
-def main(args):
 
+def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     # Define tasks episodes
-    gcdc_desc = {
-        "name": "gcdc",
-        "train": "./data/GCDC/",
-        "test": "./data/GCDC"
-    }
+    with open(args.dataset_json, 'r') as f:
+        dataset_desc = json.load(f)
+    gcdc_desc = dataset_desc['gcdc']
+    pers_desc = dataset_desc['persuasiveness']
+    partisan_desc = dataset_desc['hyperpartisan']
+    fake_news_desc = dataset_desc['fake_news']
 
-    pers_desc = {
-        "name": "persuasiveness",
-        "train": "./data/DebatePersuasiveness/persuasiveness_dataset-train.json",
-        "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"
-    }
-
-    partisan_desc = {
-        "name": "hyperpartisan",
-        "train": "./data/SemEval/byarticle-train.json",
-        "test": "./data/SemEval/byarticle-test.json",
-    }
-
-    fake_news_desc = {
-        "name": "fake_news",
-        "train": "./data/FakeNews/politifact/train.tsv",
-        "test": "./data/FakeNews/politifact/test.tsv",
-    }
 
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.device)
@@ -157,19 +145,19 @@ def main(args):
     # Build unified model
     model = Common(
         conv_model,
-        conv_model.get_n_blocks()*args.n_filters,
-        encoder = sent_embedder if args.finetune else lambda x : x,
+        conv_model.get_n_blocks() * args.n_filters,
+        encoder=sent_embedder if args.finetune else lambda x: x,
     )
 
     ep_maker = EpisodeMaker(
-                    bert_tokenizer, 
-                    args.max_len, 
-                    args.max_sent,
-                    model.cnn.get_max_kernel(),
-                    args.device, 
-                    datasets = [gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
-                    sent_embedder = None if args.finetune else sent_embedder
-                )
+        bert_tokenizer,
+        args.max_len,
+        args.max_sent,
+        model.cnn.get_max_kernel(),
+        args.device,
+        datasets=[gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
+        sent_embedder=None if args.finetune else sent_embedder
+    )
 
     # Define tasks
     gcdc = Task(
@@ -178,9 +166,9 @@ def main(args):
         3
     )
 
-    scheduler  = Scheduler(
-        epochs = args.meta_epochs,
-        sampler = persuasiveness_scheduler
+    scheduler = Scheduler(
+        epochs=args.meta_epochs,
+        sampler=persuasiveness_scheduler
     )
 
     persuasiveness = Task(
@@ -188,7 +176,7 @@ def main(args):
             'persuasiveness',
             n_train=m,
             n_test=n,
-            classes_sampled = scheduler,
+            classes_sampled=scheduler,
         ),
         nn.CrossEntropyLoss(),
         6
@@ -207,7 +195,7 @@ def main(args):
     )
 
     # Define optimizer constructor
-    init_optim = lambda pars : transformers.optimization.AdamW(pars, args.lr)
+    init_optim = lambda pars: transformers.optimization.AdamW(pars, args.lr)
 
     best_acc = None
     best_model = None
@@ -215,8 +203,9 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
-        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.meta_lr, n_train=args.train_size_support, n_test=args.train_size_query)
-        
+        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.meta_lr, n_train=args.train_size_support,
+                       n_test=args.train_size_query)
+
         # Meta Validation
         acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
 
@@ -238,19 +227,25 @@ if __name__ == "__main__":
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=15, help="Max number of sentences in a doc")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
-    parser.add_argument("--embed_size", type=int, default=768, help="Embedding size")
+    # parser.add_argument("--embed_size", type=int, default=768, help="Embedding size") # It is the output of BERT,
+    # cannot be changed!
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate for training model in specific episode")
     parser.add_argument("--meta_lr", type=float, default=0.0001, help="Learning rate for updateing meta model")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
+    parser.add_argument("--dataset_json", type=str, default='./dataset-paths.json',
+                        help="JSON file containing the dataset paths")
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
-    parser.add_argument("--finetune", type=lambda x : x.lower()=="true", default=False, help="Set to true to fine tune bert")
+    parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
+                        help="Set to true to fine tune bert")
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
-    parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6", help="Kernel sizes per cnn block")
+    parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
+                        help="Kernel sizes per cnn block")
 
     args = parser.parse_args()
+    args.embed_size = 768
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    
+
     main(args)
