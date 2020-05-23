@@ -126,7 +126,7 @@ def hyperpartisan_kfold_train(args):
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.device)
-        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, batch_norm_eval=True)
+        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels, batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
@@ -294,6 +294,7 @@ def main(args):
             'max_len': args.max_len,
             'max_sent': args.max_sent,
             'n_filters': args.n_filters,
+            'kernels': str(args.kernels),
             'lr': args.lr
         }, {
             'test_acc': test_acc,
@@ -322,6 +323,8 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
+    parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
+                        help="Kernel sizes per cnn block")
     args = parser.parse_args()
     args.embed_size = 768
     args.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
