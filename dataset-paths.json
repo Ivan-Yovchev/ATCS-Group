@@ -1,0 +1,22 @@
+{
+  "gcdc": {
+    "name": "gcdc",
+    "train": "./data/GCDC/",
+    "test": "./data/GCDC"
+  },
+  "persuasiveness": {
+    "name": "persuasiveness",
+    "train": "./data/DebatePersuasiveness/persuasiveness_dataset-train.json",
+    "test": "./data/DebatePersuasiveness/persuasiveness_dataset-test.json"
+  },
+  "hyperpartisan": {
+    "name": "hyperpartisan",
+    "train": "./data/SemEval/byarticle-train.json",
+    "test": "./data/SemEval/byarticle-test.json"
+  },
+  "fake_news": {
+    "name": "fake_news",
+    "train": "./data/FakeNews/politifact/train.tsv",
+    "test": "./data/FakeNews/politifact/test.tsv"
+  }
+}
