@@ -14,6 +14,7 @@ from tqdm import tqdm
 import transformers
 from common import Common
 import os
+import re
 import numpy as np
 from datetime import datetime
 
@@ -232,6 +233,13 @@ def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
 
     return trainset, validset, testset
 
+def get_summary_writer(args, time_log):
+    """ Creates an instance of the tensorboard summary writer for the specified run """
+    if args.dataset_type == 'gcdc':
+        dataset_name = re.findall(r'/(\w+)_\w+.csv', args.train_path)[0]
+        return SummaryWriter(f'runs/{dataset_name}_{time_log}')
+    else:
+        return SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
 
 def main(args):
     if args.kfold:
@@ -239,7 +247,7 @@ def main(args):
         return
 
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
-    writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
+    writer = get_summary_writer(args, time_log)
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
@@ -299,13 +307,12 @@ def main(args):
             'max_sent': args.max_sent,
             'n_filters': args.n_filters,
             'kernels': str(args.kernels),
-            'lr': args.lr
-        }, {
+            'lr': args.lr,
             'test_acc': test_acc,
             'test_acc_std': test_acc_std,
             'test_loss': test_loss,
             'test_loss_std': test_loss_std,
-        })
+        }, {})
 
 
 if __name__ == "__main__":
