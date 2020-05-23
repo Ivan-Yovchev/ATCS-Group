@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import argparse
 from torch import nn, flatten
@@ -27,7 +29,7 @@ def get_acc(preds, targets, binary=False):
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
-                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool = True) -> float:
+                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool = True) -> Tuple[float, float]:
     """Performs an epoch of training on the provided model
 
     :param conv_model: the ConvNet model. Takes care of transforming the sentence embeddings into a document embedding
@@ -36,7 +38,9 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
     :param dataset: the dataset the models are trained on
     :param loss: the loss function
     :param optim: the optimizer the method should call after each batch
-    :return: the average loss
+    :param binary: if the task is binary or not
+    :param disp_tqdm: whether to display the progress bar or not (default: True).
+    :return: tuple containing average accuracy and average loss
     """
 
     # important for BatchNorm layer
@@ -225,7 +229,7 @@ def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
         trainset = BertPreprocessor(trainset, sent_embedder, max_kernel, batch_size=args.batch_size)
         validset = BertPreprocessor(validset, sent_embedder, max_kernel, batch_size=args.batch_size)
         testset = BertPreprocessor(testset, sent_embedder, max_kernel, batch_size=args.batch_size)
-    
+
     return trainset, validset, testset
 
 
@@ -285,7 +289,7 @@ def main(args):
             best_acc = valid_acc
             save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
-    (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(model, task_classifier, testset, 
+    (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(model, task_classifier, testset,
                                     loss, binary=binary_classification, disp_tqdm=False)
 
 
