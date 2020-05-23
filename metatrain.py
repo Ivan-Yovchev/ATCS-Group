@@ -8,11 +8,8 @@ from datasets import EpisodeMaker, Scheduler
 from utils import persuasiveness_scheduler
 from doc_emb_models import *
 from cnn_model import CNNModel
-
 from train import train_model, eval_model
-
 from common import Common
-
 from copy import deepcopy
 import argparse
 import json
@@ -128,13 +125,7 @@ def main(args):
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     # Define tasks episodes
-    with open(args.dataset_json, 'r') as f:
-        dataset_desc = json.load(f)
-    gcdc_desc = dataset_desc['gcdc']
-    pers_desc = dataset_desc['persuasiveness']
-    partisan_desc = dataset_desc['hyperpartisan']
-    fake_news_desc = dataset_desc['fake_news']
-
+    fake_news_desc, gcdc_desc, partisan_desc, pers_desc = get_dataset_paths(args.dataset_json)
 
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.device)
@@ -219,6 +210,16 @@ def main(args):
     # meta test
     acc, loss = meta_valid(best_model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
     print("Final: ", acc, loss)
+
+
+def get_dataset_paths(dataset_json_file):
+    with open(dataset_json_file, 'r') as f:
+        dataset_desc = json.load(f)
+    gcdc_desc = dataset_desc['gcdc']
+    pers_desc = dataset_desc['persuasiveness']
+    partisan_desc = dataset_desc['hyperpartisan']
+    fake_news_desc = dataset_desc['fake_news']
+    return fake_news_desc, gcdc_desc, partisan_desc, pers_desc
 
 
 if __name__ == "__main__":
