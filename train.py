@@ -259,7 +259,7 @@ def main(args):
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr, weight_decay=0.02)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
     # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
