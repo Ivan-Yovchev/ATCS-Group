@@ -175,6 +175,15 @@ def hyperpartisan_kfold_train(args):
     return accuracy_list
 
 
+def load_model(path, conv_model, task_classifier, sent_embedder, finetune):
+    state_dicts = torch.load(path)
+    task_classifier.load_state_dict(state_dicts['task_classifier'])
+    conv_model.load_state_dict(state_dicts['cnn_model'])
+    model = construct_common_model(finetune, conv_model, sent_embedder)
+
+    return model, task_classifier
+
+
 def save_model(dataset_type, conv_model, bert_model, task_classifier, epoch, time_log, fold=None, model_dir='models'):
     filename = f"{dataset_type}.{time_log}.{fold}.pt" \
         if fold is not None else f"{dataset_type}.{time_log}.pt"
@@ -297,7 +306,9 @@ def main(args):
             best_acc = valid_acc
             save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
-    (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(model, task_classifier, testset,
+    best_model, best_task_classifier = load_model(f"models/{args.dataset_type}.{time_log}.pt",
+                                    conv_model, task_classifier, sent_embedder, args.finetune)
+    (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(best_model, best_task_classifier, testset,
                                     loss, binary=binary_classification, disp_tqdm=False)
 
 
@@ -322,15 +333,15 @@ if __name__ == "__main__":
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--valid_path", type=str, default="data/GCDC/Enron_test.csv", help="Path to validation data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
-    parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
-    parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
+    parser.add_argument("--max_len", type=int, default=100, help="Max number of words contained in a sentence")
+    parser.add_argument("--max_sent", type=int, default=50, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--kfold", type=lambda x: x.lower() == "true", default=False,
                         help="10fold for hyperpartisan dataset. test_path value will be ignored")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")
     parser.add_argument("--n_filters", type=int, default=128, help="Number of filters for CNN model")
     parser.add_argument("--n_epochs", type=int, default=50, help="Number of epochs")
-    parser.add_argument("--lr", type=float, default=0.00005, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=0.0001, help="Learning rate")
     parser.add_argument("--device", type=str, default='cuda', help="device to use for the training")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
