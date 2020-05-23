@@ -12,7 +12,10 @@ from tqdm import tqdm
 import transformers
 from common import Common
 import os
+import numpy as np
 from datetime import datetime
+
+torch.manual_seed(42)
 
 
 def get_acc(preds, targets, binary=False):
@@ -92,6 +95,18 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
 
     return results / len(dataset), avg_loss
 
+def eval_test(model: nn.Module, task_classifier: nn.Module,
+               dataset: ParentDataset, loss: nn.Module, binary: bool, disp_tqdm: bool = True):
+    accs = []
+    losses = []
+    for seed in np.random.randint(0, 100, size=10):
+        torch.manual_seed(seed)
+        cur_acc, cur_loss = eval_model(model, task_classifier, dataset, loss, binary, disp_tqdm)
+        accs.append(cur_acc)
+        losses.append(cur_loss)
+
+    return (np.mean(accs), np.std(accs)), (np.mean(losses), np.std(losses))
+
 
 def hyperpartisan_kfold_train(args):
     assert args.dataset_type in ["hyperpartisan"]
@@ -167,73 +182,12 @@ def save_model(dataset_type, conv_model, bert_model, task_classifier, epoch, tim
         }, f)
 
 
-def main(args):
-    if args.kfold:
-        hyperpartisan_kfold_train(args)
-        return
-
-    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
-    writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
-
-    bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    bert_model = BertModel.from_pretrained('bert-base-uncased')
-    dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
-    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
-
-    sent_embedder = BertManager(bert_model, args.device)
-
-    # loading task-specific classifier
-    task_classifier = task_classifier_factory(args)
-    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters)
-
-    binary_classification, loss = loss_task_factory(args.dataset_type)
-
-    # construct common model
-    model, dataset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, dataset, testset)
-    model.to(args.device)
-    task_classifier.to(args.device)
-
-    valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
-    print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
-    best_acc = 0
-    # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr, weight_decay=0.02)
-    # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
-
-    lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
-
-    for epoch in range(args.n_epochs):
-
-        if optim.defaults['lr'] < 1e-6: break
-        train_acc, train_loss = train_model(model, task_classifier, dataset, loss, optim, binary=binary_classification)
-        valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss, binary=binary_classification)
-        print(f'Epoch {epoch:02d}: train acc: {train_acc:.4f}'
-              f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
-              f' valid loss: {valid_loss:.4f}')
-
-        lr_scheduler.step(valid_acc)
-
-        writer.add_scalar('Train/accuracy', train_acc, epoch)
-        writer.add_scalar('Train/loss', train_loss, epoch)
-        writer.add_scalar('Valid/accuracy', valid_acc, epoch)
-        writer.add_scalar('Valid/loss', valid_loss, epoch)
-
-        if best_acc < valid_acc:
-            best_acc = valid_acc
-            save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
-
-
-def construct_common_model(finetune, conv_model, sent_embedder, dataset, testset):
+def construct_common_model(finetune, conv_model, sent_embedder):
     if finetune:
         model = Common(conv_model, encoder=sent_embedder)
     else:
         model = Common(conv_model)
-        dataset = BertPreprocessor(dataset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
-        testset = BertPreprocessor(testset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
-    return model, dataset, testset
+    return model
 
 
 def loss_task_factory(dataset_type):
@@ -260,12 +214,101 @@ def task_classifier_factory(args):
     assert task_classifier is not None, 'task not recognized'
     return task_classifier
 
+def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
+    trainset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
+                          args.batch_size if args.finetune else 1, args.device)
+    validset = get_dataset(args.dataset_type, args.valid_path, bert_tokenizer, args.max_len, args.max_sent,
+                          args.batch_size if args.finetune else 1, args.device)
+    testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
+                          args.batch_size if args.finetune else 1, args.device)
+    if not args.finetune:
+        trainset = BertPreprocessor(trainset, sent_embedder, max_kernel, batch_size=args.batch_size)
+        validset = BertPreprocessor(validset, sent_embedder, max_kernel, batch_size=args.batch_size)
+        testset = BertPreprocessor(testset, sent_embedder, max_kernel, batch_size=args.batch_size)
+    
+    return trainset, validset, testset
+
+
+def main(args):
+    if args.kfold:
+        hyperpartisan_kfold_train(args)
+        return
+
+    time_log = datetime.now().strftime('%y%m%d-%H%M%S')
+    writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
+
+    bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    bert_model = BertModel.from_pretrained('bert-base-uncased')
+
+    sent_embedder = BertManager(bert_model, args.device)
+
+    # loading task-specific classifier
+    task_classifier = task_classifier_factory(args)
+    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters)
+
+    binary_classification, loss = loss_task_factory(args.dataset_type)
+
+    # construct common model
+    model = construct_common_model(args.finetune, conv_model, sent_embedder)
+    model.to(args.device)
+    task_classifier.to(args.device)
+
+    trainset, validset, testset = get_datasets(args, bert_tokenizer, sent_embedder, conv_model.get_max_kernel())
+
+    valid_acc, valid_loss = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
+    print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
+    best_acc = 0
+    # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr, weight_decay=0.02)
+    # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
+
+    lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
+    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
+
+    for epoch in range(args.n_epochs):
+
+        if optim.defaults['lr'] < 1e-6: break
+        train_acc, train_loss = train_model(model, task_classifier, trainset, loss, optim, binary=binary_classification)
+        valid_acc, valid_loss = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
+        print(f'Epoch {epoch:02d}: train acc: {train_acc:.4f}'
+              f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
+              f' valid loss: {valid_loss:.4f}')
+
+        lr_scheduler.step(valid_acc)
+
+        writer.add_scalar('Train/accuracy', train_acc, epoch)
+        writer.add_scalar('Train/loss', train_loss, epoch)
+        writer.add_scalar('Valid/accuracy', valid_acc, epoch)
+        writer.add_scalar('Valid/loss', valid_loss, epoch)
+
+        if best_acc < valid_acc:
+            best_acc = valid_acc
+            save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
+
+    (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(model, task_classifier, testset, 
+                                    loss, binary=binary_classification, disp_tqdm=False)
+
+
+    writer.add_hparams({
+            'batch_size': args.batch_size,
+            'max_len': args.max_len,
+            'max_sent': args.max_sent,
+            'n_filters': args.n_filters,
+            'lr': args.lr
+        }, {
+            'test_acc': test_acc,
+            'test_acc_std': test_acc_std,
+            'test_loss': test_loss,
+            'test_loss_std': test_loss_std,
+        })
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
+    parser.add_argument("--valid_path", type=str, default="data/GCDC/Enron_test.csv", help="Path to validation data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
     parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=100, help="Max number of sentences per document")
