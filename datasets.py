@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from transformers import BertTokenizer
 
 from random import shuffle
-from math import ceil
+from math import ceil, floor
 
 
 def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold=False):
@@ -215,17 +215,17 @@ class PersuasivenessDataset(ParentDataset):
 
 class BertPreprocessor(ParentDataset):
 
-    def __init__(self, decorated, encoder, max_kernel, batch_size=1, device = None):
+    def __init__(self, decorated, encoder, max_kernel, batch_size=1, device=None):
         super(BertPreprocessor, self).__init__(
-                                                decorated.file, 
-                                                decorated.tokenizer,
-                                                decorated.max_len,
-                                                decorated.max_sent,
-                                                decorated.batch_size,
-                                                decorated.field_id,
-                                                decorated.split_token,
-                                                decorated.device
-                                            )
+            decorated.file,
+            decorated.tokenizer,
+            decorated.max_len,
+            decorated.max_sent,
+            decorated.batch_size,
+            decorated.field_id,
+            decorated.split_token,
+            decorated.device
+        )
 
         self.device = decorated.device if device is None else device
         self.batch_size = batch_size
@@ -263,7 +263,7 @@ class BertPreprocessor(ParentDataset):
         # Get interval of current batch
         idx_start, idx_end = self.batch_size * self.idx, min(self.batch_size * (self.idx + 1), len(self.y))
         self.idx += 1
- 
+
         # sample jagged batch
         samples = self.docs[idx_start:idx_end]
 
@@ -278,15 +278,15 @@ class BertPreprocessor(ParentDataset):
             pad = self.max_kernel
 
         # pad batch
-        batch = np.array([np.hstack((i, np.zeros((dim, pad-i.shape[1])))) for i in samples])
-        
+        batch = np.array([np.hstack((i, np.zeros((dim, pad - i.shape[1])))) for i in samples])
+
         return [Tensor(batch).to(self.device)], LongTensor(self.y[idx_start:idx_end]).to(self.device)
+
 
 class Scheduler(object):
     """scheduler to pick classes and keep track of epoch for EpisodeMaker"""
 
     def __init__(self, epochs, sampler):
-
         self.epoch = 0
         self.epochs = epochs
         self.sampler = sampler
@@ -295,7 +295,6 @@ class Scheduler(object):
         return self
 
     def __next__(self):
-
         if self.epoch >= self.epochs:
             raise StopIteration
 
@@ -336,8 +335,10 @@ class EpisodeMaker(object):
                 self.datasets[key] = []
                 for ext in gcdc_ext:
                     sub_gcdc = {
-                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1, self.cpu_device),
-                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1, self.cpu_device)
+                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1,
+                                             self.cpu_device),
+                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1,
+                                            self.cpu_device)
                     }
 
                     self.datasets[key].append(sub_gcdc)
@@ -354,19 +355,24 @@ class EpisodeMaker(object):
             allowed_classes = classes_tot
         elif isinstance(classes_sampled, Scheduler):
             allowed_classes = next(classes_sampled)
-        elif isinstance(classes_smapled, (list, tuple)):
+        elif isinstance(classes_sampled, (list, tuple)):
             allowed_classes = classes_sampled
         else:
             if not isinstance(classes_sampled, int):
-                k = floor(len(classes_tot*classes_sampled))
+                k = floor(len(classes_tot * classes_sampled))
             else:
                 k = classes_sampled
-            allowed_clases = random.sample(classes_tot, k)
+            allowed_classes = random.sample(classes_tot, k)
 
         support_set = self.__sample_dataset(dataset["train"], allowed_classes, n_train)
 
         if isinstance(n_test, str) and n_test == "all":
-            query_set = dataset["test"] if self.sent_embedder is None else BertPreprocessor(dataset["test"], self.sent_embedder, self.max_kernel, batch_size_when_all, self.device)
+            query_set = dataset["test"] if self.sent_embedder is None \
+                else BertPreprocessor(dataset["test"],
+                                      self.sent_embedder,
+                                      self.max_kernel,
+                                      batch_size_when_all,
+                                      self.device)
         else:
             query_set = self.__sample_dataset(dataset["test"], allowed_classes, n_test)
 
@@ -385,11 +391,11 @@ class EpisodeMaker(object):
 
         # Relabel remaining classes into progressive indices
 
-        relabel = {k : v for v,k in enumerate(allowed_classes)}
+        relabel = {k: v for v, k in enumerate(allowed_classes)}
 
         split = list(
             map(
-                lambda x : (x[0], x[1], x[2]*0 + relabel[x[2].item()]),
+                lambda x: (x[0], x[1], x[2] * 0 + relabel[x[2].item()]),
                 split
             )
         )
@@ -414,7 +420,8 @@ class EpisodeMaker(object):
             *pars
         )
 
-        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, self.max_kernel, k, self.device)
+        return dataset if self.sent_embedder is None else BertPreprocessor(dataset, self.sent_embedder, self.max_kernel,
+                                                                           k, self.device)
 
 
 def collate_pad_fn(batch):
