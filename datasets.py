@@ -17,16 +17,16 @@ from math import ceil, floor
 
 def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold=False):
     if dataset_type == "gcdc":
-        return GCDC_Dataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '\n\n', device)
+        return GCDC_Dataset(path, tokenizer, max_len, max_sent, batch_size, '\n\n', device)
     elif dataset_type == "hyperpartisan":
         if hyperpartisan_10fold:
-            return Hyperpartisan10Fold(path, tokenizer, max_len, max_sent, batch_size, 'text', '[SEP]', device)
+            return Hyperpartisan10Fold(path, tokenizer, max_len, max_sent, batch_size, '[SEP]', device)
         else:
-            return HyperpartisanDataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '[SEP]', device)
+            return HyperpartisanDataset(path, tokenizer, max_len, max_sent, batch_size, '[SEP]', device)
     elif dataset_type == "persuasiveness":
-        return PersuasivenessDataset(path, tokenizer, max_len, max_sent, batch_size, 'Justification', '[SEP]', device)
+        return PersuasivenessDataset(path, tokenizer, max_len, max_sent, batch_size, '[SEP]', device)
     elif dataset_type == "fake_news":
-        return FakeNewsDataset(path, tokenizer, max_len, max_sent, batch_size, 'text', '[SEP]', device)
+        return FakeNewsDataset(path, tokenizer, max_len, max_sent, batch_size, '[SEP]', device)
     else:
         raise ValueError(f'Unknown dataset type: {dataset_type}')
 
@@ -34,14 +34,13 @@ def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, de
 class ParentDataset(Dataset):
     """docstring for ParentDataset"""
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device):
         super(ParentDataset, self).__init__()
         self.file = file
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.max_sent = max_sent
         self.batch_size = batch_size
-        self.field_id = field_id
         self.split_token = split_token
         self.device = device
 
@@ -63,7 +62,7 @@ class ParentDataset(Dataset):
     def get_data(self, data):
         docs = []
         masks = []
-        for text in data[self.field_id]:
+        for text in data['text']:
             sents = sorted(text.split(self.split_token), key=lambda s: len(s), reverse=True)
             res = self.tokenizer.batch_encode_plus(sents,
                                                    max_length=self.max_len,
@@ -123,9 +122,9 @@ class ParentDataset(Dataset):
 
 class Manual_Dataset(ParentDataset):
 
-    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id,
+    def __init__(self, docs, masks, ys, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size,
                  split_token, device):
-        super().__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token, device)
+        super().__init__(file, tokenizer, max_len, max_sent, batch_size, split_token, device)
 
         self.docs = docs
         self.masks = masks
@@ -136,8 +135,8 @@ class Manual_Dataset(ParentDataset):
 
 class GCDC_Dataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
-        super(GCDC_Dataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token,
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device):
+        super(GCDC_Dataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, split_token,
                                            device)
 
         data = pd.read_csv(self.file)
@@ -148,8 +147,8 @@ class GCDC_Dataset(ParentDataset):
 
 
 class FakeNewsDataset(ParentDataset):
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
-        super(FakeNewsDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id, split_token,
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device):
+        super(FakeNewsDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, split_token,
                                               device)
 
         data = pd.read_csv(self.file, sep='\t', header=0, names=['text', 'label'])
@@ -163,9 +162,9 @@ class FakeNewsDataset(ParentDataset):
 
 class HyperpartisanDataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device,
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device,
                  data=None):
-        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id,
+        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, 
                                                    split_token, device)
 
         if data is None:
@@ -202,8 +201,8 @@ class Hyperpartisan10Fold:
 
 class PersuasivenessDataset(ParentDataset):
 
-    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, field_id, split_token, device):
-        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, field_id,
+    def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device):
+        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, 
                                                     split_token, device)
 
         data = pd.read_json(self.file, orient='records')
@@ -222,7 +221,6 @@ class BertPreprocessor(ParentDataset):
             decorated.max_len,
             decorated.max_sent,
             decorated.batch_size,
-            decorated.field_id,
             decorated.split_token,
             decorated.device
         )
@@ -381,7 +379,7 @@ class EpisodeMaker(object):
 
     def __sample_dataset(self, split, allowed_classes, k):
 
-        pars = split.file, split.tokenizer, split.max_len, split.max_sent, split.batch_size, split.field_id, split.split_token, split.device
+        pars = split.file, split.tokenizer, split.max_len, split.max_sent, split.batch_size, split.split_token, split.device
 
         split.shuffle()
         split = list(zip(split.docs, split.masks, split.y))

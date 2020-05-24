@@ -56,14 +56,14 @@ def parse_debate_dataset(filepath, nlp):
                     justification += line
                 line = next(f)
             line = next(f)
-            justification = split_sentences(justification, nlp)
+            # concatenate assertion and justification as per original paper
+            text = split_sentences(f'{assertion.strip()}. {justification.strip()}', nlp)
             scores = re.findall(r'GE:(\d)\tLO:(\d)\tIS:(\d)\tUA:(\d)\tUJ:(\d)\tPersuasiveness:(\d)', line)[0]
             motions.append([
                 motion_id, 
                 instance_id, 
                 motion.strip(), 
-                assertion.strip(), 
-                justification.strip(), 
+                text, 
                 *[int(score) for score in scores]
             ])
             try:
@@ -75,8 +75,7 @@ def parse_debate_dataset(filepath, nlp):
     return pd.DataFrame(motions, columns=['MotionID',
                                         'InstanceID',
                                         'Motion',
-                                        'Assertion', 
-                                        'Justification', 
+                                        'text', 
                                         'GE', 'LO', 'IS', 'UA', 'UJ', 'Persuasiveness'])
 
 def split_dataset(dataset: pd.DataFrame, ratios: list, random_state=42):
@@ -163,12 +162,16 @@ def split_sentences(text, nlp):
 
 def preprocess_fake_news(rootdir, nlp):
     for path, _, files in os.walk(rootdir):
+        save_dir = os.path.join(path, 'processed')
+        if not path == rootdir and not 'processed' in path:
+            os.makedirs(save_dir, exist_ok=True)
         for name in files:
             filename = os.path.join(path, name)
+            filename_save = os.path.join(save_dir, name)
             print(f'Processing {filename}')
             dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
             dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
-            dataset.to_csv(filename, sep='\t', index=False)
+            dataset.to_csv(filename_save, sep='\t', index=False)
 
 
 if __name__ == '__main__':
