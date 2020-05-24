@@ -93,9 +93,9 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8,
                 grad = par.grad / len(ep["query_set"])
 
                 if par_name not in meta_grads:
-                    meta_grads[par_name] = grad
+                    meta_grads[par_name] = grad.clone()
                 else:
-                    meta_grads[par_name] += grad
+                    meta_grads[par_name] += grad.clone()
 
             del model_cp
             del task_classifier
