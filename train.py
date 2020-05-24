@@ -29,8 +29,20 @@ def get_acc(preds, targets, binary=False):
     return torch.mean((preds == targets).float()).item()
 
 
+def get_f1(preds, targets, binary=False):
+    assert binary
+    preds = (preds > 0.5).to(torch.long)
+    true_pos = (preds * targets).float().sum()
+    precision = (true_pos / (preds.float().sum())).item()
+    recall = (true_pos / (targets.float().sum())).item()
+
+    f1 = (2 * precision * recall) / (precision + recall)
+    return precision, recall, f1
+
+
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
-                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool = True) -> Tuple[float, float]:
+                loss: nn.Module, optim: torch.optim.Optimizer, binary: bool, disp_tqdm: bool = True) -> Tuple[
+    float, float]:
     """Performs an epoch of training on the provided model
 
     :param conv_model: the ConvNet model. Takes care of transforming the sentence embeddings into a document embedding
@@ -100,8 +112,9 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
 
     return results / len(dataset), avg_loss
 
+
 def eval_test(model: nn.Module, task_classifier: nn.Module,
-               dataset: ParentDataset, loss: nn.Module, binary: bool, disp_tqdm: bool = True):
+              dataset: ParentDataset, loss: nn.Module, binary: bool, disp_tqdm: bool = True):
     accs = []
     losses = []
     for seed in np.random.randint(0, 100, size=10):
@@ -131,13 +144,19 @@ def hyperpartisan_kfold_train(args):
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.device)
-        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels, batch_norm_eval=True)
+        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels,
+                              batch_norm_eval=True)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
-        model, trainset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, trainset, testset)
+        model = construct_common_model(args.finetune, conv_model, sent_embedder)
+        # model, trainset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, trainset, testset)
+        trainset = BertPreprocessor(trainset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
+        testset = BertPreprocessor(testset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
+
         model.to(args.device)
         task_classifier.to(args.device)
+
         best_acc = 0
         optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
@@ -228,11 +247,12 @@ def task_classifier_factory(args):
     assert task_classifier is not None, 'task not recognized'
     return task_classifier
 
+
 def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
     trainset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
+                           args.batch_size if args.finetune else 1, args.device)
     validset = get_dataset(args.dataset_type, args.valid_path, bert_tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
+                           args.batch_size if args.finetune else 1, args.device)
     testset = get_dataset(args.dataset_type, args.test_path, bert_tokenizer, args.max_len, args.max_sent,
                           args.batch_size if args.finetune else 1, args.device)
     if not args.finetune:
@@ -242,6 +262,7 @@ def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
 
     return trainset, validset, testset
 
+
 def get_summary_writer(args, time_log):
     """ Creates an instance of the tensorboard summary writer for the specified run """
     if args.dataset_type == 'gcdc':
@@ -249,6 +270,7 @@ def get_summary_writer(args, time_log):
         return SummaryWriter(f'runs/{dataset_name}_{time_log}')
     else:
         return SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
+
 
 def main(args):
     if args.kfold:
@@ -307,23 +329,23 @@ def main(args):
             save_model(args.dataset_type, conv_model, bert_model, task_classifier, epoch, time_log)
 
     best_model, best_task_classifier = load_model(f"models/{args.dataset_type}.{time_log}.pt",
-                                    conv_model, task_classifier, sent_embedder, args.finetune)
+                                                  conv_model, task_classifier, sent_embedder, args.finetune)
     (test_acc, test_acc_std), (test_loss, test_loss_std) = eval_test(best_model, best_task_classifier, testset,
-                                    loss, binary=binary_classification, disp_tqdm=False)
-
+                                                                     loss, binary=binary_classification,
+                                                                     disp_tqdm=False)
 
     writer.add_hparams({
-            'batch_size': args.batch_size,
-            'max_len': args.max_len,
-            'max_sent': args.max_sent,
-            'n_filters': args.n_filters,
-            'kernels': str(args.kernels),
-            'lr': args.lr,
-            'test_acc': test_acc,
-            'test_acc_std': test_acc_std,
-            'test_loss': test_loss,
-            'test_loss_std': test_loss_std,
-        }, {})
+        'batch_size': args.batch_size,
+        'max_len': args.max_len,
+        'max_sent': args.max_sent,
+        'n_filters': args.n_filters,
+        'kernels': str(args.kernels),
+        'lr': args.lr,
+        'test_acc': test_acc,
+        'test_acc_std': test_acc_std,
+        'test_loss': test_loss,
+        'test_loss_std': test_loss_std,
+    }, {})
 
 
 if __name__ == "__main__":
