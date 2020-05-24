@@ -10,6 +10,7 @@ from doc_emb_models import *
 from cnn_model import CNNModel
 from train import train_model, eval_model
 from common import Common
+import random
 from copy import deepcopy
 import argparse
 import json
@@ -158,7 +159,7 @@ def main(args):
     )
 
     scheduler = Scheduler(
-        epochs=args.meta_epochs,
+        epochs=args.meta_epochs*3,
         sampler=persuasiveness_scheduler
     )
 
@@ -194,7 +195,7 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
-        run_task_batch(model, [gcdc, persuasiveness], init_optim, args.meta_lr, n_train=args.train_size_support,
+        run_task_batch(model, random.choices([gcdc, persuasiveness], k=args.meta_batch), init_optim, args.meta_lr, n_train=args.train_size_support,
                        n_test=args.train_size_query)
 
         # Meta Validation
@@ -237,6 +238,7 @@ if __name__ == "__main__":
                         help="JSON file containing the dataset paths")
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
+    parser.add_argument("--meta_batch", type=int, default=8, help="Size of meta batches")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")

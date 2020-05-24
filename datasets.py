@@ -295,8 +295,6 @@ class Scheduler(object):
         return self
 
     def __next__(self):
-        if self.epoch >= self.epochs:
-            raise StopIteration
 
         classes = self.sampler(self.epoch, self.epochs)
 
