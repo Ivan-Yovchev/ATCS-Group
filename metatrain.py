@@ -61,7 +61,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     return model_cp, ep, task_classifier
 
 
-def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8):
+def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8, n_episodes = 1):
     class EmptyOptim:
 
         def step(self):
@@ -77,28 +77,30 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8)
 
     for task in tasks:
 
-        model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
+        for _ in range(n_episodes):
 
-        # Train on task episode
-        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False, False)
+            model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
 
-        # Accumulate gradients (per task)
-        for par_name, par in dict(list(model_cp.named_parameters())).items():
+            # Train on task episode
+            train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False, False)
 
-            if par.grad is None:
-                continue
+            # Accumulate gradients (per task)
+            for par_name, par in dict(list(model_cp.named_parameters())).items():
 
-            grad = par.grad / len(ep["query_set"])
+                if par.grad is None:
+                    continue
 
-            if par_name not in meta_grads:
-                meta_grads[par_name] = grad
-            else:
-                meta_grads[par_name] += grad
+                grad = par.grad / len(ep["query_set"])
 
-        del model_cp
-        del task_classifier
-        del ep
-        torch.cuda.empty_cache()
+                if par_name not in meta_grads:
+                    meta_grads[par_name] = grad
+                else:
+                    meta_grads[par_name] += grad
+
+            del model_cp
+            del task_classifier
+            del ep
+            torch.cuda.empty_cache()
 
     # Apply gradients
     with torch.no_grad():
@@ -196,7 +198,7 @@ def main(args):
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
         run_task_batch(model, random.choices([gcdc, persuasiveness], k=args.meta_batch), init_optim, args.meta_lr, n_train=args.train_size_support,
-                       n_test=args.train_size_query)
+                       n_test=args.train_size_query, n_episodes = args.n_episodes)
 
         # Meta Validation
         acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
@@ -239,6 +241,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--meta_epochs", type=int, default=5, help="Number of meta epochs")
     parser.add_argument("--meta_batch", type=int, default=8, help="Size of meta batches")
+    parser.add_argument("--n_episodes", type=int, default=7, help="Number of episodes per task")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
