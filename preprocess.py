@@ -162,12 +162,16 @@ def split_sentences(text, nlp):
 
 def preprocess_fake_news(rootdir, nlp):
     for path, _, files in os.walk(rootdir):
+        save_dir = os.path.join(path, 'processed')
+        if not path == rootdir and not 'processed' in path:
+            os.makedirs(save_dir, exist_ok=True)
         for name in files:
             filename = os.path.join(path, name)
+            filename_save = os.path.join(save_dir, name)
             print(f'Processing {filename}')
             dataset = pd.read_csv(filename, sep='\t', names=['text', 'label'])
             dataset['text'] = dataset['text'].apply(split_sentences, args=(nlp,))
-            dataset.to_csv(filename, sep='\t', index=False)
+            dataset.to_csv(filename_save, sep='\t', index=False)
 
 
 if __name__ == '__main__':
