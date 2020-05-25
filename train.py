@@ -38,6 +38,8 @@ class AccumulatorF1:
 
     def add(self, out, label):
         pred = (out > 0.5).to(torch.long)
+        if len(pred.shape) > 1:
+            pred = pred.squeeze(1)
         self.true_positives += (pred * label).sum().item()
         self.tot_positives += pred.sum().item()
         self.tot_true += label.sum().item()
@@ -116,7 +118,6 @@ def eval_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentData
         for i, (x, label) in tqdm(enumerate(dataset), total=len(dataset), position=0, disable=not disp_tqdm):
             # For each document compute the output
             out = task_classifier(model(x))
-
             grad = loss(out, label)
             results += get_acc(out, label, binary)
             if binary:
