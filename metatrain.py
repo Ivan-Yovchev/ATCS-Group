@@ -50,10 +50,15 @@ def train_support(model: nn.Module, task: Task, init_optim, n_inner, n_train=8, 
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
-    task_classifier.weight = nn.Parameter(2*protos + (task_classifier.weight - 2*protos).detach())
-    task_classifier.bias = nn.Parameter(-torch.diag(protos @ protos. T) + (task_classifier.bias + torch.diag(protos @ protos.T)).detach())
+    W = 2*protos + (task_classifier.weight - 2*protos).detach()
+    b = -torch.diag(protos @ protos. T) + (task_classifier.bias + torch.diag(protos @ protos.T)).detach()
 
-    # Get gradients for main (original) model update
+    # new stuff
+    del task_classifier.weight
+    del task_classifier.bias
+
+    task_classifier.weight = W
+    task_classifier.bias = b
 
     # Reset gradients
     optim.zero_grad()
@@ -103,6 +108,7 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8,
     # Apply gradients
     with torch.no_grad():
         for par_name, par in dict(list(model.named_parameters())).items():
+            print(par.grad is None)
             par -= lr * meta_grads[par_name].cpu()
 
     model.zero_grad()

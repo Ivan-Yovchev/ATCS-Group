@@ -61,8 +61,8 @@ class Common(nn.Module):
         bias = -torch.diag(C.detach() @ C.detach().T)
 
         # normalize
-        linear.weight = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
-        linear.bias = nn.Parameter(bias / bias.abs().sum())
+        linear.weight.data = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
+        linear.bias.data = nn.Parameter(bias / bias.abs().sum())
 
         linear.to(self.cnn.device)
         return linear, C  # C should already be detached
