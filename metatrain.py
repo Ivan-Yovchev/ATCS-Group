@@ -50,8 +50,8 @@ def train_support(model: nn.Module, task: Task, init_optim, n_inner, n_train=8, 
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
-    task_classifier.weight = nn.Parameter(protos + (task_classifier.weight - protos).detach())
-    task_classifier.bias = nn.Parameter(torch.diag(protos @ protos. T) + (task_classifier.bias - torch.diag(protos @ protos.T)).detach())
+    task_classifier.weight = nn.Parameter(2*protos + (task_classifier.weight - 2*protos).detach())
+    task_classifier.bias = nn.Parameter(-torch.diag(protos @ protos. T) + (task_classifier.bias + torch.diag(protos @ protos.T)).detach())
 
     # Get gradients for main (original) model update
 
