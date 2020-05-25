@@ -213,7 +213,14 @@ def main(args):
                        n_test=args.train_size_query, n_inner = args.n_inner)
 
         # Meta Validation
-        acc, loss = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+        acc, loss = 0, 0
+        for i in range(args.reps_eval):
+            acc_temp, loss_temp = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+            acc += acc_temp
+            loss += loss_temp
+
+        acc /= args.reps_eval
+        loss /= args.reps_eval
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
@@ -223,7 +230,14 @@ def main(args):
     display_log.close()
 
     # meta test
-    acc, loss = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+    acc, loss = 0, 0
+    for i in range(args.reps_eval):
+        acc_temp, loss_temp = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+        acc += acc_temp
+        loss += loss_temp
+
+    acc /= args.reps_eval
+    loss /= args.reps_eval
     print("Final: ", acc, loss)
 
 
@@ -259,6 +273,8 @@ if __name__ == "__main__":
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
+    parser.add_argument("--eval_q_size", type=int, default=100, help="Size of query set for validation and testing")
+    parser.add_argument("--reps_eval", type=int, default=10, help="Number of times validation and training are repeated to be averaged")
     parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
                         help="Kernel sizes per cnn block")
     parser.add_argument("--n_inner", type=int, default=5, help="Number of inner loops")
