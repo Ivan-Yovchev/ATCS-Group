@@ -199,6 +199,7 @@ def hyperpartisan_kfold_train(args):
             writer.add_scalar('Train/loss', train_loss, epoch)
             writer.add_scalar('Valid/accuracy', valid_acc, epoch)
             writer.add_scalar('Valid/loss', valid_loss, epoch)
+
             if binary_classification:
                 writer.add_scalar('Valid/precision', f1stats[0], epoch)
                 writer.add_scalar('Valid/recall', f1stats[1], epoch)
@@ -345,6 +346,10 @@ def main(args):
         writer.add_scalar('Train/loss', train_loss, epoch)
         writer.add_scalar('Valid/accuracy', valid_acc, epoch)
         writer.add_scalar('Valid/loss', valid_loss, epoch)
+        if binary_classification:
+            writer.add_scalar('Valid/precision', f1stats[0], epoch)
+            writer.add_scalar('Valid/recall', f1stats[1], epoch)
+            writer.add_scalar('Valid/f1', f1stats[2], epoch)
 
         if best_acc < valid_acc:
             best_acc = valid_acc
