@@ -29,7 +29,7 @@ def get_acc(preds, targets, binary=False):
     return torch.mean((preds == targets).float()).item()
 
 
-class AccumulatorF1():
+class AccumulatorF1:
     def __init__(self):
         self.true_positives = 0
         self.tot_positives = 0
@@ -47,17 +47,6 @@ class AccumulatorF1():
         recall = self.true_positives / (self.tot_true + self.epsilon)
         f1 = (2 * precision * recall) / (precision + recall + self.epsilon)
         return precision, recall, f1
-
-
-def get_f1(preds, targets, binary=False):
-    assert binary
-    preds = (preds > 0.5).to(torch.long)
-    true_pos = (preds * targets).float().sum()
-    precision = (true_pos / (preds.float().sum())).item()
-    recall = (true_pos / (targets.float().sum())).item()
-
-    f1 = (2 * precision * recall) / (precision + recall)
-    return precision, recall, f1
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
@@ -137,7 +126,7 @@ def eval_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentData
 
     f1_stats = f1_acc.reduce() if binary else None
 
-    return results / len(dataset), avg_loss
+    return results / len(dataset), avg_loss, f1_stats
 
 
 def eval_test(model: nn.Module, task_classifier: nn.Module,
@@ -146,7 +135,7 @@ def eval_test(model: nn.Module, task_classifier: nn.Module,
     losses = []
     for seed in np.random.randint(0, 100, size=10):
         torch.manual_seed(seed)
-        cur_acc, cur_loss = eval_model(model, task_classifier, dataset, loss, binary, disp_tqdm)
+        cur_acc, cur_loss, f1stats = eval_model(model, task_classifier, dataset, loss, binary, disp_tqdm)
         accs.append(cur_acc)
         losses.append(cur_loss)
 
@@ -188,7 +177,8 @@ def hyperpartisan_kfold_train(args):
         optim = torch.optim.Adam(list(conv_model.parameters()) + list(task_classifier.parameters()), args.lr)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, mode='max', factor=0.8)
         # eval first time
-        valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss=loss, binary=binary_classification)
+        valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, testset, loss=loss,
+                                                    binary=binary_classification)
         print(f'Fold {fold}. Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
         # start training
         for epoch in range(args.n_epochs):
@@ -197,8 +187,8 @@ def hyperpartisan_kfold_train(args):
             train_acc, train_loss = train_model(model, task_classifier, trainset, loss, optim,
                                                 binary_classification)
             print("Avg loss: ", train_loss)
-            valid_acc, valid_loss = eval_model(model, task_classifier, testset, loss,
-                                               binary=binary_classification)
+            valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, testset, loss,
+                                                        binary=binary_classification)
             # (model, task_classifier, testset, loss, binary=binary_classification
             print(f'Fold {fold}. Epoch {epoch:02d}: train acc: {train_acc:.4f}'
                   f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
@@ -325,7 +315,7 @@ def main(args):
 
     trainset, validset, testset = get_datasets(args, bert_tokenizer, sent_embedder, conv_model.get_max_kernel())
 
-    valid_acc, valid_loss = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
+    valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
     # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
@@ -339,7 +329,8 @@ def main(args):
 
         if optim.defaults['lr'] < 1e-6: break
         train_acc, train_loss = train_model(model, task_classifier, trainset, loss, optim, binary=binary_classification)
-        valid_acc, valid_loss = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
+        valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, validset, loss,
+                                                    binary=binary_classification)
         print(f'Epoch {epoch:02d}: train acc: {train_acc:.4f}'
               f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
               f' valid loss: {valid_loss:.4f}')

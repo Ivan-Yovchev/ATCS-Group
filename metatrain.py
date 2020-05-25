@@ -201,7 +201,7 @@ def main(args):
                        n_test=args.train_size_query, n_episodes = args.n_episodes)
 
         # Meta Validation
-        acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
+        acc, loss, f1stats = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
@@ -211,7 +211,7 @@ def main(args):
     display_log.close()
 
     # meta test
-    acc, loss = meta_valid(best_model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
+    acc, loss, f1stats = meta_valid(best_model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
     print("Final: ", acc, loss)
 
 
