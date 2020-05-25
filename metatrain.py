@@ -28,7 +28,7 @@ class Task:
         self.loss = loss
 
 
-def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8):
+def train_support(model: nn.Module, task: Task, init_optim, n_inner, n_train=8, n_test=8):
     # Get episode
     ep = task.get_episode(n_train, n_test)
 
@@ -45,9 +45,8 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     # Initialize optimizer for copy
     optim = init_optim(list(model_cp.parameters()) + list(task_classifier.parameters()))
 
-    # import pdb
-    # pdb.set_trace()
-    train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False, False)
+    for _ in range(n_inner):
+        train_model(model_cp, task_classifier, ep["support_set"], task.loss, optim, False, False)
 
     # Step 6 from FO-Proto MAML pdf
     protos = protos.to(task_classifier.weight.device)
@@ -62,7 +61,7 @@ def train_support(model: nn.Module, task: Task, init_optim, n_train=8, n_test=8)
     return model_cp, ep, task_classifier
 
 
-def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8, n_episodes = 1):
+def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8, n_inner = 5):
     class EmptyOptim:
 
         def step(self):
@@ -78,30 +77,28 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8,
 
     for task in tasks:
 
-        for _ in range(n_episodes):
+        model_cp, ep, task_classifier = train_support(model, task, init_optim, n_inner, n_train, n_test)
 
-            model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train, n_test)
+        # Train on task episode
+        train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False, False)
 
-            # Train on task episode
-            train_model(model_cp, task_classifier, ep["query_set"], task.loss, empty_optim, False, False)
+        # Accumulate gradients (per task)
+        for par_name, par in dict(list(model_cp.named_parameters())).items():
 
-            # Accumulate gradients (per task)
-            for par_name, par in dict(list(model_cp.named_parameters())).items():
+            if par.grad is None:
+                continue
 
-                if par.grad is None:
-                    continue
+            grad = par.grad / len(ep["query_set"])
 
-                grad = par.grad / len(ep["query_set"])
+            if par_name not in meta_grads:
+                meta_grads[par_name] = grad.clone()
+            else:
+                meta_grads[par_name] += grad.clone()
 
-                if par_name not in meta_grads:
-                    meta_grads[par_name] = grad.clone()
-                else:
-                    meta_grads[par_name] += grad.clone()
-
-            del model_cp
-            del task_classifier
-            del ep
-            torch.cuda.empty_cache()
+        del model_cp
+        del task_classifier
+        del ep
+        torch.cuda.empty_cache()
 
     # Apply gradients
     with torch.no_grad():
@@ -111,8 +108,8 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8,
     model.zero_grad()
 
 
-def meta_valid(model: nn.Module, task: Task, init_optim, support_set_size=8, query_set_size=8):
-    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_train=support_set_size,
+def meta_valid(model: nn.Module, task: Task, init_optim, n_inner, support_set_size=8, query_set_size=8):
+    model_cp, ep, task_classifier = train_support(model, task, init_optim, n_inner, n_train=support_set_size,
                                                   n_test=query_set_size)
     results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False, False)
 
@@ -199,10 +196,10 @@ def main(args):
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
         run_task_batch(model, random.choices([gcdc, persuasiveness], k=args.meta_batch), init_optim, args.meta_lr, n_train=args.train_size_support,
-                       n_test=args.train_size_query, n_episodes = args.n_episodes)
+                       n_test=args.train_size_query, n_inner = args.n_inner)
 
         # Meta Validation
-        acc, loss = meta_valid(model, partisan, init_optim, support_set_size=args.shots, query_set_size='all')
+        acc, loss = meta_valid(model, partisan, init_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
@@ -212,7 +209,7 @@ def main(args):
     display_log.close()
 
     # meta test
-    acc, loss = meta_valid(best_model, fake_news, init_optim, support_set_size=args.shots, query_set_size='all')
+    acc, loss = meta_valid(best_model, fake_news, init_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
     print("Final: ", acc, loss)
 
 
@@ -250,6 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
     parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
                         help="Kernel sizes per cnn block")
+    parser.add_argument("--n_inner", type=int, default=5, help="Number of inner loops")
 
     args = parser.parse_args()
     args.embed_size = 768
