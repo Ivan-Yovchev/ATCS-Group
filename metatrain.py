@@ -108,8 +108,13 @@ def run_task_batch(model: nn.Module, tasks, init_optim, lr, n_train=8, n_test=8,
     # Apply gradients
     with torch.no_grad():
         for par_name, par in dict(list(model.named_parameters())).items():
-            print(par.grad is None)
-            par -= lr * meta_grads[par_name].cpu()
+
+            if par.grad is None or par_name not in meta_grads.keys():
+                print("removed ", par_name)
+                continue
+                
+            print(par.grad is None, "\t", par_name)
+            par.grad += meta_grads[par_name].cpu()
 
     model.zero_grad()
 
