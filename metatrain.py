@@ -273,8 +273,8 @@ if __name__ == "__main__":
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
-    parser.add_argument("--eval_q_size", type=int, default=100, help="Size of query set for validation and testing")
-    parser.add_argument("--reps_eval", type=int, default=10, help="Number of times validation and training are repeated to be averaged")
+    parser.add_argument("--eval_q_size", type=int, default=50, help="Size of query set for validation and testing")
+    parser.add_argument("--reps_eval", type=int, default=5, help="Number of times validation and training are repeated to be averaged")
     parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
                         help="Kernel sizes per cnn block")
     parser.add_argument("--n_inner", type=int, default=5, help="Number of inner loops")
