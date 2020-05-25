@@ -11,7 +11,7 @@ from common import Common
 from doc_emb_models import BertManager
 from metatrain import get_dataset_paths
 from datasets import EpisodeMaker
-from train import loss_task_factory, train_model
+from train import loss_task_factory, train_model, eval_model
 import torch.nn as nn
 from copy import deepcopy
 import logging
@@ -88,36 +88,50 @@ def main(args):
     import random
     logging.info('Multitask training starting.')
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
-    # writer = SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
+    writer = SummaryWriter(f'runs/_multitaskep_{time_log}')
     for batch_nr in range(args.n_epochs):
         optim.zero_grad()
         dataset_type = dataset_types[batch_nr % 4]
         # dataset_type = random.choice(dataset_types) # tried, didn't improve
-        one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type)['support_set']
+        one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
+            'support_set']
         binary, loss = loss_task_factory(dataset_type)
         tcw = TaskClassifierWrapper(task_classifier, dataset_type)
 
-        res = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
-        logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, *res)
+        train_acc, train_loss = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
+        writer.add_scalar(f'Train/{dataset_type}/multi/accuracy', train_acc, batch_nr)
+        writer.add_scalar(f'Train/{dataset_type}/multi/loss', train_loss, batch_nr)
+
+        logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, train_acc, train_loss)
         logging.debug("max of gradients of task_classifier: %f",
                       max(p.grad.max() for p in
                           task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
         logging.debug("avg of gradients of model: %f",
-                      sum(p.grad.mean() for p in model.parameters() if p.grad is not None))
+                      max(p.grad.max() for p in model.parameters() if p.grad is not None))
 
         # this is the general copy of the model
-    trained_general_model = (model.cpu(), task_classifier.cpu())
-    # for dataset_type in dataset_types:
-    #     logging.info('training task-specific mode on %s', dataset_type)
-    #     # model_sp, conv_model, _ = init_common(args, bert_model)
-    #     # task_classifier_sp = TaskClassifier(conv_model.get_n_blocks() * args.n_filters)
-    #     model_sp, task_classifier_sp = deepcopy(trained_general_model)
-    #     model_sp = model_sp.to(args.device)
-    #     task_classifier_sp = task_classifier_sp.to(args.device)
-    #
-    #     batch = ep_maker.get_episode(dataset_type=dataset_type)['support_set']
-    #     X, y = next(iter(batch))
-    #
+    trained_general_model = (model, task_classifier)
+    for dataset_type in dataset_types:
+        logging.info('training task-specific mode on %s', dataset_type)
+        model_sp, task_classifier_sp = deepcopy(trained_general_model)
+        model_sp = model_sp.to(args.device)
+        task_classifier_sp = task_classifier_sp.to(args.device)
+        binary, loss = loss_task_factory(dataset_type)
+        tcw = TaskClassifierWrapper(task_classifier_sp, dataset_type)
+        for batch_nr in range(args.n_epochs_singletask):
+            one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
+                'support_set']
+            train_acc, train_loss = train_model(model_sp, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
+            writer.add_scalar(f'Train/{dataset_type}/single/accuracy', train_acc, batch_nr)
+            writer.add_scalar(f'Train/{dataset_type}/single/loss', train_loss, batch_nr)
+        validset = ep_maker.get_episode(dataset_type=dataset_type, n_test=args.train_size_query)[
+            'query_set']
+        valid_acc, valid_loss, f1stats = eval_model(model_sp, tcw, validset, loss,
+                                                    binary=binary)
+        if binary:
+            logging.info("Eval acc %f loss %f f1 %f", valid_acc, valid_loss, f1stats[2])
+        else:
+            logging.info("Eval acc %f loss %f", valid_acc, valid_loss)
 
 
 def init_common(args, bert_model):
