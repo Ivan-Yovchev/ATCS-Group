@@ -9,6 +9,7 @@ import os
 from typing import Mapping, Tuple, List
 import logging
 from tabulate import tabulate
+from copy import deepcopy
 
 
 def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
@@ -45,14 +46,14 @@ def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: 
     return dataset
 
 
-
 def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
     logging.info('Starting train_multitask now.')
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     # writer = SummaryWriter(f'runs/{args.dataset_type}/{args.batch_size}_{args.max_len}_{args.max_sent}_{args.lr}')
     # dataset types
     d_types = set((name.split('.')[0] for name in ds_names))
-    class_and_loss = {d_type: (task_classifier_factory(args, d_type), loss_task_factory(d_type)) for d_type in d_types}
+    class_and_loss = {d_type: (task_classifier_factory(args, d_type), loss_task_factory(d_type)) for d_type in
+                      d_types}  # TODO remove unused classifiers
     conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, batch_norm_eval=True)
     logging.info('Models created.')
 
@@ -75,17 +76,17 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
                            # num_workers=args.n_workers,
                            batch_size=args.batch_size,
                            collate_fn=NumpyBackedDataset.collate_fn),
-        'hyperpartisan': DataLoader(dataset=ds_dict['hyperpartisan'][0],
-                                    shuffle=True,
-                                    # num_workers=args.n_workers,
-                                    batch_size=args.batch_size,
-                                    collate_fn=NumpyBackedDataset.collate_fn),
-        'fake_news': DataLoader(
-            dataset=ConcatDataset([v[0] for k, v in ds_dict.items() if k.split('.')[0] == 'fake_news']),
-            shuffle=True,
-            # num_workers=args.n_workers,
-            batch_size=args.batch_size,
-            collate_fn=NumpyBackedDataset.collate_fn),
+        # 'hyperpartisan': DataLoader(dataset=ds_dict['hyperpartisan'][0],
+        #                             shuffle=True,
+        #                             # num_workers=args.n_workers,
+        #                             batch_size=args.batch_size,
+        #                             collate_fn=NumpyBackedDataset.collate_fn),
+        # 'fake_news': DataLoader(
+        #     dataset=ds_dict['fake_news'][0],
+        #     shuffle=True,
+        #     # num_workers=args.n_workers,
+        #     batch_size=args.batch_size,
+        #     collate_fn=NumpyBackedDataset.collate_fn),
         'persuasiveness': DataLoader(dataset=ds_dict['persuasiveness'][0],
                                      shuffle=True,
                                      # num_workers=args.n_workers,
@@ -100,18 +101,16 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
     # initialize the iterators
     train_dl_iters = {k: iter(v) for k, v in train_dataloaders.items()}
     epoch_counter = Counter()
-
     # test them before training
 
+    train_ds_names = ['gcdc', 'persuasiveness']
 
-    # imagine a task sampling here
-    for _ in tqdm(range(50)):
-        dataset_name = random.choice(ds_names)
-        # dataset_name = 'hyperpartisan'
-        dataset_type = dataset_name.split('.')[0]
+    # TRAINING TODO remo
+    for batch_number in tqdm(range(args.n_epochs)):
+        dataset_type = random.choice(train_ds_names)
         dl_iter = train_dl_iters[dataset_type]
 
-        logging.info('Sampled dataset: %s', dataset_name)
+        logging.info('Sampled dataset: %s', dataset_type)
 
         try:
             batch = next(dl_iter)
@@ -122,11 +121,65 @@ def train_multitask(args, ds_names: List[str], ds_dict: Mapping):
             batch = next(dl_iter)
 
         task_classifier, (binary_classification, loss) = class_and_loss[dataset_type]
-        logging.info("Class and loss retrieved.")
+        # logging.info("Class and loss retrieved.")
         train_one_batch(batch, model=conv_model, task_classifier=task_classifier, loss=loss, optim=optim,
                         device=args.device)
+
+        # Validation on hyperpartisan
+        if batch_number % 10 == 0:
+            validate_dataset(args, batch_number, conv_model, ds_dict, 'hyperpartisan')
+
+    # TASK SPECIFIC TRAINING
+    acc_test, loss_test, f1_stat = validate_dataset(args, batch_number, conv_model, ds_dict, 'fake_news')
+    acc_test, loss_test, f1_stat = validate_dataset(args, batch_number, conv_model, ds_dict, 'fake_news')
+    acc_test, loss_test, f1_stat = validate_dataset(args, batch_number, conv_model, ds_dict, 'fake_news')
+    acc_test, loss_test, f1_stat = validate_dataset(args, batch_number, conv_model, ds_dict, 'fake_news')
+    acc_test, loss_test, f1_stat = validate_dataset(args, batch_number, conv_model, ds_dict, 'fake_news')
     ev = eval_model_on_all(conv_model, class_and_loss, testsets_dict, batch_size=args.batch_size)
-    print(tabulate(ev, headers='keys'))
+    print("\n", tabulate(ev, headers='keys'))
+
+
+def validate_dataset(args, batch_number, conv_model, ds_dict, dataset_val):
+    task_classifier_val, (binary_classification_val, loss_val) = task_classifier_factory(args, dataset_val), \
+                                                                 loss_task_factory(dataset_val)
+    conv_model_val = deepcopy(conv_model)
+    task_classifier_val.to(args.device)
+    conv_model_val.to(args.device)
+    params_val = list(conv_model_val.parameters()) + list(task_classifier_val.parameters())
+    optim_val = torch.optim.Adam(params=params_val, lr=args.lr)
+
+    if dataset_val == 'fake_news':
+        weights = ds_dict[dataset_val][0].make_weight_vector()
+        sampler = torch.utils.data.WeightedRandomSampler(weights, len(weights))
+        # print(list(sampler))
+        train_val_dataloader = DataLoader(dataset=ds_dict[dataset_val][0],
+                                          sampler=sampler,
+                                          batch_size=args.batch_size,
+                                          collate_fn=NumpyBackedDataset.collate_fn)
+    else:
+        train_val_dataloader = DataLoader(dataset=ds_dict[dataset_val][0],
+                                          shuffle=True,
+                                          batch_size=args.batch_size,
+                                          collate_fn=NumpyBackedDataset.collate_fn)
+
+    for kshot, batch_val in enumerate(train_val_dataloader):
+        if kshot > 5:  # TODO decide
+            break
+        train_one_batch(batch_val, model=conv_model_val, task_classifier=task_classifier_val,
+                        loss=loss_val, optim=optim_val, device=args.device)
+
+    dataloader_val = DataLoader(ds_dict[dataset_val][1], batch_size=args.batch_size,
+                                collate_fn=NumpyBackedDataset.collate_fn)
+    acc_val, avg_loss_val, f1_stats = eval_model(conv_model_val, task_classifier_val, dataloader_val,
+                                                 loss=loss_val, binary=binary_classification_val)
+
+    if binary_classification_val:
+        logging.info('[VAL OR TEST] results on %s %d: acc %.4f loss %.4f prec %.4f rec %.4f f1 %.4f', dataset_val,
+                     batch_number, acc_val, avg_loss_val, *f1_stats)
+    else:
+        logging.info('[VAL OR TEST] results on %s %d: acc %.4f loss %.4f', dataset_val, batch_number, acc_val,
+                     avg_loss_val)
+    return acc_val, avg_loss_val, f1_stats
 
 
 def eval_model_on_all(model: nn.Module, classifiers_and_losses: Mapping[str, Tuple[nn.Module, nn.Module]],
@@ -139,15 +192,20 @@ def eval_model_on_all(model: nn.Module, classifiers_and_losses: Mapping[str, Tup
     :param testsets:
     :return:
     """
-    d = {}
+    d = {'Measure': ['accuracy', 'loss', 'precision', 'recall', 'f1']}
     for t, dt in testsets.items():
-        # if t.startswith('fake_news.gossipcop'):
-            # continue
         tsc, (binary_class, loss) = classifiers_and_losses[t.split('.')[0]]
-        d[t] = eval_model(model, tsc, DataLoader(dt, batch_size=batch_size, collate_fn=NumpyBackedDataset.collate_fn),
-                          loss=loss,
-                          binary=binary_class)
-        logging.info('Results on %s: %.4f %.4f', t, *d[t])
+        acc, loss, f1_stats = eval_model(model, tsc,
+                                         DataLoader(dt, batch_size=batch_size,
+                                                    collate_fn=NumpyBackedDataset.collate_fn),
+                                         loss=loss,
+                                         binary=binary_class)
+        d[t] = [acc, loss]
+        if binary_class:
+            d[t].extend(f1_stats)
+        else:
+            d[t].extend('---')
+        # logging.info('Results on %s: %.4f %.4f', t, *d[t])
     return d
 
 
@@ -159,8 +217,8 @@ def train_one_batch(batch, model: nn.Module, task_classifier: nn.Module, loss: n
 
     x, label = batch
     x, label = x.to(device), label.to(device)
-    logging.info('x shape %s', str(x.shape))
-    logging.info('label shape %s', str(label.shape))
+    # logging.info('x shape %s', str(x.shape))
+    # logging.info('label shape %s', str(label.shape))
 
     out = task_classifier(model(x))
     l = loss(out, label)
@@ -194,7 +252,7 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
     parser.add_argument("--max_len", type=int, default=100, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=50, help="Max number of sentences per document")
     parser.add_argument("--doc_emb_type", type=str, default="max_batcher", help="Type of document encoder")

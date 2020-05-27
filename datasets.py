@@ -159,7 +159,7 @@ class HyperpartisanDataset(ParentDataset):
 
     def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device,
                  data=None):
-        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, 
+        super(HyperpartisanDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size,
                                                    split_token, device)
 
         if data is None:
@@ -199,7 +199,7 @@ class Hyperpartisan10Fold:
 class PersuasivenessDataset(ParentDataset):
 
     def __init__(self, file, tokenizer: BertTokenizer, max_len, max_sent, batch_size, split_token, device):
-        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size, 
+        super(PersuasivenessDataset, self).__init__(file, tokenizer, max_len, max_sent, batch_size,
                                                     split_token, device)
         data = pd.read_json(self.file, orient='records')
         self.docs, self.masks = self.get_data(data)
@@ -257,10 +257,22 @@ class NumpyBackedDataset(Dataset):
         y = torch.tensor(self.shards[shard]['Y'][shardwise_idx]).squeeze(dim=0)
         return x, y
 
+    def make_weight_vector(self):
+        """Makes a weight vector to even out the distribution in case
+        of binary classifications. Can be used with a Weighted Sampler"""
+        all_labels = np.concatenate(
+            [self.shards[shard]['Y'] for shard in range(self.length // self.max_shard_size + 1)])
+        class_weights = 1 / np.bincount(all_labels, minlength=2)
+        res = np.zeros_like(all_labels)
+        for i, w in enumerate(class_weights):
+            res = res + (all_labels == i).astype(float) * w
+
+        return res
+
     @staticmethod
     def collate_fn(batch):
         X, Y = zip(*batch)
-        # need to make the max-length at least the minimum kernelgit
+        # need to make the max-length at least the minimum kernel
         max_length = max(6, max(arr.shape[1] for arr in X))
         X_new = [np.pad(x, pad_width=((0, 0), (0, max_length - x.shape[1]))) for x in X]
         X_new = np.array(X_new)

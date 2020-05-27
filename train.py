@@ -1,3 +1,5 @@
+from typing import Union
+
 import torch
 import argparse
 from torch import nn, flatten
@@ -22,6 +24,28 @@ def get_acc(preds, targets, binary=False):
     else:  # multiclass
         preds = preds.argmax(dim=-1)
     return torch.mean((preds == targets).float()).item()
+
+
+class AccumulatorF1:
+    def __init__(self):
+        self.true_positives = 0
+        self.tot_positives = 0
+        self.tot_true = 0
+        self.epsilon = 1e-16
+
+    def add(self, out, label):
+        pred = (out > 0.5).to(torch.long)
+        if len(pred.shape) > 1:
+            pred = pred.squeeze(1)
+        self.true_positives += (pred * label).sum().item()
+        self.tot_positives += pred.sum().item()
+        self.tot_true += label.sum().item()
+
+    def reduce(self):
+        precision = self.true_positives / (self.tot_positives + self.epsilon)
+        recall = self.true_positives / (self.tot_true + self.epsilon)
+        f1 = (2 * precision * recall) / (precision + recall + self.epsilon)
+        return precision, recall, f1
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
@@ -71,13 +95,14 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
 
 
 def eval_model(model: nn.Module, task_classifier: nn.Module,
-               dataset: Dataset, loss: nn.Module, binary: bool, device='cuda') -> float:
+               dataset: Union[Dataset, DataLoader], loss: nn.Module, binary: bool, device='cuda') -> float:
     # Set all models to evaluation mode
     model.eval()
     task_classifier.eval()
 
     results = 0
     avg_loss = 0
+    f1_acc = AccumulatorF1() if binary else None
 
     # Prevents the gradients from being computed
     with torch.no_grad():
@@ -88,8 +113,11 @@ def eval_model(model: nn.Module, task_classifier: nn.Module,
             grad = loss(out, label)
             results += get_acc(out, label, binary)
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
+            if binary:
+                f1_acc.add(out, label)
 
-    return results / len(dataset), avg_loss
+    f1_stats = f1_acc.reduce() if binary else None
+    return results / len(dataset), avg_loss, f1_stats
 
 
 def hyperpartisan_kfold_train(args):

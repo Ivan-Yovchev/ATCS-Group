@@ -19,11 +19,7 @@
     "test": "data/SemEval/byarticle-test.json",
     "train": "data/SemEval/byarticle-train.json"
   },
-  "fake_news.gossipcop": {
-    "train": "data/FakeNews/gossipcop/train.tsv",
-    "test": "data/FakeNews/gossipcop/val.tsv"
-  },
-  "fake_news.politifact": {
+  "fake_news": {
     "test": "data/FakeNews/politifact/test.tsv",
     "train": "data/FakeNews/politifact/train.tsv"
   },
