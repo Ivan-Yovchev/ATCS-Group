@@ -34,7 +34,6 @@ class Common(nn.Module):
 
         C = [torch.zeros(self.n_filters) for _ in range(n_classes)]
         counts = torch.zeros(n_classes, 1)
-        l2i = {}
 
         for x, label in S:
 
@@ -43,9 +42,7 @@ class Common(nn.Module):
 
             for i in range(label.shape[0]):
                 # Label to index
-                new_label = label[i].item()
-                l2i[new_label] = l2i.get(new_label, len(l2i))
-                idx = l2i[new_label]
+                idx = label[i].item()
 
                 # Accumulate latent vectors
                 C[idx] = C[idx] + outputs[i]
@@ -61,8 +58,8 @@ class Common(nn.Module):
         bias = -torch.diag(C.detach() @ C.detach().T)
 
         # normalize
-        linear.weight = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
-        linear.bias = nn.Parameter(bias / bias.abs().sum())
+        linear.weight.data = nn.Parameter(weight / weight.abs().sum(dim=-1).unsqueeze(-1))
+        linear.bias.data = nn.Parameter(bias / bias.abs().sum())
 
         linear.to(self.cnn.device)
         return linear, C  # C should already be detached
