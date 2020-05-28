@@ -12,26 +12,6 @@ from tabulate import tabulate
 from copy import deepcopy
 
 
-def load_datasets(ds_name, ds_paths, args, sent_embedder: BertManager, tokenizer: BertTokenizer):
-    filename = f'temp/{ds_name}.pt'
-    if os.path.isfile(filename):
-        with open(filename, 'rb') as f:
-            return torch.load(f)
-
-    dataset_type = ds_name.split('.')[0]
-    dataset = get_dataset(dataset_type, ds_paths['train'], tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
-    testset = get_dataset(dataset_type, ds_paths['test'], tokenizer, args.max_len, args.max_sent,
-                          args.batch_size if args.finetune else 1, args.device)
-    dataset = BertPreprocessor(dataset, sent_embedder, batch_size=args.batch_size)
-    testset = BertPreprocessor(testset, sent_embedder, batch_size=args.batch_size)
-
-    with open(filename, 'wb') as f:
-        torch.save([dataset, testset], f)
-
-    return dataset, testset
-
-
 def mmap_dataset(ds_name, ds_path, args, sent_embedder: BertManager, tokenizer: BertTokenizer, dir='temp'):
     trainfname = os.path.join(dir, ds_name)
     dataset_type = ds_name.split('.')[0] if '.' in ds_name else ds_name.split('-')[0]
