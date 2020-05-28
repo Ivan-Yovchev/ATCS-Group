@@ -37,6 +37,11 @@ class AccumulatorF1:
         self.epsilon = 1e-16
 
     def add(self, out, label):
+
+        # for the binary tasks with 2 outputs coming from metalearning.py
+        if out.shape[1] == 2:
+            out = nn.functional.softmax(out, dim=1)[:, 1]
+
         pred = (out > 0.5).to(torch.long)
         if len(pred.shape) > 1:
             pred = pred.squeeze(1)
@@ -103,7 +108,7 @@ def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDat
 
 
 def eval_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset, loss: nn.Module, binary: bool,
-               disp_tqdm: bool = True) -> Tuple[float, float, Mapping]:
+               disp_tqdm: bool = True, special_binary: bool = False) -> Tuple[float, float, Mapping]:
     # Set all models to evaluation mode
     model.eval()
     task_classifier.eval()
@@ -111,7 +116,7 @@ def eval_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentData
     results = 0
     avg_loss = 0
 
-    f1_acc = AccumulatorF1() if binary else None
+    f1_acc = AccumulatorF1() if binary or special_binary else None
 
     # Prevents the gradients from being computed
     with torch.no_grad():
@@ -120,12 +125,12 @@ def eval_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentData
             out = task_classifier(model(x))
             grad = loss(out, label)
             results += get_acc(out, label, binary)
-            if binary:
+            if binary or special_binary:
                 f1_acc.add(out, label)
 
             avg_loss = (avg_loss * i + grad.item()) / (i + 1)
 
-    f1_stats = f1_acc.reduce() if binary else None
+    f1_stats = f1_acc.reduce() if binary or special_binary else None
 
     return results / len(dataset), avg_loss, f1_stats
 

@@ -14,6 +14,7 @@ import random
 from copy import deepcopy
 import argparse
 import json
+import operator
 
 
 class Task:
@@ -124,7 +125,7 @@ def run_task_batch(model: nn.Module, tasks, outer_optim, inner_optim, n_train=8,
 def meta_valid(model: nn.Module, task: Task, inner_optim, n_inner, support_set_size=8, query_set_size=8):
     model_cp, ep, task_classifier = train_support(model, task, inner_optim, n_inner, n_train=support_set_size,
                                                   n_test=query_set_size)
-    results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False, False)
+    results = eval_model(model_cp, task_classifier, ep["query_set"], task.loss, False, False, task.n_classes == 2)
 
     del model_cp
     del ep
@@ -214,31 +215,38 @@ def main(args):
 
         # Meta Validation
         acc, loss = 0, 0
+        stats = (0, 0, 0)
         for i in range(args.reps_eval):
-            acc_temp, loss_temp, _ = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+            acc_temp, loss_temp, stats_temp = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
             acc += acc_temp
             loss += loss_temp
+            stats = tuple(map(operator.add, stats, stats_temp))
 
         acc /= args.reps_eval
         loss /= args.reps_eval
+        stats = tuple(x/args.reps_eval for x in stats)
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
             best_model = deepcopy(model)
 
-        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
+        p, r, f1 = stats
+        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f} p: {p:.3f} r: {r:.3f} f1: {f1:.3f}")
     display_log.close()
 
     # meta test
     acc, loss = 0, 0
+    stats = (0, 0, 0)
     for i in range(args.reps_eval):
-        acc_temp, loss_temp, _ = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+        acc_temp, loss_temp, stats_temp = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
         acc += acc_temp
         loss += loss_temp
+        stats = tuple(map(operator.add, stats, stats_temp))
 
     acc /= args.reps_eval
     loss /= args.reps_eval
-    print("Final: ", acc, loss)
+    stats = tuple(x/args.reps_eval for x in stats)
+    print("Final: ", acc, loss, stats)
 
 
 def get_dataset_paths(dataset_json_file):
