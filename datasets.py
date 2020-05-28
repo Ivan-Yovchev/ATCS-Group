@@ -342,7 +342,6 @@ class EpisodeMaker(object):
     def get_episode(self, dataset_type, n_train=8, n_test=8, classes_sampled="all", batch_size_when_all=32):
 
         dataset = random.sample(self.datasets[dataset_type], 1)[0]
-
         classes_tot = list(range(dataset["train"].get_n_classes()))
 
         # OPTIMIZE: maybe not true
