@@ -39,7 +39,7 @@ class AccumulatorF1:
     def add(self, out, label):
 
         # for the binary tasks with 2 outputs coming from metalearning.py
-        if out.shape[1] == 2:
+        if len(out.shape) > 1 and out.shape[1] == 2:
             out = nn.functional.softmax(out, dim=1)[:, 1]
 
         pred = (out > 0.5).to(torch.long)

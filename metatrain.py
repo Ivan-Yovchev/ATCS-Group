@@ -231,7 +231,7 @@ def main(args):
             best_model = deepcopy(model)
 
         p, r, f1 = stats
-        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f} p: {p:.3f} r: {r:.3f} f1: {f1:.3f}")
+        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f} p: {p:.4f} r: {r:.4f} f1: {f1:.4f}")
     display_log.close()
 
     # meta test
