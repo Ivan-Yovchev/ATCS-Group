@@ -97,31 +97,31 @@ def main(args):
 
     task_classifier = task_classifier.to(args.device)
     model = model.to(args.device)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
+    optim = torch.optim.AdamW(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
     best_acc = 0.
 
     logging.info('Multitask training starting.')
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     writer = SummaryWriter(f'runs/multitaskep_{time_log}')
     for batch_nr in range(args.n_epochs):
-        optim.zero_grad()
-        # dataset_type = dataset_types[batch_nr % 4]
-        dataset_type = random.choice(['gcdc', 'persuasiveness'])  # tried, didn't improve
-        one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
-            'support_set']
-        binary, loss = loss_task_factory(dataset_type)
-        tcw = TaskClassifierWrapper(task_classifier, dataset_type)
+        for _ in range(args.meta_batch):
+            optim.zero_grad()
+            dataset_type = random.choice(['gcdc', 'persuasiveness'])
+            one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
+                'support_set']
+            binary, loss = loss_task_factory(dataset_type)
+            tcw = TaskClassifierWrapper(task_classifier, dataset_type)
 
-        train_acc, train_loss = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
-        writer.add_scalar(f'Train/{dataset_type}/multi/accuracy', train_acc, batch_nr)
-        writer.add_scalar(f'Train/{dataset_type}/multi/loss', train_loss, batch_nr)
+            train_acc, train_loss = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
+            writer.add_scalar(f'Train/{dataset_type}/multi/accuracy', train_acc, batch_nr)
+            writer.add_scalar(f'Train/{dataset_type}/multi/loss', train_loss, batch_nr)
 
-        logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, train_acc, train_loss)
-        logging.debug("max of gradients of task_classifier: %f",
-                      max(p.grad.max() for p in
-                          task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
-        logging.debug("avg of gradients of model: %f",
-                      max(p.grad.max() for p in model.parameters() if p.grad is not None))
+            logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, train_acc, train_loss)
+            logging.debug("max of gradients of task_classifier: %f",
+                          max(p.grad.max() for p in
+                              task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
+            logging.debug("avg of gradients of model: %f",
+                          max(p.grad.max() for p in model.parameters() if p.grad is not None))
 
         if batch_nr % 5 == 0:
             dataset_type = 'hyperpartisan'
@@ -159,7 +159,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
@@ -177,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
     parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
+    parser.add_argument("--meta_batch", type=int, default=8, help="Number of meta batches")
     parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
                         help="Kernel sizes per cnn block")
 

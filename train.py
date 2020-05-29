@@ -14,8 +14,8 @@ from cnn_model import CNNModel
 from common import Common
 from utils import get_acc, AccumulatorF1, load_model, save_model, get_summary_writer
 
-torch.manual_seed(42)
-np.random.seed(42)
+# torch.manual_seed(42)
+# np.random.seed(42)
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
