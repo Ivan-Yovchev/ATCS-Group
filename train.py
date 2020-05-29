@@ -1,59 +1,21 @@
-from typing import Tuple, Mapping
-
 import torch
 import argparse
-from torch import nn, flatten
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+from torch import nn
 from transformers import BertModel, BertTokenizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+from typing import Tuple, Mapping
+import numpy as np
+from datetime import datetime
 from doc_emb_models import *
 from datasets import *
 from cnn_model import CNNModel
-from tqdm import tqdm
-import transformers
 from common import Common
-import os
-import re
-import numpy as np
-from datetime import datetime
+from utils import get_acc, AccumulatorF1, load_model, save_model, get_summary_writer
 
 torch.manual_seed(42)
-
-
-def get_acc(preds, targets, binary=False):
-    if binary:  # binary
-        preds = (preds > 0.5).to(torch.long)
-    else:  # multiclass
-        preds = preds.argmax(dim=-1)
-    return torch.mean((preds == targets).float()).item()
-
-
-class AccumulatorF1:
-    def __init__(self):
-        self.true_positives = 0
-        self.tot_positives = 0
-        self.tot_true = 0
-        self.epsilon = 1e-16
-
-    def add(self, out, label):
-
-        # for the binary tasks with 2 outputs coming from metalearning.py
-        if len(out.shape) > 1 and out.shape[1] == 2:
-            out = nn.functional.softmax(out, dim=1)[:, 1]
-
-        pred = (out > 0.5).to(torch.long)
-        if len(pred.shape) > 1:
-            pred = pred.squeeze(1)
-        self.true_positives += (pred * label).sum().item()
-        self.tot_positives += pred.sum().item()
-        self.tot_true += label.sum().item()
-
-    def reduce(self):
-        precision = self.true_positives / (self.tot_positives + self.epsilon)
-        recall = self.true_positives / (self.tot_true + self.epsilon)
-        f1 = (2 * precision * recall) / (precision + recall + self.epsilon)
-        return precision, recall, f1
+np.random.seed(42)
 
 
 def train_model(model: nn.Module, task_classifier: nn.Module, dataset: ParentDataset,
@@ -139,13 +101,25 @@ def eval_test(model: nn.Module, task_classifier: nn.Module,
               dataset: ParentDataset, loss: nn.Module, binary: bool, disp_tqdm: bool = True):
     accs = []
     losses = []
+    if binary:
+        precisions = []
+        recalls = []
+        f1s = []
     for seed in np.random.randint(0, 100, size=10):
         torch.manual_seed(seed)
         cur_acc, cur_loss, f1stats = eval_model(model, task_classifier, dataset, loss, binary, disp_tqdm)
         accs.append(cur_acc)
         losses.append(cur_loss)
+        if binary:
+            precisions.append(f1stats[0])
+            recalls.append(f1stats[1])
+            f1s.append(f1stats[2])
 
-    return (np.mean(accs), np.std(accs)), (np.mean(losses), np.std(losses))
+    if binary:
+        f1stats = (np.mean(precisions), np.std(precisions)), (np.mean(recalls), np.std(recalls)), (np.mean(f1s), np.std(f1s))
+    else:
+        f1stats = None
+    return (np.mean(accs), np.std(accs)), (np.mean(losses), np.std(losses)), f1stats
 
 
 def hyperpartisan_kfold_train(args):
@@ -154,7 +128,7 @@ def hyperpartisan_kfold_train(args):
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
     kfold_dataset = get_dataset(args.dataset_type, args.train_path, bert_tokenizer, args.max_len, args.max_sent,
-                                args.batch_size, args.device, hyperpartisan_10fold=True)
+                                1, args.device, hyperpartisan_10fold=True)
 
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
     accuracy_list = []
@@ -166,13 +140,11 @@ def hyperpartisan_kfold_train(args):
         task_classifier = task_classifier_factory(args)
         bert_model = BertModel.from_pretrained('bert-base-uncased')
         sent_embedder = BertManager(bert_model, args.device)
-        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels,
-                              batch_norm_eval=True)
+        conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels)
         conv_model.initialize_weights(nn.init.xavier_normal_)
 
         # construct common model
         model = construct_common_model(args.finetune, conv_model, sent_embedder)
-        # model, trainset, testset = construct_common_model(args.finetune, conv_model, sent_embedder, trainset, testset)
         trainset = BertPreprocessor(trainset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
         testset = BertPreprocessor(testset, sent_embedder, conv_model.get_max_kernel(), batch_size=args.batch_size)
 
@@ -195,7 +167,6 @@ def hyperpartisan_kfold_train(args):
             print("Avg loss: ", train_loss)
             valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, testset, loss,
                                                         binary=binary_classification)
-            # (model, task_classifier, testset, loss, binary=binary_classification
             print(f'Fold {fold}. Epoch {epoch:02d}: train acc: {train_acc:.4f}'
                   f' train loss: {train_loss:.4f} valid acc: {valid_acc:.4f}'
                   f' valid loss: {valid_loss:.4f}')
@@ -222,32 +193,15 @@ def hyperpartisan_kfold_train(args):
     return accuracy_list
 
 
-def load_model(path, conv_model, task_classifier, sent_embedder, finetune):
-    state_dicts = torch.load(path)
-    task_classifier.load_state_dict(state_dicts['task_classifier'])
-    conv_model.load_state_dict(state_dicts['cnn_model'])
-    model = construct_common_model(finetune, conv_model, sent_embedder)
-
-    return model, task_classifier
-
-
-def save_model(dataset_type, conv_model, bert_model, task_classifier, epoch, time_log, fold=None, model_dir='models'):
-    filename = f"{dataset_type}.{time_log}.{fold}.pt" \
-        if fold is not None else f"{dataset_type}.{time_log}.pt"
-    with open(os.path.join(model_dir, filename), 'wb') as f:
-        torch.save({
-            'cnn_model': conv_model.state_dict(),
-            'task_classifier': task_classifier.state_dict(),
-            'bert_model': bert_model.state_dict(),
-            'epoch': epoch
-        }, f)
-
-
 def construct_common_model(finetune, conv_model, sent_embedder):
     if finetune:
-        model = Common(conv_model, encoder=sent_embedder)
+        model = Common(conv_model, 
+                       n_filters=conv_model.get_n_blocks() * args.n_filters,
+                       encoder=sent_embedder)
+        
     else:
-        model = Common(conv_model)
+        model = Common(conv_model, 
+                       n_filters=conv_model.get_n_blocks() * args.n_filters)
     return model
 
 
@@ -266,12 +220,13 @@ def loss_task_factory(dataset_type):
 
 def task_classifier_factory(args):
     task_classifier = None
+    input_dim = len(args.kernels) * args.n_filters
     if args.dataset_type == "gcdc":
-        task_classifier = nn.Linear(5 * args.n_filters, 3)
+        task_classifier = nn.Linear(input_dim, 3)
     elif args.dataset_type in ["hyperpartisan", "fake_news"]:
-        task_classifier = nn.Sequential(nn.Linear(5 * args.n_filters, 1), nn.Sigmoid())
+        task_classifier = nn.Sequential(nn.Linear(input_dim, 1), nn.Sigmoid())
     elif args.dataset_type == "persuasiveness":
-        task_classifier = nn.Linear(5 * args.n_filters, 6)
+        task_classifier = nn.Linear(input_dim, 6)
     assert task_classifier is not None, 'task not recognized'
     return task_classifier
 
@@ -291,15 +246,6 @@ def get_datasets(args, bert_tokenizer, sent_embedder, max_kernel):
     return trainset, validset, testset
 
 
-def get_summary_writer(args, time_log):
-    """ Creates an instance of the tensorboard summary writer for the specified run """
-    if args.dataset_type == 'gcdc':
-        dataset_name = re.findall(r'/(\w+)_\w+.csv', args.train_path)[0]
-        return SummaryWriter(f'runs/{dataset_name}_{time_log}')
-    else:
-        return SummaryWriter(f'runs/{args.dataset_type}_{time_log}')
-
-
 def main(args):
     if args.kfold:
         hyperpartisan_kfold_train(args)
@@ -315,7 +261,7 @@ def main(args):
 
     # loading task-specific classifier
     task_classifier = task_classifier_factory(args)
-    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters)
+    conv_model = CNNModel(args.embed_size, args.device, n_filters=args.n_filters, filter_sizes=args.kernels)
 
     binary_classification, loss = loss_task_factory(args.dataset_type)
 
@@ -329,12 +275,9 @@ def main(args):
     valid_acc, valid_loss, f1stats = eval_model(model, task_classifier, validset, loss, binary=binary_classification)
     print(f'Initial acc: {valid_acc:.4f} loss: {valid_loss:.4f}')
     best_acc = 0
-    # optim = transformers.optimization.AdamW(list(model.parameters()) + list(bert_model.parameters()), args.lr)
     optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), args.lr)
-    # optim = transformers.optimization.AdamW(list(conv_model.parameters()), args.lr)
 
     lr_scheduler = ReduceLROnPlateau(optim, mode='max', patience=5, factor=0.8)
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optim, 1, gamma=0.8)
 
     for epoch in range(args.n_epochs):
 
@@ -388,7 +331,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_path", type=str, default="data/GCDC/Clinton_train.csv", help="Path to training data")
     parser.add_argument("--valid_path", type=str, default="data/GCDC/Enron_test.csv", help="Path to validation data")
     parser.add_argument("--test_path", type=str, default="data/GCDC/Clinton_test.csv", help="Path to testing data")
-    parser.add_argument("--max_len", type=int, default=100, help="Max number of words contained in a sentence")
+    parser.add_argument("--max_len", type=int, default=50, help="Max number of words contained in a sentence")
     parser.add_argument("--max_sent", type=int, default=50, help="Max number of sentences per document")
     parser.add_argument("--dataset_type", type=str, default="gcdc", help="Dataset type")
     parser.add_argument("--kfold", type=lambda x: x.lower() == "true", default=False,
