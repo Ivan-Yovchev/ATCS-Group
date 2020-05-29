@@ -158,29 +158,6 @@ def main(args):
     logging.info("%s: accuracy %.4f; f1: %s", test_set.file, acc, str(f1_stats))
 
 
-    # for dataset_type in dataset_types:
-    #     logging.info('training task-specific mode on %s', dataset_type)
-    #     model_sp, task_classifier_sp = deepcopy(trained_general_model)
-    #     model_sp = model_sp.to(args.device)
-    #     task_classifier_sp = task_classifier_sp.to(args.device)
-    #     binary, loss = loss_task_factory(dataset_type)
-    #     tcw = TaskClassifierWrapper(task_classifier_sp, dataset_type)
-    #     for batch_nr in range(args.n_epochs_singletask):
-    #         one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
-    #             'support_set']
-    #         train_acc, train_loss = train_model(model_sp, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
-    #         writer.add_scalar(f'Train/{dataset_type}/single/accuracy', train_acc, batch_nr)
-    #         writer.add_scalar(f'Train/{dataset_type}/single/loss', train_loss, batch_nr)
-    #     validset = ep_maker.get_episode(dataset_type=dataset_type, n_test=args.train_size_query)[
-    #         'query_set']
-    #     valid_acc, valid_loss, f1stats = eval_model(model_sp, tcw, validset, loss,
-    #                                                 binary=binary)
-    #     if binary:
-    #         logging.info("Eval acc %f loss %f f1 %f", valid_acc, valid_loss, f1stats[2])
-    #     else:
-    #         logging.info("Eval acc %f loss %f", valid_acc, valid_loss)
-
-
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
     parser = argparse.ArgumentParser()
@@ -195,7 +172,6 @@ if __name__ == "__main__":
                         help="JSON file containing the dataset paths")
 
     parser.add_argument("--n_epochs", type=int, default=100, help="Number of epochs")
-    parser.add_argument("--n_epochs_singletask", type=int, default=5, help="Number of shots for single-task adaptation")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
