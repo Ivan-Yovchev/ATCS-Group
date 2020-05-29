@@ -200,13 +200,13 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
-        run_task_batch(model, random.choices([gcdc_Clinton, gcdc_Enron], k=args.meta_batch), outer_optim, inner_optim, n_train=args.train_size_support,
+        run_task_batch(model, random.choices([gcdc_Clinton, gcdc_Yahoo], k=args.meta_batch), outer_optim, inner_optim, n_train=args.train_size_support,
                        n_test=args.train_size_query, n_inner = args.n_inner)
 
         # Meta Validation
         acc, loss = 0, 0
         for i in range(args.reps_eval):
-            acc_temp, loss_temp, stats_temp = meta_valid(model, gcdc_Yahoo, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+            acc_temp, loss_temp, stats_temp = meta_valid(model, gcdc_Yelp, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
             acc += acc_temp
             loss += loss_temp
 
@@ -223,7 +223,7 @@ def main(args):
     # meta test
     acc, loss = 0, 0
     for i in range(args.reps_eval):
-        acc_temp, loss_temp, stats_temp = meta_valid(best_model, gcdc_Yelp, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+        acc_temp, loss_temp, stats_temp = meta_valid(best_model, gcdc_Enron, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
         acc += acc_temp
         loss += loss_temp
 
