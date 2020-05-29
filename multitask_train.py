@@ -10,11 +10,12 @@ from cnn_model import CNNModel
 from common import Common
 from doc_emb_models import BertManager
 from metatrain import get_dataset_paths
-from datasets import EpisodeMaker
+from datasets import EpisodeMaker, BertPreprocessor
 from train import loss_task_factory, train_model, eval_model
 import torch.nn as nn
 from copy import deepcopy
 import logging
+import random
 
 
 class TaskClassifier(nn.Module):
@@ -61,6 +62,19 @@ class TaskClassifierWrapper(nn.Module):
         raise ValueError('{} is not recognized as a dataset type'.format(dataset_type))
 
 
+def init_common(args, bert_model):
+    sent_embedder = BertManager(bert_model, args.device)
+    conv_model = CNNModel(args.embed_size, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels,
+                          batch_norm_eval=True)
+    # Build unified model
+    model = Common(
+        conv_model,
+        conv_model.get_n_blocks() * args.n_filters,
+        encoder=sent_embedder if args.finetune else lambda x: x,
+    )
+    return model, conv_model, sent_embedder
+
+
 def main(args):
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = BertModel.from_pretrained('bert-base-uncased')
@@ -83,72 +97,69 @@ def main(args):
 
     task_classifier = task_classifier.to(args.device)
     model = model.to(args.device)
-    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
+    optim = torch.optim.AdamW(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
+    best_acc = 0.
 
-    import random
     logging.info('Multitask training starting.')
     time_log = datetime.now().strftime('%y%m%d-%H%M%S')
-    writer = SummaryWriter(f'runs/_multitaskep_{time_log}')
+    writer = SummaryWriter(f'runs/multitaskep_{time_log}')
     for batch_nr in range(args.n_epochs):
-        optim.zero_grad()
-        dataset_type = dataset_types[batch_nr % 4]
-        # dataset_type = random.choice(dataset_types) # tried, didn't improve
-        one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
-            'support_set']
-        binary, loss = loss_task_factory(dataset_type)
-        tcw = TaskClassifierWrapper(task_classifier, dataset_type)
-
-        train_acc, train_loss = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
-        writer.add_scalar(f'Train/{dataset_type}/multi/accuracy', train_acc, batch_nr)
-        writer.add_scalar(f'Train/{dataset_type}/multi/loss', train_loss, batch_nr)
-
-        logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, train_acc, train_loss)
-        logging.debug("max of gradients of task_classifier: %f",
-                      max(p.grad.max() for p in
-                          task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
-        logging.debug("avg of gradients of model: %f",
-                      max(p.grad.max() for p in model.parameters() if p.grad is not None))
-
-        # this is the general copy of the model
-    trained_general_model = (model, task_classifier)
-    for dataset_type in dataset_types:
-        logging.info('training task-specific mode on %s', dataset_type)
-        model_sp, task_classifier_sp = deepcopy(trained_general_model)
-        model_sp = model_sp.to(args.device)
-        task_classifier_sp = task_classifier_sp.to(args.device)
-        binary, loss = loss_task_factory(dataset_type)
-        tcw = TaskClassifierWrapper(task_classifier_sp, dataset_type)
-        for batch_nr in range(args.n_epochs_singletask):
+        for _ in range(args.meta_batch):
+            optim.zero_grad()
+            dataset_type = random.choice(['gcdc', 'persuasiveness'])
             one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
                 'support_set']
-            train_acc, train_loss = train_model(model_sp, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
-            writer.add_scalar(f'Train/{dataset_type}/single/accuracy', train_acc, batch_nr)
-            writer.add_scalar(f'Train/{dataset_type}/single/loss', train_loss, batch_nr)
-        validset = ep_maker.get_episode(dataset_type=dataset_type, n_test=args.train_size_query)[
-            'query_set']
-        valid_acc, valid_loss, f1stats = eval_model(model_sp, tcw, validset, loss,
-                                                    binary=binary)
-        if binary:
-            logging.info("Eval acc %f loss %f f1 %f", valid_acc, valid_loss, f1stats[2])
-        else:
-            logging.info("Eval acc %f loss %f", valid_acc, valid_loss)
+            binary, loss = loss_task_factory(dataset_type)
+            tcw = TaskClassifierWrapper(task_classifier, dataset_type)
+
+            train_acc, train_loss = train_model(model, tcw, one_batch_dataset, loss, optim, binary, disp_tqdm=False)
+            writer.add_scalar(f'Train/{dataset_type}/multi/accuracy', train_acc, batch_nr)
+            writer.add_scalar(f'Train/{dataset_type}/multi/loss', train_loss, batch_nr)
+
+            logging.info("dataset_type %s, acc %.4f, loss %.4f", dataset_type, train_acc, train_loss)
+            logging.debug("max of gradients of task_classifier: %f",
+                          max(p.grad.max() for p in
+                              task_classifier.parameters()))  # we take the max because the mean wouldn't be informative
+            logging.debug("avg of gradients of model: %f",
+                          max(p.grad.max() for p in model.parameters() if p.grad is not None))
+
+        if batch_nr % 5 == 0:
+            dataset_type = 'hyperpartisan'
+            model_cp = deepcopy(model)
+            tcw_cp = TaskClassifierWrapper(deepcopy(task_classifier), dataset_type)
+            binary_cp, loss_cp = loss_task_factory(dataset_type)
+            optim_cp = torch.optim.Adam(list(model_cp.parameters()) + list(tcw_cp.parameters()), lr=args.lr)
+            for k in range(args.shots):
+                one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support,
+                                                         n_test=args.train_size_query)['support_set']
+                train_model(model_cp, tcw_cp, one_batch_dataset, loss_cp, optim_cp, binary_cp, disp_tqdm=False)
+            one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support,
+                                                     n_test=args.train_size_query)['query_set']
+            acc, avg_loss, _ = eval_model(model_cp, tcw_cp, one_batch_dataset, loss_cp, binary_cp, disp_tqdm=False)
+            logging.info("Eval acc %f loss %f", acc, avg_loss)
+            if acc > best_acc:
+                trained_general_model = (deepcopy(model), deepcopy(task_classifier))
 
 
-def init_common(args, bert_model):
-    sent_embedder = BertManager(bert_model, args.device)
-    conv_model = CNNModel(args.embed_size, torch.device("cpu"), n_filters=args.n_filters, filter_sizes=args.kernels,
-                          batch_norm_eval=True)
-    # Build unified model
-    model = Common(
-        conv_model,
-        conv_model.get_n_blocks() * args.n_filters,
-        encoder=sent_embedder if args.finetune else lambda x: x,
-    )
-    return model, conv_model, sent_embedder
+    dataset_type='fake_news'
+    model_cp, task_classifier_cp = trained_general_model
+    tcw_cp = TaskClassifierWrapper(task_classifier, dataset_type)
+    binary_cp, loss_cp = loss_task_factory(dataset_type)
+    optim_cp = torch.optim.Adam(list(model_cp.parameters()) + list(tcw_cp.parameters()), lr=args.lr)
+    for k in range(args.shots):
+        one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support,
+                                                 n_test=args.train_size_query)['support_set']
+        train_model(model_cp, tcw_cp, one_batch_dataset, loss_cp, optim_cp, binary_cp, disp_tqdm=False)
+    test_set = ep_maker.datasets[dataset_type][0]['test']
+    test_set.batch_size = 1
+    test_set.shuffle()
+    test_set = BertPreprocessor(test_set, sent_embedder, conv_model.get_max_kernel(), device=args.device, batch_size=8)
+    acc, loss, f1_stats = eval_model(model_cp, tcw_cp, test_set, loss_cp, binary_cp, disp_tqdm=False)
+    logging.info("%s: accuracy %.4f; f1: %s", test_set.file, acc, str(f1_stats))
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--max_len", type=int, default=15, help="Max number of words contained in a sentence")
@@ -161,12 +172,12 @@ if __name__ == "__main__":
                         help="JSON file containing the dataset paths")
 
     parser.add_argument("--n_epochs", type=int, default=100, help="Number of epochs")
-    parser.add_argument("--n_epochs_singletask", type=int, default=5, help="Number of shots for single-task adaptation")
     parser.add_argument("--finetune", type=lambda x: x.lower() == "true", default=False,
                         help="Set to true to fine tune bert")
     parser.add_argument("--train_size_support", type=int, default=8, help="Size of support set during training")
     parser.add_argument("--train_size_query", type=int, default=8, help="Size of query set during training")
-    # parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
+    parser.add_argument("--shots", type=int, default=8, help="Number of examples during meta validation/testing")
+    parser.add_argument("--meta_batch", type=int, default=8, help="Number of meta batches")
     parser.add_argument("--kernels", type=lambda x: [int(i) for i in x.split(',')], default="2,4,6",
                         help="Kernel sizes per cnn block")
 
