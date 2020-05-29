@@ -1,0 +1,33 @@
+
+[AMeta-epochs:   0%|          | 0/100 [00:00<?, ?it/s]
+Meta-valid 04 acc: 0.5000 loss: 639.8613 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:   1%|1         | 1/100 [00:41<1:09:04, 41.87s/it]
+Meta-valid 04 acc: 0.5000 loss: 403.1616 p: 0.0000 r: 0.0000 f1: 0.0000[AMeta-epochs:   2%|2         | 2/100 [01:23<1:08:03, 41.67s/it]
+Meta-valid 04 acc: 0.5000 loss: 1002.3780 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:   3%|3         | 3/100 [02:03<1:06:55, 41.39s/it]
+Meta-valid 04 acc: 0.5000 loss: 1512.4760 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:   4%|4         | 4/100 [02:44<1:05:41, 41.06s/it]
+Meta-valid 04 acc: 0.5000 loss: 2606.4389 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:   5%|5         | 5/100 [03:23<1:04:13, 40.56s/it]
+Meta-valid 04 acc: 0.5000 loss: 4124.6131 p: 0.2000 r: 0.4000 f1: 0.2667[AMeta-epochs:   6%|6         | 6/100 [04:03<1:03:20, 40.43s/it]
+Meta-valid 04 acc: 0.5000 loss: 3311.5575 p: 0.0000 r: 0.0000 f1: 0.0000[AMeta-epochs:   7%|7         | 7/100 [04:43<1:02:23, 40.25s/it]
+Meta-valid 04 acc: 0.5000 loss: 2495.1813 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:   8%|8         | 8/100 [05:25<1:02:40, 40.88s/it]
+Meta-valid 04 acc: 0.4960 loss: 1610.9926 p: 0.1980 r: 0.3920 f1: 0.2631[AMeta-epochs:   9%|9         | 9/100 [06:08<1:02:50, 41.44s/it]
+Meta-valid 04 acc: 0.5000 loss: 1318.4253 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:  10%|#         | 10/100 [06:49<1:01:49, 41.22s/it]
+Meta-valid 04 acc: 0.5000 loss: 1847.2273 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:  11%|#1        | 11/100 [07:30<1:01:00, 41.13s/it]
+Meta-valid 04 acc: 0.5000 loss: 1948.8352 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:  12%|#2        | 12/100 [08:11<1:00:11, 41.04s/it]
+Meta-valid 04 acc: 0.5000 loss: 1947.6144 p: 0.2000 r: 0.4000 f1: 0.2667[AMeta-epochs:  13%|#3        | 13/100 [08:52<59:38, 41.13s/it]  
+Meta-valid 04 acc: 0.5120 loss: 1846.7335 p: 0.2067 r: 0.3920 f1: 0.2705[AMeta-epochs:  14%|#4        | 14/100 [09:33<59:07, 41.25s/it]
+Meta-valid 04 acc: 0.5000 loss: 2666.4838 p: 0.2000 r: 0.4000 f1: 0.2667[AMeta-epochs:  15%|#5        | 15/100 [10:15<58:44, 41.46s/it]
+Meta-valid 04 acc: 0.5000 loss: 2516.3266 p: 0.1000 r: 0.2000 f1: 0.1333[AMeta-epochs:  16%|#6        | 16/100 [10:56<57:55, 41.37s/it]
+Meta-valid 04 acc: 0.5000 loss: 1491.1411 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:  17%|#7        | 17/100 [11:38<57:18, 41.42s/it]
+Meta-valid 04 acc: 0.5320 loss: 1702.8113 p: 0.3667 r: 0.4800 f1: 0.3748[AMeta-epochs:  18%|#8        | 18/100 [12:19<56:16, 41.18s/it]
+Meta-valid 04 acc: 0.5000 loss: 1329.1702 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:  19%|#9        | 19/100 [13:00<55:31, 41.13s/it]
+Meta-valid 04 acc: 0.5000 loss: 1215.7575 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:  20%|##        | 20/100 [13:40<54:39, 41.00s/it]
+Meta-valid 04 acc: 0.5000 loss: 723.7336 p: 0.1000 r: 0.2000 f1: 0.1333 [AMeta-epochs:  21%|##1       | 21/100 [14:20<53:33, 40.67s/it]
+Meta-valid 04 acc: 0.5000 loss: 885.5282 p: 0.3000 r: 0.6000 f1: 0.4000[AMeta-epochs:  22%|##2       | 22/100 [15:02<53:16, 40.98s/it]
+Meta-valid 04 acc: 0.5120 loss: 289.6077 p: 0.3063 r: 0.5600 f1: 0.3954[AMeta-epochs:  23%|##3       | 23/100 [15:43<52:34, 40.97s/it]
+Meta-valid 04 acc: 0.5040 loss: 292.2215 p: 0.4007 r: 0.5200 f1: 0.3923[AMeta-epochs:  24%|##4       | 24/100 [16:25<52:27, 41.41s/it]
+Meta-valid 04 acc: 0.5000 loss: 410.3635 p: 0.2000 r: 0.3760 f1: 0.2609[AMeta-epochs:  25%|##5       | 25/100 [17:07<51:42, 41.37s/it]
+Meta-valid 04 acc: 0.4640 loss: 294.3787 p: 0.1690 r: 0.2800 f1: 0.2074[AMeta-epochs:  26%|##6       | 26/100 [17:48<50:58, 41.33s/it]
+Meta-valid 04 acc: 0.5000 loss: 351.1325 p: 0.0000 r: 0.0000 f1: 0.0000[AMeta-epochs:  27%|##7       | 27/100 [18:30<50:34, 41.57s/it]
+Meta-valid 04 acc: 0.5200 loss: 169.6583 p: 0.3016 r: 0.3200 f1: 0.2793[AMeta-epochs:  28%|##8       | 28/100 [19:12<50:05, 41.74s/it]
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+Meta-valid 04 acc: 0.5120 loss: 335.0106 p: 0.5000 r: 0.6240 f1: 0.4429[AMeta-epochs:  29%|##9       | 29/100 [19:54<49:25, 41.77s/it]slurmstepd: error: *** STEP 5719994.0 ON r31n5 CANCELLED AT 2020-05-29T14:53:52 ***
+slurmstepd: error: *** JOB 5719994 ON r31n5 CANCELLED AT 2020-05-29T14:53:52 ***
