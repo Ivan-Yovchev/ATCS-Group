@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#SBATCH --mail-type=END
+#SBATCH --mail-user=EMAIL_HERE
+#SBATCH --output=/home/lgpu0039/mt_ID9/%j.job
+
+#SBATCH --job-name=mt_ID9
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=2:00:00
+#SBATCH --mem=60000M
+#SBATCH --partition=gpu_shared_course
+#SBATCH --gres=gpu:1
+
+module purge
+
+module load pre2019
+module load Python/3.6.3-foss-2017b
+module load cuDNN/7.0.5-CUDA-9.0.176
+module load NCCL/2.0.5-CUDA-9.0.176
+export LD_LIBRARY_PATH=/hpc/eb/Debian9/cuDNN/7.1-CUDA-8.0.44-GCCcore-5.4.0/lib64:$LD_LIBRARY_PATH
+
+source activate maml
+srun python -u multitask_train.py --n_epochs=100 --max_len=50 --max_sent=50 --train_size_support=32 --train_size_query=32 --shots=32 --meta_batch=32 --lr 1e-3 
