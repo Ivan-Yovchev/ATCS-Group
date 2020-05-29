@@ -205,38 +205,31 @@ def main(args):
 
         # Meta Validation
         acc, loss = 0, 0
-        stats = (0, 0, 0)
         for i in range(args.reps_eval):
             acc_temp, loss_temp, stats_temp = meta_valid(model, gcdc_Yahoo, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
             acc += acc_temp
             loss += loss_temp
-            stats = tuple(map(operator.add, stats, stats_temp))
 
         acc /= args.reps_eval
         loss /= args.reps_eval
-        stats = tuple(x/args.reps_eval for x in stats)
 
         if best_acc is None or acc > best_acc:
             best_acc = acc
             best_model = deepcopy(model)
 
-        p, r, f1 = stats
-        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f} p: {p:.4f} r: {r:.4f} f1: {f1:.4f}")
+        display_log.set_description_str(f"Meta-valid {i:02d} acc: {acc:.4f} loss: {loss:.4f}")
     display_log.close()
 
     # meta test
     acc, loss = 0, 0
-    stats = (0, 0, 0)
     for i in range(args.reps_eval):
         acc_temp, loss_temp, stats_temp = meta_valid(best_model, gcdc_Yelp, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
         acc += acc_temp
         loss += loss_temp
-        stats = tuple(map(operator.add, stats, stats_temp))
 
     acc /= args.reps_eval
     loss /= args.reps_eval
-    stats = tuple(x/args.reps_eval for x in stats)
-    print("Final: ", acc, loss, stats)
+    print("Final: ", acc, loss)
 
 
 def get_dataset_paths(dataset_json_file):
