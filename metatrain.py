@@ -217,7 +217,7 @@ def main(args):
         acc, loss = 0, 0
         stats = (0, 0, 0)
         for i in range(args.reps_eval):
-            acc_temp, loss_temp, stats_temp = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+            acc_temp, loss_temp, stats_temp = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
             acc += acc_temp
             loss += loss_temp
             stats = tuple(map(operator.add, stats, stats_temp))
@@ -238,7 +238,7 @@ def main(args):
     acc, loss = 0, 0
     stats = (0, 0, 0)
     for i in range(args.reps_eval):
-        acc_temp, loss_temp, stats_temp = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size=args.eval_q_size)
+        acc_temp, loss_temp, stats_temp = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
         acc += acc_temp
         loss += loss_temp
         stats = tuple(map(operator.add, stats, stats_temp))
