@@ -16,7 +16,7 @@ from math import ceil, floor
 
 
 def get_dataset(dataset_type, path, tokenizer, max_len, max_sent, batch_size, device, hyperpartisan_10fold=False):
-    if dataset_type == "gcdc":
+    if dataset_type.startswith("gcdc"):
         return GCDC_Dataset(path, tokenizer, max_len, max_sent, batch_size, '\n\n', device)
     elif dataset_type == "hyperpartisan":
         if hyperpartisan_10fold:
@@ -318,26 +318,10 @@ class EpisodeMaker(object):
         for dataset in datasets:
             key = dataset["name"]
 
-            if key != "gcdc":
-                self.datasets[key] = [{
-                    "train": get_dataset(key, dataset["train"], tokenizer, max_len, max_sent, 1, self.cpu_device),
-                    "test": get_dataset(key, dataset["test"], tokenizer, max_len, max_sent, 1, self.cpu_device)
-                }]
-            else:
-                path = dataset["train"]
-                if ".csv" in path:
-                    path = os.path.dirname(path)
-
-                self.datasets[key] = []
-                for ext in gcdc_ext:
-                    sub_gcdc = {
-                        "train": get_dataset(key, path + ext + "_train.csv", tokenizer, max_len, max_sent, 1,
-                                             self.cpu_device),
-                        "test": get_dataset(key, path + ext + "_test.csv", tokenizer, max_len, max_sent, 1,
-                                            self.cpu_device)
-                    }
-
-                    self.datasets[key].append(sub_gcdc)
+            self.datasets[key] = [{
+                "train": get_dataset(key, dataset["train"], tokenizer, max_len, max_sent, 1, self.cpu_device),
+                "test": get_dataset(key, dataset["test"], tokenizer, max_len, max_sent, 1, self.cpu_device)
+            }]
 
     def get_episode(self, dataset_type, n_train=8, n_test=8, classes_sampled="all", batch_size_when_all=32):
 

@@ -140,7 +140,7 @@ def main(args):
     bert_model = BertModel.from_pretrained('bert-base-uncased')
 
     # Define tasks episodes
-    fake_news_desc, gcdc_desc, partisan_desc, pers_desc = get_dataset_paths(args.dataset_json)
+    gcdc_Clinton_desc,  gcdc_Enron_desc, gcdc_Yahoo_desc, gcdc_Yelp_desc = get_dataset_paths(args.dataset_json)
 
     # Init Bert layer
     sent_embedder = BertManager(bert_model, args.device)
@@ -161,43 +161,33 @@ def main(args):
         args.max_sent,
         model.cnn.get_max_kernel(),
         args.device,
-        datasets=[gcdc_desc, pers_desc, partisan_desc, fake_news_desc],
+        datasets=[gcdc_Clinton_desc,  gcdc_Enron_desc, gcdc_Yahoo_desc, gcdc_Yelp_desc],
         sent_embedder=None if args.finetune else sent_embedder
     )
 
     # Define tasks
-    gcdc = Task(
-        lambda m=8, n=8: ep_maker.get_episode('gcdc', n_train=m, n_test=n),
+    gcdc_Clinton = Task(
+        lambda m=8, n=8: ep_maker.get_episode('gcdc_Clinton', n_train=m, n_test=n),
         nn.CrossEntropyLoss(),
         3
     )
 
-    scheduler = Scheduler(
-        epochs=args.meta_epochs*3,
-        sampler=persuasiveness_scheduler
+    gcdc_Enron = Task(
+        lambda m=8, n=8: ep_maker.get_episode('gcdc_Enron', n_train=m, n_test=n),
+        nn.CrossEntropyLoss(),
+        3
     )
 
-    persuasiveness = Task(
-        lambda m=8, n=8: ep_maker.get_episode(
-            'persuasiveness',
-            n_train=m,
-            n_test=n,
-            classes_sampled=scheduler,
-        ),
+    gcdc_Yahoo = Task(
+        lambda m=8, n=8: ep_maker.get_episode('gcdc_Yahoo', n_train=m, n_test=n),
         nn.CrossEntropyLoss(),
-        6
+        3
     )
 
-    partisan = Task(
-        lambda m=8, n=8: ep_maker.get_episode('hyperpartisan', n_train=m, n_test=n),
+    gcdc_Yelp = Task(
+        lambda m=8, n=8: ep_maker.get_episode('gcdc_Yelp', n_train=m, n_test=n),
         nn.CrossEntropyLoss(),
-        2
-    )
-
-    fake_news = Task(
-        lambda m=8, n=8: ep_maker.get_episode('fake_news', n_train=m, n_test=n),
-        nn.CrossEntropyLoss(),
-        2
+        3
     )
 
     # Define optimizer constructor
@@ -210,14 +200,14 @@ def main(args):
     # meta train
     display_log = tqdm(range(args.meta_epochs), total=0, position=1, bar_format='{desc}')
     for i in tqdm(range(args.meta_epochs), desc="Meta-epochs", total=args.meta_epochs, position=0):
-        run_task_batch(model, random.choices([gcdc, persuasiveness], k=args.meta_batch), outer_optim, inner_optim, n_train=args.train_size_support,
+        run_task_batch(model, random.choices([gcdc_Clinton, gcdc_Enron], k=args.meta_batch), outer_optim, inner_optim, n_train=args.train_size_support,
                        n_test=args.train_size_query, n_inner = args.n_inner)
 
         # Meta Validation
         acc, loss = 0, 0
         stats = (0, 0, 0)
         for i in range(args.reps_eval):
-            acc_temp, loss_temp, stats_temp = meta_valid(model, partisan, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+            acc_temp, loss_temp, stats_temp = meta_valid(model, gcdc_Yahoo, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
             acc += acc_temp
             loss += loss_temp
             stats = tuple(map(operator.add, stats, stats_temp))
@@ -238,7 +228,7 @@ def main(args):
     acc, loss = 0, 0
     stats = (0, 0, 0)
     for i in range(args.reps_eval):
-        acc_temp, loss_temp, stats_temp = meta_valid(best_model, fake_news, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
+        acc_temp, loss_temp, stats_temp = meta_valid(best_model, gcdc_Yelp, inner_optim, args.n_inner, support_set_size=args.shots, query_set_size='all')
         acc += acc_temp
         loss += loss_temp
         stats = tuple(map(operator.add, stats, stats_temp))
@@ -252,12 +242,7 @@ def main(args):
 def get_dataset_paths(dataset_json_file):
     with open(dataset_json_file, 'r') as f:
         dataset_desc = json.load(f)
-    gcdc_desc = dataset_desc['gcdc']
-    pers_desc = dataset_desc['persuasiveness']
-    partisan_desc = dataset_desc['hyperpartisan']
-    fake_news_desc = dataset_desc['fake_news']
-    return fake_news_desc, gcdc_desc, partisan_desc, pers_desc
-
+    return dataset_desc['gcdc_Clinton'], dataset_desc['gcdc_Enron'], dataset_desc['gcdc_Yahoo'], dataset_desc['gcdc_Yelp']
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
