@@ -1,0 +1,104 @@
+
+[AMeta-epochs:   0%|          | 0/100 [00:00<?, ?it/s]
+Meta-valid 04 acc: 0.2946 loss: 206.0679[AMeta-epochs:   1%|1         | 1/100 [01:17<2:07:51, 77.49s/it]
+Meta-valid 04 acc: 0.3366 loss: 168.0260[AMeta-epochs:   2%|2         | 2/100 [02:25<2:01:56, 74.66s/it]
+Meta-valid 04 acc: 0.3491 loss: 93.1125 [AMeta-epochs:   3%|3         | 3/100 [03:30<1:56:13, 71.89s/it]
+Meta-valid 04 acc: 0.4089 loss: 216.1138[AMeta-epochs:   4%|4         | 4/100 [04:36<1:51:59, 70.00s/it]
+Meta-valid 04 acc: 0.3473 loss: 408.0924[AMeta-epochs:   5%|5         | 5/100 [05:46<1:50:39, 69.88s/it]
+Meta-valid 04 acc: 0.2884 loss: 557.6793[AMeta-epochs:   6%|6         | 6/100 [06:56<1:49:31, 69.91s/it]
+Meta-valid 04 acc: 0.3098 loss: 1361.2511[AMeta-epochs:   7%|7         | 7/100 [08:03<1:47:00, 69.04s/it]
+Meta-valid 04 acc: 0.4080 loss: 1110.0554[AMeta-epochs:   8%|8         | 8/100 [09:13<1:46:41, 69.58s/it]
+Meta-valid 04 acc: 0.3464 loss: 1465.7216[AMeta-epochs:   9%|9         | 9/100 [10:30<1:48:46, 71.72s/it]
+Meta-valid 04 acc: 0.4196 loss: 959.4203 [AMeta-epochs:  10%|#         | 10/100 [11:47<1:49:49, 73.22s/it]
+Meta-valid 04 acc: 0.3402 loss: 1182.2636[AMeta-epochs:  11%|#1        | 11/100 [13:03<1:50:01, 74.18s/it]
+Meta-valid 04 acc: 0.3563 loss: 825.6890 [AMeta-epochs:  12%|#2        | 12/100 [14:22<1:50:35, 75.41s/it]
+Meta-valid 04 acc: 0.2857 loss: 772.6952[AMeta-epochs:  13%|#3        | 13/100 [15:37<1:49:07, 75.26s/it]
+Meta-valid 04 acc: 0.4241 loss: 494.4554[AMeta-epochs:  14%|#4        | 14/100 [16:55<1:49:04, 76.10s/it]
+Meta-valid 04 acc: 0.4580 loss: 296.1417[AMeta-epochs:  15%|#5        | 15/100 [18:12<1:48:30, 76.60s/it]
+Meta-valid 04 acc: 0.2357 loss: 337.3198[AMeta-epochs:  16%|#6        | 16/100 [19:30<1:47:34, 76.84s/it]
+Meta-valid 04 acc: 0.2777 loss: 125.4796[AMeta-epochs:  17%|#7        | 17/100 [20:47<1:46:34, 77.05s/it]
+Meta-valid 04 acc: 0.2214 loss: 87.3414 [AMeta-epochs:  18%|#8        | 18/100 [22:05<1:45:31, 77.22s/it]
+Meta-valid 04 acc: 0.3420 loss: 56.1924[AMeta-epochs:  19%|#9        | 19/100 [23:20<1:43:15, 76.49s/it]
+Meta-valid 04 acc: 0.4241 loss: 39.0560[AMeta-epochs:  20%|##        | 20/100 [24:37<1:42:24, 76.80s/it]
+Meta-valid 04 acc: 0.3643 loss: 33.4236[AMeta-epochs:  21%|##1       | 21/100 [25:54<1:41:13, 76.88s/it]
+Meta-valid 04 acc: 0.2964 loss: 30.0817[AMeta-epochs:  22%|##2       | 22/100 [27:11<1:39:54, 76.85s/it]
+Meta-valid 04 acc: 0.2750 loss: 36.6407[AMeta-epochs:  23%|##3       | 23/100 [28:28<1:38:37, 76.85s/it]
+Meta-valid 04 acc: 0.2777 loss: 14.6343[AMeta-epochs:  24%|##4       | 24/100 [29:46<1:37:44, 77.16s/it]
+Meta-valid 04 acc: 0.4098 loss: 13.7816[AMeta-epochs:  25%|##5       | 25/100 [31:04<1:36:41, 77.35s/it]
+Meta-valid 04 acc: 0.3179 loss: 17.7393[AMeta-epochs:  26%|##6       | 26/100 [32:18<1:34:09, 76.35s/it]
+Meta-valid 04 acc: 0.3554 loss: 12.3702[AMeta-epochs:  27%|##7       | 27/100 [33:28<1:30:34, 74.45s/it]
+Meta-valid 04 acc: 0.3241 loss: 10.5968[AMeta-epochs:  28%|##8       | 28/100 [34:44<1:30:11, 75.15s/it]
+Meta-valid 04 acc: 0.4071 loss: 7.7711 [AMeta-epochs:  29%|##9       | 29/100 [35:59<1:28:33, 74.84s/it]
+Meta-valid 04 acc: 0.3000 loss: 8.2425[AMeta-epochs:  30%|###       | 30/100 [37:16<1:28:07, 75.53s/it]
+Meta-valid 04 acc: 0.3295 loss: 3.9657[AMeta-epochs:  31%|###1      | 31/100 [38:31<1:26:43, 75.41s/it]
+Meta-valid 04 acc: 0.4679 loss: 2.3314[AMeta-epochs:  32%|###2      | 32/100 [39:44<1:24:48, 74.83s/it]
+Meta-valid 04 acc: 0.3857 loss: 3.3825[AMeta-epochs:  33%|###3      | 33/100 [41:03<1:24:50, 75.98s/it]
+Meta-valid 04 acc: 0.4054 loss: 2.3783[AMeta-epochs:  34%|###4      | 34/100 [42:20<1:23:53, 76.26s/it]
+Meta-valid 04 acc: 0.3491 loss: 1.6279[AMeta-epochs:  35%|###5      | 35/100 [43:36<1:22:43, 76.36s/it]
+Meta-valid 04 acc: 0.3536 loss: 2.2549[AMeta-epochs:  36%|###6      | 36/100 [44:54<1:21:42, 76.60s/it]
+Meta-valid 04 acc: 0.3821 loss: 1.2548[AMeta-epochs:  37%|###7      | 37/100 [46:11<1:20:42, 76.86s/it]
+Meta-valid 04 acc: 0.4527 loss: 1.1161[AMeta-epochs:  38%|###8      | 38/100 [47:26<1:18:58, 76.42s/it]
+Meta-valid 04 acc: 0.3795 loss: 1.1774[AMeta-epochs:  39%|###9      | 39/100 [48:42<1:17:30, 76.23s/it]
+Meta-valid 04 acc: 0.4304 loss: 1.1765[AMeta-epochs:  40%|####      | 40/100 [50:00<1:16:48, 76.81s/it]
+Meta-valid 04 acc: 0.3563 loss: 1.1603[AMeta-epochs:  41%|####1     | 41/100 [51:17<1:15:31, 76.81s/it]
+Meta-valid 04 acc: 0.3527 loss: 1.1197[AMeta-epochs:  42%|####2     | 42/100 [52:30<1:13:11, 75.72s/it]
+Meta-valid 04 acc: 0.2571 loss: 1.1949[AMeta-epochs:  43%|####3     | 43/100 [53:47<1:12:07, 75.91s/it]
+Meta-valid 04 acc: 0.2527 loss: 1.1529[AMeta-epochs:  44%|####4     | 44/100 [55:05<1:11:30, 76.62s/it]
+Meta-valid 04 acc: 0.2527 loss: 1.1795[AMeta-epochs:  45%|####5     | 45/100 [56:20<1:09:49, 76.18s/it]
+Meta-valid 04 acc: 0.3045 loss: 1.1382[AMeta-epochs:  46%|####6     | 46/100 [57:38<1:08:58, 76.63s/it]
+Meta-valid 04 acc: 0.2687 loss: 1.1309[AMeta-epochs:  47%|####6     | 47/100 [58:54<1:07:32, 76.46s/it]
+Meta-valid 04 acc: 0.2679 loss: 1.2026[AMeta-epochs:  48%|####8     | 48/100 [1:00:11<1:06:27, 76.69s/it]
+Meta-valid 04 acc: 0.2866 loss: 1.1491[AMeta-epochs:  49%|####9     | 49/100 [1:01:27<1:04:56, 76.41s/it]
+Meta-valid 04 acc: 0.2455 loss: 1.2066[AMeta-epochs:  50%|#####     | 50/100 [1:02:44<1:03:45, 76.50s/it]
+Meta-valid 04 acc: 0.2348 loss: 1.1612[AMeta-epochs:  51%|#####1    | 51/100 [1:03:59<1:02:17, 76.28s/it]
+Meta-valid 04 acc: 0.2455 loss: 1.1840[AMeta-epochs:  52%|#####2    | 52/100 [1:05:11<59:47, 74.74s/it]  
+Meta-valid 04 acc: 0.2509 loss: 1.1631[AMeta-epochs:  53%|#####3    | 53/100 [1:06:23<58:07, 74.20s/it]
+Meta-valid 04 acc: 0.2491 loss: 1.1700[AMeta-epochs:  54%|#####4    | 54/100 [1:07:39<57:14, 74.66s/it]
+Meta-valid 04 acc: 0.2938 loss: 1.1575[AMeta-epochs:  55%|#####5    | 55/100 [1:08:48<54:41, 72.92s/it]
+Meta-valid 04 acc: 0.2420 loss: 1.1478[AMeta-epochs:  56%|#####6    | 56/100 [1:10:04<54:03, 73.71s/it]
+Meta-valid 04 acc: 0.2313 loss: 1.1416[AMeta-epochs:  57%|#####6    | 57/100 [1:11:20<53:18, 74.39s/it]
+Meta-valid 04 acc: 0.2313 loss: 1.1726[AMeta-epochs:  58%|#####8    | 58/100 [1:12:27<50:37, 72.31s/it]
+Meta-valid 04 acc: 0.2473 loss: 1.1455[AMeta-epochs:  59%|#####8    | 59/100 [1:13:35<48:30, 70.99s/it]
+Meta-valid 04 acc: 0.2580 loss: 1.1620[AMeta-epochs:  60%|######    | 60/100 [1:14:43<46:43, 70.09s/it]
+Meta-valid 04 acc: 0.2429 loss: 1.1435[AMeta-epochs:  61%|######1   | 61/100 [1:15:51<45:15, 69.62s/it]
+Meta-valid 04 acc: 0.2973 loss: 1.1300[AMeta-epochs:  62%|######2   | 62/100 [1:16:59<43:40, 68.95s/it]
+Meta-valid 04 acc: 0.3438 loss: 1.1382[AMeta-epochs:  63%|######3   | 63/100 [1:18:07<42:16, 68.57s/it]
+Meta-valid 04 acc: 0.2598 loss: 1.1714[AMeta-epochs:  64%|######4   | 64/100 [1:19:16<41:15, 68.75s/it]
+Meta-valid 04 acc: 0.2384 loss: 1.1279[AMeta-epochs:  65%|######5   | 65/100 [1:20:22<39:41, 68.05s/it]
+Meta-valid 04 acc: 0.2321 loss: 1.1899[AMeta-epochs:  66%|######6   | 66/100 [1:21:31<38:46, 68.43s/it]
+Meta-valid 04 acc: 0.2277 loss: 1.1395[AMeta-epochs:  67%|######7   | 67/100 [1:22:45<38:27, 69.92s/it]
+Meta-valid 04 acc: 0.2464 loss: 1.1537[AMeta-epochs:  68%|######8   | 68/100 [1:23:50<36:36, 68.63s/it]
+Meta-valid 04 acc: 0.2348 loss: 1.1485[AMeta-epochs:  69%|######9   | 69/100 [1:24:56<34:59, 67.72s/it]
+Meta-valid 04 acc: 0.2446 loss: 1.1523[AMeta-epochs:  70%|#######   | 70/100 [1:26:02<33:33, 67.11s/it]
+Meta-valid 04 acc: 0.2464 loss: 1.1752[AMeta-epochs:  71%|#######1  | 71/100 [1:27:05<31:56, 66.08s/it]
+Meta-valid 04 acc: 0.2402 loss: 1.1510[AMeta-epochs:  72%|#######2  | 72/100 [1:28:11<30:50, 66.07s/it]
+Meta-valid 04 acc: 0.2411 loss: 1.1633[AMeta-epochs:  73%|#######3  | 73/100 [1:29:17<29:40, 65.95s/it]
+Meta-valid 04 acc: 0.2562 loss: 1.1652[AMeta-epochs:  74%|#######4  | 74/100 [1:30:23<28:35, 65.97s/it]
+Meta-valid 04 acc: 0.2491 loss: 1.1482[AMeta-epochs:  75%|#######5  | 75/100 [1:31:28<27:22, 65.69s/it]
+Meta-valid 04 acc: 0.2482 loss: 1.1492[AMeta-epochs:  76%|#######6  | 76/100 [1:32:36<26:29, 66.21s/it]
+Meta-valid 04 acc: 0.2375 loss: 1.1523[AMeta-epochs:  77%|#######7  | 77/100 [1:33:44<25:37, 66.87s/it]
+Meta-valid 04 acc: 0.2393 loss: 1.1653[AMeta-epochs:  78%|#######8  | 78/100 [1:34:51<24:33, 66.96s/it]
+Meta-valid 04 acc: 0.2295 loss: 1.1496[AMeta-epochs:  79%|#######9  | 79/100 [1:35:57<23:16, 66.50s/it]
+Meta-valid 04 acc: 0.2732 loss: 1.1892[AMeta-epochs:  80%|########  | 80/100 [1:37:03<22:08, 66.40s/it]
+Meta-valid 04 acc: 0.2518 loss: 1.1369[AMeta-epochs:  81%|########1 | 81/100 [1:38:09<21:02, 66.46s/it]
+Meta-valid 04 acc: 0.3098 loss: 1.1241[AMeta-epochs:  82%|########2 | 82/100 [1:39:16<19:58, 66.59s/it]
+Meta-valid 04 acc: 0.2509 loss: 1.1330[AMeta-epochs:  83%|########2 | 83/100 [1:40:22<18:48, 66.38s/it]
+Meta-valid 04 acc: 0.2348 loss: 1.1270[AMeta-epochs:  84%|########4 | 84/100 [1:41:27<17:36, 66.02s/it]
+Meta-valid 04 acc: 0.2473 loss: 1.1441[AMeta-epochs:  85%|########5 | 85/100 [1:42:33<16:30, 66.01s/it]
+Meta-valid 04 acc: 0.2598 loss: 1.1384[AMeta-epochs:  86%|########6 | 86/100 [1:43:39<15:22, 65.89s/it]
+Meta-valid 04 acc: 0.2509 loss: 1.1273[AMeta-epochs:  87%|########7 | 87/100 [1:44:42<14:06, 65.12s/it]
+Meta-valid 04 acc: 0.2554 loss: 1.1572[AMeta-epochs:  88%|########8 | 88/100 [1:45:47<13:01, 65.12s/it]
+Meta-valid 04 acc: 0.2366 loss: 1.1301[AMeta-epochs:  89%|########9 | 89/100 [1:46:54<12:01, 65.57s/it]
+Meta-valid 04 acc: 0.2366 loss: 1.1429[AMeta-epochs:  90%|######### | 90/100 [1:48:02<11:02, 66.22s/it]
+Meta-valid 04 acc: 0.2348 loss: 1.1335[AMeta-epochs:  91%|#########1| 91/100 [1:49:05<09:48, 65.37s/it]
+Meta-valid 04 acc: 0.2375 loss: 1.1374[AMeta-epochs:  92%|#########2| 92/100 [1:50:10<08:42, 65.30s/it]
+Meta-valid 04 acc: 0.2295 loss: 1.1464[AMeta-epochs:  93%|#########3| 93/100 [1:51:16<07:38, 65.43s/it]
+Meta-valid 04 acc: 0.2554 loss: 1.1370[AMeta-epochs:  94%|#########3| 94/100 [1:52:19<06:29, 64.84s/it]
+Meta-valid 04 acc: 0.2562 loss: 1.1535[AMeta-epochs:  95%|#########5| 95/100 [1:53:25<05:25, 65.13s/it]
+Meta-valid 04 acc: 0.2348 loss: 1.1357[AMeta-epochs:  96%|#########6| 96/100 [1:54:33<04:23, 65.96s/it]
+Meta-valid 04 acc: 0.2268 loss: 1.1473[AMeta-epochs:  97%|#########7| 97/100 [1:55:39<03:17, 65.85s/it]
+Meta-valid 04 acc: 0.2536 loss: 1.1598[AMeta-epochs:  98%|#########8| 98/100 [1:56:45<02:11, 65.89s/it]
+Meta-valid 04 acc: 0.2420 loss: 1.1656[AMeta-epochs:  99%|#########9| 99/100 [1:57:50<01:05, 65.65s/it]
+Meta-valid 04 acc: 0.2509 loss: 1.1727[AMeta-epochs: 100%|##########| 100/100 [1:58:57<00:00, 66.01s/it]Meta-epochs: 100%|##########| 100/100 [1:58:57<00:00, 71.37s/it]
+Meta-valid 04 acc: 0.2509 loss: 1.1727
+Final:  0.3169642857142857 1.5454552820750647
