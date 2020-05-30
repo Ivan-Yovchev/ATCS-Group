@@ -97,7 +97,7 @@ def main(args):
 
     task_classifier = task_classifier.to(args.device)
     model = model.to(args.device)
-    optim = torch.optim.AdamW(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
+    optim = torch.optim.Adam(list(model.parameters()) + list(task_classifier.parameters()), lr=args.lr)
     best_acc = 0.
 
     logging.info('Multitask training starting.')
