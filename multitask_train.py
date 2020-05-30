@@ -51,7 +51,7 @@ class TaskClassifierWrapper(nn.Module):
     def _retrieve_interval(dataset_type: str) -> Tuple[int, int]:
         # TODO maybe let's not hardcode it?
         # contains the relevant portions of each task in the task_classifier output
-        if dataset_type == 'gcdc':
+        if dataset_type.startswith('gcdc'):
             return 0, 3
         if dataset_type == 'persuasiveness':
             return 3, 6
@@ -106,7 +106,7 @@ def main(args):
     for batch_nr in range(args.n_epochs):
         for _ in range(args.meta_batch):
             optim.zero_grad()
-            dataset_type = random.choice(['gcdc', 'persuasiveness'])
+            dataset_type = random.choice(['gcdc_Clinton', 'gcdc_Yahoo'])
             one_batch_dataset = ep_maker.get_episode(dataset_type=dataset_type, n_train=args.train_size_support)[
                 'support_set']
             binary, loss = loss_task_factory(dataset_type)
@@ -124,7 +124,7 @@ def main(args):
                           max(p.grad.max() for p in model.parameters() if p.grad is not None))
 
         if batch_nr % 5 == 0:
-            dataset_type = 'hyperpartisan'
+            dataset_type = 'gcdc_Yelp'
             model_cp = deepcopy(model)
             tcw_cp = TaskClassifierWrapper(deepcopy(task_classifier), dataset_type)
             binary_cp, loss_cp = loss_task_factory(dataset_type)
@@ -141,7 +141,7 @@ def main(args):
                 trained_general_model = (deepcopy(model), deepcopy(task_classifier))
 
 
-    dataset_type='fake_news'
+    dataset_type='gcdc_Enron'
     model_cp, task_classifier_cp = trained_general_model
     tcw_cp = TaskClassifierWrapper(task_classifier, dataset_type)
     binary_cp, loss_cp = loss_task_factory(dataset_type)

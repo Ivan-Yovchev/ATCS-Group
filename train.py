@@ -207,7 +207,7 @@ def construct_common_model(finetune, conv_model, sent_embedder):
 
 def loss_task_factory(dataset_type):
     loss = None
-    if dataset_type in ["gcdc", "persuasiveness"]:
+    if dataset_type.startswith('gcdc') or dataset_type == "persuasiveness":
         loss = nn.CrossEntropyLoss()
         binary_classification = False
     elif dataset_type in ["hyperpartisan", "fake_news"]:
@@ -221,7 +221,7 @@ def loss_task_factory(dataset_type):
 def task_classifier_factory(args):
     task_classifier = None
     input_dim = len(args.kernels) * args.n_filters
-    if args.dataset_type == "gcdc":
+    if args.dataset_type.startswith("gcdc"):
         task_classifier = nn.Linear(input_dim, 3)
     elif args.dataset_type in ["hyperpartisan", "fake_news"]:
         task_classifier = nn.Sequential(nn.Linear(input_dim, 1), nn.Sigmoid())
