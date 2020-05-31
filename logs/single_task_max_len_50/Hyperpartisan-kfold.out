@@ -1,0 +1,1514 @@
+Starting script
+Hyperpartisan kfold
+Fold 0. Initial acc: 0.3438 loss: 0.7987
+Epoch:  0
+Avg loss:  0.6520028829574585
+Fold 0. Epoch 00: train acc: 0.6327 train loss: 0.6520 valid acc: 0.3438 valid loss: 0.9302
+Epoch:  1
+Avg loss:  0.6304604232311248
+Fold 0. Epoch 01: train acc: 0.6047 train loss: 0.6305 valid acc: 0.4707 valid loss: 0.6624
+Epoch:  2
+Avg loss:  0.5922728657722474
+Fold 0. Epoch 02: train acc: 0.6113 train loss: 0.5923 valid acc: 0.3438 valid loss: 1.0609
+Epoch:  3
+Avg loss:  0.5609687268733978
+Fold 0. Epoch 03: train acc: 0.6206 train loss: 0.5610 valid acc: 0.4707 valid loss: 0.6615
+Epoch:  4
+Avg loss:  0.5569768726825715
+Fold 0. Epoch 04: train acc: 0.5942 train loss: 0.5570 valid acc: 0.3584 valid loss: 0.9702
+Epoch:  5
+Avg loss:  0.5182103961706161
+Fold 0. Epoch 05: train acc: 0.6073 train loss: 0.5182 valid acc: 0.4268 valid loss: 0.7408
+Epoch:  6
+Avg loss:  0.48982869684696195
+Fold 0. Epoch 06: train acc: 0.6276 train loss: 0.4898 valid acc: 0.3926 valid loss: 0.8214
+Epoch:  7
+Avg loss:  0.5182617127895355
+Fold 0. Epoch 07: train acc: 0.6193 train loss: 0.5183 valid acc: 0.3926 valid loss: 0.8594
+Epoch:  8
+Avg loss:  0.5294071018695832
+Fold 0. Epoch 08: train acc: 0.6226 train loss: 0.5294 valid acc: 0.4121 valid loss: 0.7917
+Epoch:  9
+Avg loss:  0.5047278076410293
+Fold 0. Epoch 09: train acc: 0.6406 train loss: 0.5047 valid acc: 0.4268 valid loss: 0.7792
+Epoch:  10
+Avg loss:  0.4691694170236588
+Fold 0. Epoch 10: train acc: 0.6209 train loss: 0.4692 valid acc: 0.3730 valid loss: 0.8815
+Epoch:  11
+Avg loss:  0.4873478412628174
+Fold 0. Epoch 11: train acc: 0.6040 train loss: 0.4873 valid acc: 0.4072 valid loss: 0.8080
+Epoch:  12
+Avg loss:  0.4833892732858658
+Fold 0. Epoch 12: train acc: 0.6234 train loss: 0.4834 valid acc: 0.4756 valid loss: 0.7218
+Epoch:  13
+Avg loss:  0.48351851403713225
+Fold 0. Epoch 13: train acc: 0.5914 train loss: 0.4835 valid acc: 0.3633 valid loss: 0.9648
+Epoch:  14
+Avg loss:  0.48764970898628235
+Fold 0. Epoch 14: train acc: 0.6143 train loss: 0.4876 valid acc: 0.4805 valid loss: 0.7004
+Epoch:  15
+Avg loss:  0.49234730899333956
+Fold 0. Epoch 15: train acc: 0.5770 train loss: 0.4923 valid acc: 0.3633 valid loss: 0.9800
+Epoch:  16
+Avg loss:  0.4842148333787918
+Fold 0. Epoch 16: train acc: 0.6169 train loss: 0.4842 valid acc: 0.4463 valid loss: 0.7798
+Epoch:  17
+Avg loss:  0.4580410152673721
+Fold 0. Epoch 17: train acc: 0.6150 train loss: 0.4580 valid acc: 0.4463 valid loss: 0.7923
+Epoch:  18
+Avg loss:  0.46169100403785707
+Fold 0. Epoch 18: train acc: 0.5711 train loss: 0.4617 valid acc: 0.4023 valid loss: 0.8410
+Epoch:  19
+Avg loss:  0.45621858835220336
+Fold 0. Epoch 19: train acc: 0.6013 train loss: 0.4562 valid acc: 0.4658 valid loss: 0.7478
+Epoch:  20
+Avg loss:  0.4505325496196747
+Fold 0. Epoch 20: train acc: 0.5804 train loss: 0.4505 valid acc: 0.4316 valid loss: 0.8050
+Epoch:  21
+Avg loss:  0.4233311265707016
+Fold 0. Epoch 21: train acc: 0.6125 train loss: 0.4233 valid acc: 0.4463 valid loss: 0.7787
+Epoch:  22
+Avg loss:  0.4513023644685745
+Fold 0. Epoch 22: train acc: 0.5879 train loss: 0.4513 valid acc: 0.4072 valid loss: 0.8313
+Epoch:  23
+Avg loss:  0.4289915919303894
+Fold 0. Epoch 23: train acc: 0.6172 train loss: 0.4290 valid acc: 0.4463 valid loss: 0.7848
+Epoch:  24
+Avg loss:  0.4178285747766495
+Fold 0. Epoch 24: train acc: 0.6378 train loss: 0.4178 valid acc: 0.4219 valid loss: 0.8153
+Epoch:  25
+Avg loss:  0.4567172169685364
+Fold 0. Epoch 25: train acc: 0.5938 train loss: 0.4567 valid acc: 0.4268 valid loss: 0.8249
+Epoch:  26
+Avg loss:  0.41933058202266693
+Fold 0. Epoch 26: train acc: 0.6109 train loss: 0.4193 valid acc: 0.4463 valid loss: 0.7799
+Epoch:  27
+Avg loss:  0.42727184295654297
+Fold 0. Epoch 27: train acc: 0.6051 train loss: 0.4273 valid acc: 0.4219 valid loss: 0.8183
+Epoch:  28
+Avg loss:  0.4259728193283081
+Fold 0. Epoch 28: train acc: 0.5929 train loss: 0.4260 valid acc: 0.4561 valid loss: 0.7695
+Epoch:  29
+Avg loss:  0.4697157770395279
+Fold 0. Epoch 29: train acc: 0.5874 train loss: 0.4697 valid acc: 0.4023 valid loss: 0.8240
+Epoch:  30
+Avg loss:  0.42335273027420045
+Fold 0. Epoch 30: train acc: 0.5903 train loss: 0.4234 valid acc: 0.4609 valid loss: 0.7605
+Epoch:  31
+Avg loss:  0.4631765365600586
+Fold 0. Epoch 31: train acc: 0.5885 train loss: 0.4632 valid acc: 0.4609 valid loss: 0.7701
+Epoch:  32
+Avg loss:  0.399147929251194
+Fold 0. Epoch 32: train acc: 0.5895 train loss: 0.3991 valid acc: 0.4463 valid loss: 0.7797
+Epoch:  33
+Avg loss:  0.42156914472579954
+Fold 0. Epoch 33: train acc: 0.5899 train loss: 0.4216 valid acc: 0.4414 valid loss: 0.7977
+Epoch:  34
+Avg loss:  0.41528562605381014
+Fold 0. Epoch 34: train acc: 0.5995 train loss: 0.4153 valid acc: 0.4512 valid loss: 0.7941
+Epoch:  35
+Avg loss:  0.4098497420549393
+Fold 0. Epoch 35: train acc: 0.5930 train loss: 0.4098 valid acc: 0.4463 valid loss: 0.7930
+Epoch:  36
+Avg loss:  0.42580328285694125
+Fold 0. Epoch 36: train acc: 0.6074 train loss: 0.4258 valid acc: 0.4561 valid loss: 0.7754
+Epoch:  37
+Avg loss:  0.4043325871229172
+Fold 0. Epoch 37: train acc: 0.6410 train loss: 0.4043 valid acc: 0.3926 valid loss: 0.8654
+Epoch:  38
+Avg loss:  0.42551277577877045
+Fold 0. Epoch 38: train acc: 0.5931 train loss: 0.4255 valid acc: 0.4561 valid loss: 0.7676
+Epoch:  39
+Avg loss:  0.4217331498861313
+Fold 0. Epoch 39: train acc: 0.5772 train loss: 0.4217 valid acc: 0.4658 valid loss: 0.7531
+Epoch:  40
+Avg loss:  0.4133166342973709
+Fold 0. Epoch 40: train acc: 0.5807 train loss: 0.4133 valid acc: 0.4561 valid loss: 0.7698
+Epoch:  41
+Avg loss:  0.40663316249847414
+Fold 0. Epoch 41: train acc: 0.5786 train loss: 0.4066 valid acc: 0.4561 valid loss: 0.7693
+Epoch:  42
+Avg loss:  0.40377271473407744
+Fold 0. Epoch 42: train acc: 0.5989 train loss: 0.4038 valid acc: 0.4463 valid loss: 0.7860
+Epoch:  43
+Avg loss:  0.3907536953687668
+Fold 0. Epoch 43: train acc: 0.6046 train loss: 0.3908 valid acc: 0.4170 valid loss: 0.8180
+Epoch:  44
+Avg loss:  0.40728093683719635
+Fold 0. Epoch 44: train acc: 0.5978 train loss: 0.4073 valid acc: 0.4463 valid loss: 0.7910
+Epoch:  45
+Avg loss:  0.3963029861450195
+Fold 0. Epoch 45: train acc: 0.5731 train loss: 0.3963 valid acc: 0.4658 valid loss: 0.7352
+Epoch:  46
+Avg loss:  0.4139514952898026
+Fold 0. Epoch 46: train acc: 0.5920 train loss: 0.4140 valid acc: 0.4463 valid loss: 0.8009
+Epoch:  47
+Avg loss:  0.3996338963508606
+Fold 0. Epoch 47: train acc: 0.5964 train loss: 0.3996 valid acc: 0.4365 valid loss: 0.8147
+Epoch:  48
+Avg loss:  0.38753373026847837
+Fold 0. Epoch 48: train acc: 0.6288 train loss: 0.3875 valid acc: 0.4609 valid loss: 0.7638
+Epoch:  49
+Avg loss:  0.3847497656941414
+Fold 0. Epoch 49: train acc: 0.5824 train loss: 0.3847 valid acc: 0.4365 valid loss: 0.8090
+Fold 1. Initial acc: 0.6094 loss: 0.6993
+Epoch:  0
+Avg loss:  0.6572116434574127
+Fold 1. Epoch 00: train acc: 0.5932 train loss: 0.6572 valid acc: 0.5718 valid loss: 0.6246
+Epoch:  1
+Avg loss:  0.5944287836551666
+Fold 1. Epoch 01: train acc: 0.5815 train loss: 0.5944 valid acc: 0.5991 valid loss: 0.6177
+Epoch:  2
+Avg loss:  0.6083156645298005
+Fold 1. Epoch 02: train acc: 0.5966 train loss: 0.6083 valid acc: 0.5718 valid loss: 0.5813
+Epoch:  3
+Avg loss:  0.5588786661624908
+Fold 1. Epoch 03: train acc: 0.6134 train loss: 0.5589 valid acc: 0.5649 valid loss: 0.5667
+Epoch:  4
+Avg loss:  0.5333186566829682
+Fold 1. Epoch 04: train acc: 0.5966 train loss: 0.5333 valid acc: 0.5718 valid loss: 0.5529
+Epoch:  5
+Avg loss:  0.5360070765018463
+Fold 1. Epoch 05: train acc: 0.5764 train loss: 0.5360 valid acc: 0.5820 valid loss: 0.5593
+Epoch:  6
+Avg loss:  0.5379790514707565
+Fold 1. Epoch 06: train acc: 0.5848 train loss: 0.5380 valid acc: 0.5718 valid loss: 0.5414
+Epoch:  7
+Avg loss:  0.559588623046875
+Fold 1. Epoch 07: train acc: 0.5595 train loss: 0.5596 valid acc: 0.5820 valid loss: 0.5493
+Epoch:  8
+Avg loss:  0.5149155169725418
+Fold 1. Epoch 08: train acc: 0.5915 train loss: 0.5149 valid acc: 0.5786 valid loss: 0.5565
+Epoch:  9
+Avg loss:  0.5250531822443009
+Fold 1. Epoch 09: train acc: 0.5839 train loss: 0.5251 valid acc: 0.5308 valid loss: 0.5432
+Epoch:  10
+Avg loss:  0.5166431397199631
+Fold 1. Epoch 10: train acc: 0.5629 train loss: 0.5166 valid acc: 0.5854 valid loss: 0.5767
+Epoch:  11
+Avg loss:  0.5089989840984345
+Fold 1. Epoch 11: train acc: 0.5595 train loss: 0.5090 valid acc: 0.5547 valid loss: 0.5217
+Epoch:  12
+Avg loss:  0.49829881489276884
+Fold 1. Epoch 12: train acc: 0.5849 train loss: 0.4983 valid acc: 0.5786 valid loss: 0.5311
+Epoch:  13
+Avg loss:  0.5008805632591248
+Fold 1. Epoch 13: train acc: 0.5774 train loss: 0.5009 valid acc: 0.5410 valid loss: 0.5179
+Epoch:  14
+Avg loss:  0.4904800057411194
+Fold 1. Epoch 14: train acc: 0.5510 train loss: 0.4905 valid acc: 0.5752 valid loss: 0.5170
+Epoch:  15
+Avg loss:  0.48316603899002075
+Fold 1. Epoch 15: train acc: 0.5522 train loss: 0.4832 valid acc: 0.5752 valid loss: 0.5195
+Epoch:  16
+Avg loss:  0.4976985722780228
+Fold 1. Epoch 16: train acc: 0.5732 train loss: 0.4977 valid acc: 0.5718 valid loss: 0.5121
+Epoch:  17
+Avg loss:  0.48809206783771514
+Fold 1. Epoch 17: train acc: 0.5523 train loss: 0.4881 valid acc: 0.5718 valid loss: 0.5141
+Epoch:  18
+Avg loss:  0.47401851415634155
+Fold 1. Epoch 18: train acc: 0.5912 train loss: 0.4740 valid acc: 0.5547 valid loss: 0.5092
+Epoch:  19
+Avg loss:  0.4562389522790909
+Fold 1. Epoch 19: train acc: 0.5517 train loss: 0.4562 valid acc: 0.5786 valid loss: 0.5293
+Epoch:  20
+Avg loss:  0.4899193376302719
+Fold 1. Epoch 20: train acc: 0.5991 train loss: 0.4899 valid acc: 0.5479 valid loss: 0.5060
+Epoch:  21
+Avg loss:  0.45535766780376435
+Fold 1. Epoch 21: train acc: 0.5441 train loss: 0.4554 valid acc: 0.5786 valid loss: 0.5203
+Epoch:  22
+Avg loss:  0.4593642622232437
+Fold 1. Epoch 22: train acc: 0.5919 train loss: 0.4594 valid acc: 0.5615 valid loss: 0.5043
+Epoch:  23
+Avg loss:  0.4522898256778717
+Fold 1. Epoch 23: train acc: 0.5421 train loss: 0.4523 valid acc: 0.5581 valid loss: 0.5000
+Epoch:  24
+Avg loss:  0.44718801975250244
+Fold 1. Epoch 24: train acc: 0.5740 train loss: 0.4472 valid acc: 0.5718 valid loss: 0.5038
+Epoch:  25
+Avg loss:  0.456447622179985
+Fold 1. Epoch 25: train acc: 0.5730 train loss: 0.4564 valid acc: 0.5684 valid loss: 0.5015
+Epoch:  26
+Avg loss:  0.45864356160163877
+Fold 1. Epoch 26: train acc: 0.5981 train loss: 0.4586 valid acc: 0.5752 valid loss: 0.5131
+Epoch:  27
+Avg loss:  0.4399338781833649
+Fold 1. Epoch 27: train acc: 0.5562 train loss: 0.4399 valid acc: 0.5479 valid loss: 0.4956
+Epoch:  28
+Avg loss:  0.43884196877479553
+Fold 1. Epoch 28: train acc: 0.5670 train loss: 0.4388 valid acc: 0.5718 valid loss: 0.5047
+Epoch:  29
+Avg loss:  0.454035747051239
+Fold 1. Epoch 29: train acc: 0.5977 train loss: 0.4540 valid acc: 0.5479 valid loss: 0.4937
+Epoch:  30
+Avg loss:  0.4493555337190628
+Fold 1. Epoch 30: train acc: 0.5448 train loss: 0.4494 valid acc: 0.5479 valid loss: 0.4927
+Epoch:  31
+Avg loss:  0.43084255158901213
+Fold 1. Epoch 31: train acc: 0.5630 train loss: 0.4308 valid acc: 0.5718 valid loss: 0.5001
+Epoch:  32
+Avg loss:  0.4498355448246002
+Fold 1. Epoch 32: train acc: 0.5648 train loss: 0.4498 valid acc: 0.5547 valid loss: 0.4911
+Epoch:  33
+Avg loss:  0.4458271056413651
+Fold 1. Epoch 33: train acc: 0.5592 train loss: 0.4458 valid acc: 0.5581 valid loss: 0.4909
+Epoch:  34
+Avg loss:  0.4353496998548508
+Fold 1. Epoch 34: train acc: 0.5565 train loss: 0.4353 valid acc: 0.5513 valid loss: 0.4890
+Epoch:  35
+Avg loss:  0.43385252058506013
+Fold 1. Epoch 35: train acc: 0.5637 train loss: 0.4339 valid acc: 0.5649 valid loss: 0.4942
+Epoch:  36
+Avg loss:  0.4439963400363922
+Fold 1. Epoch 36: train acc: 0.5850 train loss: 0.4440 valid acc: 0.5615 valid loss: 0.4918
+Epoch:  37
+Avg loss:  0.4315159797668457
+Fold 1. Epoch 37: train acc: 0.5712 train loss: 0.4315 valid acc: 0.5718 valid loss: 0.4963
+Epoch:  38
+Avg loss:  0.45818648040294646
+Fold 1. Epoch 38: train acc: 0.5633 train loss: 0.4582 valid acc: 0.5547 valid loss: 0.4895
+Epoch:  39
+Avg loss:  0.4560073524713516
+Fold 1. Epoch 39: train acc: 0.5853 train loss: 0.4560 valid acc: 0.5547 valid loss: 0.4894
+Epoch:  40
+Avg loss:  0.4285540759563446
+Fold 1. Epoch 40: train acc: 0.5550 train loss: 0.4286 valid acc: 0.5479 valid loss: 0.4870
+Epoch:  41
+Avg loss:  0.41248514503240585
+Fold 1. Epoch 41: train acc: 0.5618 train loss: 0.4125 valid acc: 0.5547 valid loss: 0.4871
+Epoch:  42
+Avg loss:  0.4111726194620132
+Fold 1. Epoch 42: train acc: 0.5720 train loss: 0.4112 valid acc: 0.5718 valid loss: 0.4963
+Epoch:  43
+Avg loss:  0.4193462997674942
+Fold 1. Epoch 43: train acc: 0.5698 train loss: 0.4193 valid acc: 0.5718 valid loss: 0.4945
+Epoch:  44
+Avg loss:  0.4181941419839859
+Fold 1. Epoch 44: train acc: 0.5719 train loss: 0.4182 valid acc: 0.5547 valid loss: 0.4863
+Epoch:  45
+Avg loss:  0.4414717733860016
+Fold 1. Epoch 45: train acc: 0.5603 train loss: 0.4415 valid acc: 0.5615 valid loss: 0.4899
+Epoch:  46
+Avg loss:  0.42755651772022246
+Fold 1. Epoch 46: train acc: 0.5642 train loss: 0.4276 valid acc: 0.5718 valid loss: 0.4946
+Epoch:  47
+Avg loss:  0.4190368801355362
+Fold 1. Epoch 47: train acc: 0.5665 train loss: 0.4190 valid acc: 0.5547 valid loss: 0.4846
+Epoch:  48
+Avg loss:  0.46637487411499023
+Fold 1. Epoch 48: train acc: 0.5575 train loss: 0.4664 valid acc: 0.5547 valid loss: 0.4831
+Epoch:  49
+Avg loss:  0.4201566934585571
+Fold 1. Epoch 49: train acc: 0.5531 train loss: 0.4202 valid acc: 0.5581 valid loss: 0.4859
+Fold 2. Initial acc: 0.4062 loss: 0.7504
+Epoch:  0
+Avg loss:  0.6479121506214142
+Fold 2. Epoch 00: train acc: 0.6453 train loss: 0.6479 valid acc: 0.5264 valid loss: 0.6646
+Epoch:  1
+Avg loss:  0.6016916006803512
+Fold 2. Epoch 01: train acc: 0.6084 train loss: 0.6017 valid acc: 0.4062 valid loss: 0.9809
+Epoch:  2
+Avg loss:  0.6020407676696777
+Fold 2. Epoch 02: train acc: 0.6182 train loss: 0.6020 valid acc: 0.5117 valid loss: 0.6630
+Epoch:  3
+Avg loss:  0.580237090587616
+Fold 2. Epoch 03: train acc: 0.6140 train loss: 0.5802 valid acc: 0.4736 valid loss: 0.7044
+Epoch:  4
+Avg loss:  0.5528482735157013
+Fold 2. Epoch 04: train acc: 0.5996 train loss: 0.5528 valid acc: 0.4590 valid loss: 0.7689
+Epoch:  5
+Avg loss:  0.5365670055150986
+Fold 2. Epoch 05: train acc: 0.6166 train loss: 0.5366 valid acc: 0.4971 valid loss: 0.6642
+Epoch:  6
+Avg loss:  0.5163452714681626
+Fold 2. Epoch 06: train acc: 0.6322 train loss: 0.5163 valid acc: 0.4473 valid loss: 0.8130
+Epoch:  7
+Avg loss:  0.5210103392601013
+Fold 2. Epoch 07: train acc: 0.6174 train loss: 0.5210 valid acc: 0.5176 valid loss: 0.6566
+Epoch:  8
+Avg loss:  0.5313256770372391
+Fold 2. Epoch 08: train acc: 0.5869 train loss: 0.5313 valid acc: 0.4678 valid loss: 0.7402
+Epoch:  9
+Avg loss:  0.5198270738124847
+Fold 2. Epoch 09: train acc: 0.5971 train loss: 0.5198 valid acc: 0.4854 valid loss: 0.6771
+Epoch:  10
+Avg loss:  0.5061368227005005
+Fold 2. Epoch 10: train acc: 0.6099 train loss: 0.5061 valid acc: 0.4795 valid loss: 0.6952
+Epoch:  11
+Avg loss:  0.5090502798557281
+Fold 2. Epoch 11: train acc: 0.6265 train loss: 0.5091 valid acc: 0.4795 valid loss: 0.6972
+Epoch:  12
+Avg loss:  0.5133967280387879
+Fold 2. Epoch 12: train acc: 0.6081 train loss: 0.5134 valid acc: 0.4941 valid loss: 0.6611
+Epoch:  13
+Avg loss:  0.504433861374855
+Fold 2. Epoch 13: train acc: 0.5601 train loss: 0.5044 valid acc: 0.4766 valid loss: 0.7004
+Epoch:  14
+Avg loss:  0.49348707497119904
+Fold 2. Epoch 14: train acc: 0.6323 train loss: 0.4935 valid acc: 0.4795 valid loss: 0.6895
+Epoch:  15
+Avg loss:  0.4841008991003036
+Fold 2. Epoch 15: train acc: 0.6087 train loss: 0.4841 valid acc: 0.4941 valid loss: 0.6590
+Epoch:  16
+Avg loss:  0.4719283401966095
+Fold 2. Epoch 16: train acc: 0.6011 train loss: 0.4719 valid acc: 0.4678 valid loss: 0.6996
+Epoch:  17
+Avg loss:  0.47401081919670107
+Fold 2. Epoch 17: train acc: 0.6100 train loss: 0.4740 valid acc: 0.4941 valid loss: 0.6626
+Epoch:  18
+Avg loss:  0.4732560157775879
+Fold 2. Epoch 18: train acc: 0.5892 train loss: 0.4733 valid acc: 0.4854 valid loss: 0.6747
+Epoch:  19
+Avg loss:  0.46150566041469576
+Fold 2. Epoch 19: train acc: 0.6091 train loss: 0.4615 valid acc: 0.4941 valid loss: 0.6626
+Epoch:  20
+Avg loss:  0.4857833504676819
+Fold 2. Epoch 20: train acc: 0.5928 train loss: 0.4858 valid acc: 0.4854 valid loss: 0.6713
+Epoch:  21
+Avg loss:  0.49671022593975067
+Fold 2. Epoch 21: train acc: 0.6120 train loss: 0.4967 valid acc: 0.4795 valid loss: 0.6740
+Epoch:  22
+Avg loss:  0.4752129763364792
+Fold 2. Epoch 22: train acc: 0.5817 train loss: 0.4752 valid acc: 0.4941 valid loss: 0.6418
+Epoch:  23
+Avg loss:  0.4726995050907135
+Fold 2. Epoch 23: train acc: 0.5995 train loss: 0.4727 valid acc: 0.4883 valid loss: 0.6663
+Epoch:  24
+Avg loss:  0.4495630502700806
+Fold 2. Epoch 24: train acc: 0.6080 train loss: 0.4496 valid acc: 0.4854 valid loss: 0.6681
+Epoch:  25
+Avg loss:  0.4746676445007324
+Fold 2. Epoch 25: train acc: 0.5952 train loss: 0.4747 valid acc: 0.4854 valid loss: 0.6591
+Epoch:  26
+Avg loss:  0.470938515663147
+Fold 2. Epoch 26: train acc: 0.5917 train loss: 0.4709 valid acc: 0.4941 valid loss: 0.6457
+Epoch:  27
+Avg loss:  0.4682299971580505
+Fold 2. Epoch 27: train acc: 0.5946 train loss: 0.4682 valid acc: 0.4648 valid loss: 0.6946
+Epoch:  28
+Avg loss:  0.4933075517416
+Fold 2. Epoch 28: train acc: 0.5708 train loss: 0.4933 valid acc: 0.5059 valid loss: 0.6329
+Epoch:  29
+Avg loss:  0.42888406962156295
+Fold 2. Epoch 29: train acc: 0.6029 train loss: 0.4289 valid acc: 0.4648 valid loss: 0.6886
+Epoch:  30
+Avg loss:  0.4371721476316452
+Fold 2. Epoch 30: train acc: 0.6374 train loss: 0.4372 valid acc: 0.4883 valid loss: 0.6518
+Epoch:  31
+Avg loss:  0.43205525577068327
+Fold 2. Epoch 31: train acc: 0.6073 train loss: 0.4321 valid acc: 0.4854 valid loss: 0.6670
+Epoch:  32
+Avg loss:  0.47402381598949433
+Fold 2. Epoch 32: train acc: 0.5901 train loss: 0.4740 valid acc: 0.4883 valid loss: 0.6513
+Epoch:  33
+Avg loss:  0.46095961332321167
+Fold 2. Epoch 33: train acc: 0.5675 train loss: 0.4610 valid acc: 0.5117 valid loss: 0.6239
+Epoch:  34
+Avg loss:  0.42120561599731443
+Fold 2. Epoch 34: train acc: 0.5840 train loss: 0.4212 valid acc: 0.4854 valid loss: 0.6613
+Epoch:  35
+Avg loss:  0.4327310860157013
+Fold 2. Epoch 35: train acc: 0.6132 train loss: 0.4327 valid acc: 0.4707 valid loss: 0.6875
+Epoch:  36
+Avg loss:  0.45456731915473936
+Fold 2. Epoch 36: train acc: 0.5889 train loss: 0.4546 valid acc: 0.4912 valid loss: 0.6518
+Epoch:  37
+Avg loss:  0.4203215926885605
+Fold 2. Epoch 37: train acc: 0.5931 train loss: 0.4203 valid acc: 0.4971 valid loss: 0.6401
+Epoch:  38
+Avg loss:  0.45601579546928406
+Fold 2. Epoch 38: train acc: 0.5862 train loss: 0.4560 valid acc: 0.4912 valid loss: 0.6550
+Epoch:  39
+Avg loss:  0.4420059621334076
+Fold 2. Epoch 39: train acc: 0.5860 train loss: 0.4420 valid acc: 0.4971 valid loss: 0.6402
+Epoch:  40
+Avg loss:  0.4268311083316803
+Fold 2. Epoch 40: train acc: 0.5793 train loss: 0.4268 valid acc: 0.4941 valid loss: 0.6487
+Epoch:  41
+Avg loss:  0.42818647921085357
+Fold 2. Epoch 41: train acc: 0.5874 train loss: 0.4282 valid acc: 0.4824 valid loss: 0.6784
+Epoch:  42
+Avg loss:  0.4329099178314209
+Fold 2. Epoch 42: train acc: 0.5880 train loss: 0.4329 valid acc: 0.4912 valid loss: 0.6501
+Epoch:  43
+Avg loss:  0.4317696183919907
+Fold 2. Epoch 43: train acc: 0.5803 train loss: 0.4318 valid acc: 0.5000 valid loss: 0.6393
+Epoch:  44
+Avg loss:  0.4338078051805496
+Fold 2. Epoch 44: train acc: 0.5745 train loss: 0.4338 valid acc: 0.4941 valid loss: 0.6467
+Epoch:  45
+Avg loss:  0.4239465981721878
+Fold 2. Epoch 45: train acc: 0.6003 train loss: 0.4239 valid acc: 0.4912 valid loss: 0.6538
+Epoch:  46
+Avg loss:  0.4148984462022781
+Fold 2. Epoch 46: train acc: 0.6358 train loss: 0.4149 valid acc: 0.4883 valid loss: 0.6639
+Epoch:  47
+Avg loss:  0.42464966177940366
+Fold 2. Epoch 47: train acc: 0.6168 train loss: 0.4246 valid acc: 0.4883 valid loss: 0.6644
+Epoch:  48
+Avg loss:  0.42003936767578126
+Fold 2. Epoch 48: train acc: 0.6324 train loss: 0.4200 valid acc: 0.4912 valid loss: 0.6570
+Epoch:  49
+Avg loss:  0.4262358874082565
+Fold 2. Epoch 49: train acc: 0.5921 train loss: 0.4262 valid acc: 0.4854 valid loss: 0.6639
+Fold 3. Initial acc: 0.3906 loss: 0.8784
+Epoch:  0
+Avg loss:  0.7065430223941803
+Fold 3. Epoch 00: train acc: 0.5966 train loss: 0.7065 valid acc: 0.4146 valid loss: 0.7002
+Epoch:  1
+Avg loss:  0.660860949754715
+Fold 3. Epoch 01: train acc: 0.5320 train loss: 0.6609 valid acc: 0.6094 valid loss: 0.7001
+Epoch:  2
+Avg loss:  0.5952759325504303
+Fold 3. Epoch 02: train acc: 0.6057 train loss: 0.5953 valid acc: 0.5444 valid loss: 0.6217
+Epoch:  3
+Avg loss:  0.6347127318382263
+Fold 3. Epoch 03: train acc: 0.5652 train loss: 0.6347 valid acc: 0.5991 valid loss: 0.6187
+Epoch:  4
+Avg loss:  0.5794513046741485
+Fold 3. Epoch 04: train acc: 0.5581 train loss: 0.5795 valid acc: 0.5923 valid loss: 0.6002
+Epoch:  5
+Avg loss:  0.5613417744636535
+Fold 3. Epoch 05: train acc: 0.5869 train loss: 0.5613 valid acc: 0.5991 valid loss: 0.6182
+Epoch:  6
+Avg loss:  0.5469277292490006
+Fold 3. Epoch 06: train acc: 0.5956 train loss: 0.5469 valid acc: 0.5513 valid loss: 0.5959
+Epoch:  7
+Avg loss:  0.5398880481719971
+Fold 3. Epoch 07: train acc: 0.5652 train loss: 0.5399 valid acc: 0.5854 valid loss: 0.6018
+Epoch:  8
+Avg loss:  0.5275676935911179
+Fold 3. Epoch 08: train acc: 0.5969 train loss: 0.5276 valid acc: 0.5991 valid loss: 0.6071
+Epoch:  9
+Avg loss:  0.5286979138851166
+Fold 3. Epoch 09: train acc: 0.5948 train loss: 0.5287 valid acc: 0.5410 valid loss: 0.5807
+Epoch:  10
+Avg loss:  0.5364693492650986
+Fold 3. Epoch 10: train acc: 0.5623 train loss: 0.5365 valid acc: 0.6025 valid loss: 0.6187
+Epoch:  11
+Avg loss:  0.5389648795127868
+Fold 3. Epoch 11: train acc: 0.5910 train loss: 0.5390 valid acc: 0.5239 valid loss: 0.5826
+Epoch:  12
+Avg loss:  0.5177801579236985
+Fold 3. Epoch 12: train acc: 0.5658 train loss: 0.5178 valid acc: 0.5854 valid loss: 0.5788
+Epoch:  13
+Avg loss:  0.5018685817718506
+Fold 3. Epoch 13: train acc: 0.5941 train loss: 0.5019 valid acc: 0.5479 valid loss: 0.5690
+Epoch:  14
+Avg loss:  0.5079071938991546
+Fold 3. Epoch 14: train acc: 0.5791 train loss: 0.5079 valid acc: 0.5957 valid loss: 0.5830
+Epoch:  15
+Avg loss:  0.501503124833107
+Fold 3. Epoch 15: train acc: 0.5621 train loss: 0.5015 valid acc: 0.5752 valid loss: 0.5664
+Epoch:  16
+Avg loss:  0.4759723424911499
+Fold 3. Epoch 16: train acc: 0.6029 train loss: 0.4760 valid acc: 0.5820 valid loss: 0.5734
+Epoch:  17
+Avg loss:  0.48107669949531556
+Fold 3. Epoch 17: train acc: 0.5881 train loss: 0.4811 valid acc: 0.5615 valid loss: 0.5573
+Epoch:  18
+Avg loss:  0.4858113884925842
+Fold 3. Epoch 18: train acc: 0.5756 train loss: 0.4858 valid acc: 0.5820 valid loss: 0.5704
+Epoch:  19
+Avg loss:  0.48265265822410586
+Fold 3. Epoch 19: train acc: 0.5609 train loss: 0.4827 valid acc: 0.5513 valid loss: 0.5572
+Epoch:  20
+Avg loss:  0.4524185091257095
+Fold 3. Epoch 20: train acc: 0.5708 train loss: 0.4524 valid acc: 0.5752 valid loss: 0.5580
+Epoch:  21
+Avg loss:  0.4862740606069565
+Fold 3. Epoch 21: train acc: 0.5807 train loss: 0.4863 valid acc: 0.5581 valid loss: 0.5481
+Epoch:  22
+Avg loss:  0.4916831314563751
+Fold 3. Epoch 22: train acc: 0.5552 train loss: 0.4917 valid acc: 0.5581 valid loss: 0.5473
+Epoch:  23
+Avg loss:  0.48059689104557035
+Fold 3. Epoch 23: train acc: 0.5521 train loss: 0.4806 valid acc: 0.5649 valid loss: 0.5494
+Epoch:  24
+Avg loss:  0.49492281675338745
+Fold 3. Epoch 24: train acc: 0.5786 train loss: 0.4949 valid acc: 0.5718 valid loss: 0.5513
+Epoch:  25
+Avg loss:  0.4704375654459
+Fold 3. Epoch 25: train acc: 0.5991 train loss: 0.4704 valid acc: 0.5786 valid loss: 0.5607
+Epoch:  26
+Avg loss:  0.4578510671854019
+Fold 3. Epoch 26: train acc: 0.5883 train loss: 0.4579 valid acc: 0.5786 valid loss: 0.5591
+Epoch:  27
+Avg loss:  0.4675764739513397
+Fold 3. Epoch 27: train acc: 0.5773 train loss: 0.4676 valid acc: 0.5649 valid loss: 0.5522
+Epoch:  28
+Avg loss:  0.462071493268013
+Fold 3. Epoch 28: train acc: 0.5717 train loss: 0.4621 valid acc: 0.5786 valid loss: 0.5573
+Epoch:  29
+Avg loss:  0.4643393188714981
+Fold 3. Epoch 29: train acc: 0.5668 train loss: 0.4643 valid acc: 0.5615 valid loss: 0.5493
+Epoch:  30
+Avg loss:  0.4654363453388214
+Fold 3. Epoch 30: train acc: 0.5461 train loss: 0.4654 valid acc: 0.5581 valid loss: 0.5490
+Epoch:  31
+Avg loss:  0.4587199777364731
+Fold 3. Epoch 31: train acc: 0.5734 train loss: 0.4587 valid acc: 0.5786 valid loss: 0.5603
+Epoch:  32
+Avg loss:  0.472491180896759
+Fold 3. Epoch 32: train acc: 0.5765 train loss: 0.4725 valid acc: 0.5684 valid loss: 0.5531
+Epoch:  33
+Avg loss:  0.4467902839183807
+Fold 3. Epoch 33: train acc: 0.5658 train loss: 0.4468 valid acc: 0.5444 valid loss: 0.5491
+Epoch:  34
+Avg loss:  0.45646798312664033
+Fold 3. Epoch 34: train acc: 0.5528 train loss: 0.4565 valid acc: 0.5684 valid loss: 0.5551
+Epoch:  35
+Avg loss:  0.47456579506397245
+Fold 3. Epoch 35: train acc: 0.5632 train loss: 0.4746 valid acc: 0.5513 valid loss: 0.5507
+Epoch:  36
+Avg loss:  0.4498379945755005
+Fold 3. Epoch 36: train acc: 0.5669 train loss: 0.4498 valid acc: 0.5684 valid loss: 0.5551
+Epoch:  37
+Avg loss:  0.4502470105886459
+Fold 3. Epoch 37: train acc: 0.5733 train loss: 0.4502 valid acc: 0.5786 valid loss: 0.5606
+Epoch:  38
+Avg loss:  0.44883570075035095
+Fold 3. Epoch 38: train acc: 0.5692 train loss: 0.4488 valid acc: 0.5649 valid loss: 0.5486
+Epoch:  39
+Avg loss:  0.4415585160255432
+Fold 3. Epoch 39: train acc: 0.5874 train loss: 0.4416 valid acc: 0.5684 valid loss: 0.5509
+Epoch:  40
+Avg loss:  0.4399830996990204
+Fold 3. Epoch 40: train acc: 0.5684 train loss: 0.4400 valid acc: 0.5684 valid loss: 0.5509
+Epoch:  41
+Avg loss:  0.44830873906612395
+Fold 3. Epoch 41: train acc: 0.5715 train loss: 0.4483 valid acc: 0.5513 valid loss: 0.5462
+Epoch:  42
+Avg loss:  0.4262616068124771
+Fold 3. Epoch 42: train acc: 0.6117 train loss: 0.4263 valid acc: 0.5718 valid loss: 0.5550
+Epoch:  43
+Avg loss:  0.4532121330499649
+Fold 3. Epoch 43: train acc: 0.5627 train loss: 0.4532 valid acc: 0.5684 valid loss: 0.5513
+Epoch:  44
+Avg loss:  0.4457625329494476
+Fold 3. Epoch 44: train acc: 0.5844 train loss: 0.4458 valid acc: 0.5615 valid loss: 0.5475
+Epoch:  45
+Avg loss:  0.45754371881484984
+Fold 3. Epoch 45: train acc: 0.5765 train loss: 0.4575 valid acc: 0.5752 valid loss: 0.5557
+Epoch:  46
+Avg loss:  0.43888622224330903
+Fold 3. Epoch 46: train acc: 0.5657 train loss: 0.4389 valid acc: 0.5718 valid loss: 0.5520
+Epoch:  47
+Avg loss:  0.44741577804088595
+Fold 3. Epoch 47: train acc: 0.5696 train loss: 0.4474 valid acc: 0.5684 valid loss: 0.5474
+Epoch:  48
+Avg loss:  0.4370680689811707
+Fold 3. Epoch 48: train acc: 0.5832 train loss: 0.4371 valid acc: 0.5684 valid loss: 0.5459
+Epoch:  49
+Avg loss:  0.4429223030805588
+Fold 3. Epoch 49: train acc: 0.5637 train loss: 0.4429 valid acc: 0.5752 valid loss: 0.5535
+Fold 4. Initial acc: 0.5591 loss: 0.6924
+Epoch:  0
+Avg loss:  0.656155776977539
+Fold 4. Epoch 00: train acc: 0.5989 train loss: 0.6562 valid acc: 0.5698 valid loss: 0.6255
+Epoch:  1
+Avg loss:  0.6180792510509491
+Fold 4. Epoch 01: train acc: 0.6207 train loss: 0.6181 valid acc: 0.6235 valid loss: 0.5603
+Epoch:  2
+Avg loss:  0.5838513791561126
+Fold 4. Epoch 02: train acc: 0.6147 train loss: 0.5839 valid acc: 0.6289 valid loss: 0.5340
+Epoch:  3
+Avg loss:  0.5797424614429474
+Fold 4. Epoch 03: train acc: 0.6207 train loss: 0.5797 valid acc: 0.5913 valid loss: 0.5462
+Epoch:  4
+Avg loss:  0.5831340372562408
+Fold 4. Epoch 04: train acc: 0.6034 train loss: 0.5831 valid acc: 0.5859 valid loss: 0.5413
+Epoch:  5
+Avg loss:  0.5658179253339768
+Fold 4. Epoch 05: train acc: 0.5791 train loss: 0.5658 valid acc: 0.5967 valid loss: 0.5316
+Epoch:  6
+Avg loss:  0.5379659593105316
+Fold 4. Epoch 06: train acc: 0.6008 train loss: 0.5380 valid acc: 0.6343 valid loss: 0.5241
+Epoch:  7
+Avg loss:  0.5270398795604706
+Fold 4. Epoch 07: train acc: 0.5877 train loss: 0.5270 valid acc: 0.5698 valid loss: 0.5540
+Epoch:  8
+Avg loss:  0.5480183571577072
+Fold 4. Epoch 08: train acc: 0.5459 train loss: 0.5480 valid acc: 0.5913 valid loss: 0.5199
+Epoch:  9
+Avg loss:  0.5653269439935684
+Fold 4. Epoch 09: train acc: 0.5264 train loss: 0.5653 valid acc: 0.6289 valid loss: 0.4991
+Epoch:  10
+Avg loss:  0.5725908935070038
+Fold 4. Epoch 10: train acc: 0.5291 train loss: 0.5726 valid acc: 0.6289 valid loss: 0.4978
+Epoch:  11
+Avg loss:  0.5293025374412537
+Fold 4. Epoch 11: train acc: 0.5745 train loss: 0.5293 valid acc: 0.5806 valid loss: 0.5254
+Epoch:  12
+Avg loss:  0.489618843793869
+Fold 4. Epoch 12: train acc: 0.5572 train loss: 0.4896 valid acc: 0.6343 valid loss: 0.5142
+Epoch:  13
+Avg loss:  0.5149192214012146
+Fold 4. Epoch 13: train acc: 0.5607 train loss: 0.5149 valid acc: 0.5859 valid loss: 0.5181
+Epoch:  14
+Avg loss:  0.5055004030466079
+Fold 4. Epoch 14: train acc: 0.5465 train loss: 0.5055 valid acc: 0.6021 valid loss: 0.5024
+Epoch:  15
+Avg loss:  0.4816155046224594
+Fold 4. Epoch 15: train acc: 0.5595 train loss: 0.4816 valid acc: 0.6289 valid loss: 0.4941
+Epoch:  16
+Avg loss:  0.5262728691101074
+Fold 4. Epoch 16: train acc: 0.5713 train loss: 0.5263 valid acc: 0.6021 valid loss: 0.4954
+Epoch:  17
+Avg loss:  0.46466886401176455
+Fold 4. Epoch 17: train acc: 0.5862 train loss: 0.4647 valid acc: 0.6182 valid loss: 0.4915
+Epoch:  18
+Avg loss:  0.4786448419094086
+Fold 4. Epoch 18: train acc: 0.5607 train loss: 0.4786 valid acc: 0.6021 valid loss: 0.4912
+Epoch:  19
+Avg loss:  0.47535295486450196
+Fold 4. Epoch 19: train acc: 0.5983 train loss: 0.4754 valid acc: 0.6021 valid loss: 0.4883
+Epoch:  20
+Avg loss:  0.4713656336069107
+Fold 4. Epoch 20: train acc: 0.5597 train loss: 0.4714 valid acc: 0.6128 valid loss: 0.4838
+Epoch:  21
+Avg loss:  0.4512555539608002
+Fold 4. Epoch 21: train acc: 0.5728 train loss: 0.4513 valid acc: 0.6074 valid loss: 0.4820
+Epoch:  22
+Avg loss:  0.46404429376125333
+Fold 4. Epoch 22: train acc: 0.5471 train loss: 0.4640 valid acc: 0.6235 valid loss: 0.4823
+Epoch:  23
+Avg loss:  0.4513745099306107
+Fold 4. Epoch 23: train acc: 0.5783 train loss: 0.4514 valid acc: 0.6021 valid loss: 0.4818
+Epoch:  24
+Avg loss:  0.44016505777835846
+Fold 4. Epoch 24: train acc: 0.5976 train loss: 0.4402 valid acc: 0.6021 valid loss: 0.4784
+Epoch:  25
+Avg loss:  0.45665461421012876
+Fold 4. Epoch 25: train acc: 0.5671 train loss: 0.4567 valid acc: 0.6182 valid loss: 0.4744
+Epoch:  26
+Avg loss:  0.4659871429204941
+Fold 4. Epoch 26: train acc: 0.5664 train loss: 0.4660 valid acc: 0.6182 valid loss: 0.4724
+Epoch:  27
+Avg loss:  0.4681642919778824
+Fold 4. Epoch 27: train acc: 0.5682 train loss: 0.4682 valid acc: 0.6182 valid loss: 0.4737
+Epoch:  28
+Avg loss:  0.4343428134918213
+Fold 4. Epoch 28: train acc: 0.5602 train loss: 0.4343 valid acc: 0.6074 valid loss: 0.4751
+Epoch:  29
+Avg loss:  0.4413770824670792
+Fold 4. Epoch 29: train acc: 0.5512 train loss: 0.4414 valid acc: 0.6021 valid loss: 0.4772
+Epoch:  30
+Avg loss:  0.4574281722307205
+Fold 4. Epoch 30: train acc: 0.5419 train loss: 0.4574 valid acc: 0.6074 valid loss: 0.4725
+Epoch:  31
+Avg loss:  0.4262078106403351
+Fold 4. Epoch 31: train acc: 0.5780 train loss: 0.4262 valid acc: 0.6182 valid loss: 0.4690
+Epoch:  32
+Avg loss:  0.4409878432750702
+Fold 4. Epoch 32: train acc: 0.5610 train loss: 0.4410 valid acc: 0.5913 valid loss: 0.4753
+Epoch:  33
+Avg loss:  0.4382194936275482
+Fold 4. Epoch 33: train acc: 0.5340 train loss: 0.4382 valid acc: 0.6074 valid loss: 0.4664
+Epoch:  34
+Avg loss:  0.43422586023807525
+Fold 4. Epoch 34: train acc: 0.5891 train loss: 0.4342 valid acc: 0.6182 valid loss: 0.4644
+Epoch:  35
+Avg loss:  0.4359142452478409
+Fold 4. Epoch 35: train acc: 0.5703 train loss: 0.4359 valid acc: 0.6021 valid loss: 0.4666
+Epoch:  36
+Avg loss:  0.430748188495636
+Fold 4. Epoch 36: train acc: 0.5716 train loss: 0.4307 valid acc: 0.6182 valid loss: 0.4670
+Epoch:  37
+Avg loss:  0.45027713775634765
+Fold 4. Epoch 37: train acc: 0.5525 train loss: 0.4503 valid acc: 0.5913 valid loss: 0.4706
+Epoch:  38
+Avg loss:  0.40303159058094024
+Fold 4. Epoch 38: train acc: 0.5562 train loss: 0.4030 valid acc: 0.6021 valid loss: 0.4663
+Epoch:  39
+Avg loss:  0.4282314360141754
+Fold 4. Epoch 39: train acc: 0.5490 train loss: 0.4282 valid acc: 0.6074 valid loss: 0.4657
+Epoch:  40
+Avg loss:  0.42748199701309203
+Fold 4. Epoch 40: train acc: 0.5427 train loss: 0.4275 valid acc: 0.6021 valid loss: 0.4674
+Epoch:  41
+Avg loss:  0.4094971567392349
+Fold 4. Epoch 41: train acc: 0.5638 train loss: 0.4095 valid acc: 0.6074 valid loss: 0.4644
+Epoch:  42
+Avg loss:  0.40457212179899216
+Fold 4. Epoch 42: train acc: 0.6070 train loss: 0.4046 valid acc: 0.6074 valid loss: 0.4631
+Epoch:  43
+Avg loss:  0.4271317392587662
+Fold 4. Epoch 43: train acc: 0.5809 train loss: 0.4271 valid acc: 0.6074 valid loss: 0.4638
+Epoch:  44
+Avg loss:  0.4396980136632919
+Fold 4. Epoch 44: train acc: 0.5502 train loss: 0.4397 valid acc: 0.6128 valid loss: 0.4645
+Epoch:  45
+Avg loss:  0.4105178564786911
+Fold 4. Epoch 45: train acc: 0.5525 train loss: 0.4105 valid acc: 0.5913 valid loss: 0.4686
+Epoch:  46
+Avg loss:  0.41001108586788176
+Fold 4. Epoch 46: train acc: 0.5855 train loss: 0.4100 valid acc: 0.6021 valid loss: 0.4653
+Epoch:  47
+Avg loss:  0.4183987587690353
+Fold 4. Epoch 47: train acc: 0.5844 train loss: 0.4184 valid acc: 0.6235 valid loss: 0.4668
+Epoch:  48
+Avg loss:  0.41403416991233827
+Fold 4. Epoch 48: train acc: 0.5657 train loss: 0.4140 valid acc: 0.6182 valid loss: 0.4650
+Epoch:  49
+Avg loss:  0.42260044515132905
+Fold 4. Epoch 49: train acc: 0.5465 train loss: 0.4226 valid acc: 0.5913 valid loss: 0.4678
+Fold 5. Initial acc: 0.7812 loss: 0.5460
+Epoch:  0
+Avg loss:  0.6788505852222443
+Fold 5. Epoch 00: train acc: 0.5678 train loss: 0.6789 valid acc: 0.7637 valid loss: 0.5495
+Epoch:  1
+Avg loss:  0.6058244109153748
+Fold 5. Epoch 01: train acc: 0.6012 train loss: 0.6058 valid acc: 0.7285 valid loss: 0.5376
+Epoch:  2
+Avg loss:  0.599357259273529
+Fold 5. Epoch 02: train acc: 0.5730 train loss: 0.5994 valid acc: 0.6318 valid loss: 0.5788
+Epoch:  3
+Avg loss:  0.5908158183097839
+Fold 5. Epoch 03: train acc: 0.5725 train loss: 0.5908 valid acc: 0.6846 valid loss: 0.5343
+Epoch:  4
+Avg loss:  0.5650692522525788
+Fold 5. Epoch 04: train acc: 0.5750 train loss: 0.5651 valid acc: 0.5615 valid loss: 0.6076
+Epoch:  5
+Avg loss:  0.5504205226898193
+Fold 5. Epoch 05: train acc: 0.5618 train loss: 0.5504 valid acc: 0.7285 valid loss: 0.4660
+Epoch:  6
+Avg loss:  0.5390076130628586
+Fold 5. Epoch 06: train acc: 0.5783 train loss: 0.5390 valid acc: 0.7373 valid loss: 0.4373
+Epoch:  7
+Avg loss:  0.5779432237148285
+Fold 5. Epoch 07: train acc: 0.5853 train loss: 0.5779 valid acc: 0.6846 valid loss: 0.5073
+Epoch:  8
+Avg loss:  0.5850861102342606
+Fold 5. Epoch 08: train acc: 0.5693 train loss: 0.5851 valid acc: 0.6318 valid loss: 0.5411
+Epoch:  9
+Avg loss:  0.5201810449361801
+Fold 5. Epoch 09: train acc: 0.5533 train loss: 0.5202 valid acc: 0.7285 valid loss: 0.4401
+Epoch:  10
+Avg loss:  0.5384743511676788
+Fold 5. Epoch 10: train acc: 0.5839 train loss: 0.5385 valid acc: 0.6582 valid loss: 0.5160
+Epoch:  11
+Avg loss:  0.5156977117061615
+Fold 5. Epoch 11: train acc: 0.5769 train loss: 0.5157 valid acc: 0.7109 valid loss: 0.4693
+Epoch:  12
+Avg loss:  0.5386214107275009
+Fold 5. Epoch 12: train acc: 0.5273 train loss: 0.5386 valid acc: 0.6230 valid loss: 0.5302
+Epoch:  13
+Avg loss:  0.5089772999286651
+Fold 5. Epoch 13: train acc: 0.5275 train loss: 0.5090 valid acc: 0.7373 valid loss: 0.4353
+Epoch:  14
+Avg loss:  0.5198102027177811
+Fold 5. Epoch 14: train acc: 0.5629 train loss: 0.5198 valid acc: 0.6494 valid loss: 0.5090
+Epoch:  15
+Avg loss:  0.4985052734613419
+Fold 5. Epoch 15: train acc: 0.5657 train loss: 0.4985 valid acc: 0.7109 valid loss: 0.4418
+Epoch:  16
+Avg loss:  0.49475757479667665
+Fold 5. Epoch 16: train acc: 0.5791 train loss: 0.4948 valid acc: 0.6582 valid loss: 0.4899
+Epoch:  17
+Avg loss:  0.4730403691530228
+Fold 5. Epoch 17: train acc: 0.5638 train loss: 0.4730 valid acc: 0.7109 valid loss: 0.4563
+Epoch:  18
+Avg loss:  0.4791363000869751
+Fold 5. Epoch 18: train acc: 0.5569 train loss: 0.4791 valid acc: 0.7021 valid loss: 0.4635
+Epoch:  19
+Avg loss:  0.4829262435436249
+Fold 5. Epoch 19: train acc: 0.5654 train loss: 0.4829 valid acc: 0.6582 valid loss: 0.4821
+Epoch:  20
+Avg loss:  0.47411769032478335
+Fold 5. Epoch 20: train acc: 0.5507 train loss: 0.4741 valid acc: 0.7021 valid loss: 0.4563
+Epoch:  21
+Avg loss:  0.49828374981880186
+Fold 5. Epoch 21: train acc: 0.5591 train loss: 0.4983 valid acc: 0.6934 valid loss: 0.4567
+Epoch:  22
+Avg loss:  0.47559343874454496
+Fold 5. Epoch 22: train acc: 0.5759 train loss: 0.4756 valid acc: 0.7109 valid loss: 0.4497
+Epoch:  23
+Avg loss:  0.4632442474365234
+Fold 5. Epoch 23: train acc: 0.5624 train loss: 0.4632 valid acc: 0.6934 valid loss: 0.4550
+Epoch:  24
+Avg loss:  0.4690730631351471
+Fold 5. Epoch 24: train acc: 0.5526 train loss: 0.4691 valid acc: 0.6406 valid loss: 0.4872
+Epoch:  25
+Avg loss:  0.4645036101341248
+Fold 5. Epoch 25: train acc: 0.5335 train loss: 0.4645 valid acc: 0.6758 valid loss: 0.4588
+Epoch:  26
+Avg loss:  0.44928685426712034
+Fold 5. Epoch 26: train acc: 0.5627 train loss: 0.4493 valid acc: 0.7109 valid loss: 0.4332
+Epoch:  27
+Avg loss:  0.4473549485206604
+Fold 5. Epoch 27: train acc: 0.5764 train loss: 0.4474 valid acc: 0.6582 valid loss: 0.4684
+Epoch:  28
+Avg loss:  0.5059346467256546
+Fold 5. Epoch 28: train acc: 0.5452 train loss: 0.5059 valid acc: 0.6670 valid loss: 0.4577
+Epoch:  29
+Avg loss:  0.4505309462547302
+Fold 5. Epoch 29: train acc: 0.5455 train loss: 0.4505 valid acc: 0.6582 valid loss: 0.4676
+Epoch:  30
+Avg loss:  0.45583843290805814
+Fold 5. Epoch 30: train acc: 0.5570 train loss: 0.4558 valid acc: 0.7109 valid loss: 0.4410
+Epoch:  31
+Avg loss:  0.44635056853294375
+Fold 5. Epoch 31: train acc: 0.5536 train loss: 0.4464 valid acc: 0.6494 valid loss: 0.4682
+Epoch:  32
+Avg loss:  0.45034886300563814
+Fold 5. Epoch 32: train acc: 0.5429 train loss: 0.4503 valid acc: 0.6934 valid loss: 0.4408
+Epoch:  33
+Avg loss:  0.4389045715332031
+Fold 5. Epoch 33: train acc: 0.5519 train loss: 0.4389 valid acc: 0.6934 valid loss: 0.4415
+Epoch:  34
+Avg loss:  0.444425043463707
+Fold 5. Epoch 34: train acc: 0.5920 train loss: 0.4444 valid acc: 0.6758 valid loss: 0.4465
+Epoch:  35
+Avg loss:  0.45767987072467803
+Fold 5. Epoch 35: train acc: 0.5793 train loss: 0.4577 valid acc: 0.7109 valid loss: 0.4285
+Epoch:  36
+Avg loss:  0.44278327822685243
+Fold 5. Epoch 36: train acc: 0.5789 train loss: 0.4428 valid acc: 0.6934 valid loss: 0.4404
+Epoch:  37
+Avg loss:  0.4314572811126709
+Fold 5. Epoch 37: train acc: 0.5512 train loss: 0.4315 valid acc: 0.6934 valid loss: 0.4420
+Epoch:  38
+Avg loss:  0.45320609509944915
+Fold 5. Epoch 38: train acc: 0.5583 train loss: 0.4532 valid acc: 0.6670 valid loss: 0.4548
+Epoch:  39
+Avg loss:  0.4281616806983948
+Fold 5. Epoch 39: train acc: 0.5517 train loss: 0.4282 valid acc: 0.6406 valid loss: 0.4803
+Epoch:  40
+Avg loss:  0.4520618438720703
+Fold 5. Epoch 40: train acc: 0.5437 train loss: 0.4521 valid acc: 0.6934 valid loss: 0.4354
+Epoch:  41
+Avg loss:  0.4653890758752823
+Fold 5. Epoch 41: train acc: 0.5578 train loss: 0.4654 valid acc: 0.6494 valid loss: 0.4544
+Epoch:  42
+Avg loss:  0.429762265086174
+Fold 5. Epoch 42: train acc: 0.5521 train loss: 0.4298 valid acc: 0.6934 valid loss: 0.4312
+Epoch:  43
+Avg loss:  0.44038117825984957
+Fold 5. Epoch 43: train acc: 0.5620 train loss: 0.4404 valid acc: 0.6670 valid loss: 0.4456
+Epoch:  44
+Avg loss:  0.45847661793231964
+Fold 5. Epoch 44: train acc: 0.5499 train loss: 0.4585 valid acc: 0.6758 valid loss: 0.4432
+Epoch:  45
+Avg loss:  0.45360017716884615
+Fold 5. Epoch 45: train acc: 0.5664 train loss: 0.4536 valid acc: 0.6406 valid loss: 0.4711
+Epoch:  46
+Avg loss:  0.4309717744588852
+Fold 5. Epoch 46: train acc: 0.5449 train loss: 0.4310 valid acc: 0.6934 valid loss: 0.4375
+Epoch:  47
+Avg loss:  0.44290987849235536
+Fold 5. Epoch 47: train acc: 0.5938 train loss: 0.4429 valid acc: 0.6934 valid loss: 0.4378
+Epoch:  48
+Avg loss:  0.4339215010404587
+Fold 5. Epoch 48: train acc: 0.5517 train loss: 0.4339 valid acc: 0.7021 valid loss: 0.4300
+Epoch:  49
+Avg loss:  0.4319844424724579
+Fold 5. Epoch 49: train acc: 0.5657 train loss: 0.4320 valid acc: 0.6846 valid loss: 0.4435
+Fold 6. Initial acc: 0.2969 loss: 0.8353
+Epoch:  0
+Avg loss:  0.7252334773540496
+Fold 6. Epoch 00: train acc: 0.5769 train loss: 0.7252 valid acc: 0.3159 valid loss: 0.7418
+Epoch:  1
+Avg loss:  0.6284087598323822
+Fold 6. Epoch 01: train acc: 0.5845 train loss: 0.6284 valid acc: 0.7031 valid loss: 0.5758
+Epoch:  2
+Avg loss:  0.6424203991889954
+Fold 6. Epoch 02: train acc: 0.5891 train loss: 0.6424 valid acc: 0.5317 valid loss: 0.6161
+Epoch:  3
+Avg loss:  0.588719692826271
+Fold 6. Epoch 03: train acc: 0.5733 train loss: 0.5887 valid acc: 0.6968 valid loss: 0.5423
+Epoch:  4
+Avg loss:  0.5876819610595703
+Fold 6. Epoch 04: train acc: 0.5795 train loss: 0.5877 valid acc: 0.6587 valid loss: 0.5217
+Epoch:  5
+Avg loss:  0.5865828692913055
+Fold 6. Epoch 05: train acc: 0.5891 train loss: 0.5866 valid acc: 0.5952 valid loss: 0.5699
+Epoch:  6
+Avg loss:  0.5686259984970092
+Fold 6. Epoch 06: train acc: 0.5735 train loss: 0.5686 valid acc: 0.6650 valid loss: 0.5053
+Epoch:  7
+Avg loss:  0.5470742523670197
+Fold 6. Epoch 07: train acc: 0.5909 train loss: 0.5471 valid acc: 0.6333 valid loss: 0.5127
+Epoch:  8
+Avg loss:  0.5441401302814484
+Fold 6. Epoch 08: train acc: 0.5938 train loss: 0.5441 valid acc: 0.6079 valid loss: 0.5383
+Epoch:  9
+Avg loss:  0.5700895249843597
+Fold 6. Epoch 09: train acc: 0.5505 train loss: 0.5701 valid acc: 0.6143 valid loss: 0.5169
+Epoch:  10
+Avg loss:  0.5385924100875854
+Fold 6. Epoch 10: train acc: 0.5641 train loss: 0.5386 valid acc: 0.6523 valid loss: 0.4982
+Epoch:  11
+Avg loss:  0.5425452500581741
+Fold 6. Epoch 11: train acc: 0.5748 train loss: 0.5425 valid acc: 0.6016 valid loss: 0.5236
+Epoch:  12
+Avg loss:  0.5269106864929199
+Fold 6. Epoch 12: train acc: 0.5559 train loss: 0.5269 valid acc: 0.6333 valid loss: 0.4976
+Epoch:  13
+Avg loss:  0.4964123636484146
+Fold 6. Epoch 13: train acc: 0.5721 train loss: 0.4964 valid acc: 0.6206 valid loss: 0.4996
+Epoch:  14
+Avg loss:  0.5096888422966004
+Fold 6. Epoch 14: train acc: 0.5706 train loss: 0.5097 valid acc: 0.6079 valid loss: 0.5026
+Epoch:  15
+Avg loss:  0.4940889984369278
+Fold 6. Epoch 15: train acc: 0.5961 train loss: 0.4941 valid acc: 0.6460 valid loss: 0.4779
+Epoch:  16
+Avg loss:  0.5426096022129059
+Fold 6. Epoch 16: train acc: 0.5814 train loss: 0.5426 valid acc: 0.5825 valid loss: 0.5154
+Epoch:  17
+Avg loss:  0.5098189890384675
+Fold 6. Epoch 17: train acc: 0.5325 train loss: 0.5098 valid acc: 0.6333 valid loss: 0.4790
+Epoch:  18
+Avg loss:  0.5015470176935196
+Fold 6. Epoch 18: train acc: 0.5702 train loss: 0.5015 valid acc: 0.6079 valid loss: 0.4895
+Epoch:  19
+Avg loss:  0.5175941258668899
+Fold 6. Epoch 19: train acc: 0.5614 train loss: 0.5176 valid acc: 0.6079 valid loss: 0.4873
+Epoch:  20
+Avg loss:  0.5063217371702194
+Fold 6. Epoch 20: train acc: 0.5335 train loss: 0.5063 valid acc: 0.6206 valid loss: 0.4793
+Epoch:  21
+Avg loss:  0.47437016367912294
+Fold 6. Epoch 21: train acc: 0.5647 train loss: 0.4744 valid acc: 0.6016 valid loss: 0.4901
+Epoch:  22
+Avg loss:  0.47566463947296145
+Fold 6. Epoch 22: train acc: 0.5718 train loss: 0.4757 valid acc: 0.6396 valid loss: 0.4679
+Epoch:  23
+Avg loss:  0.4908591866493225
+Fold 6. Epoch 23: train acc: 0.6098 train loss: 0.4909 valid acc: 0.6396 valid loss: 0.4659
+Epoch:  24
+Avg loss:  0.5038762122392655
+Fold 6. Epoch 24: train acc: 0.5561 train loss: 0.5039 valid acc: 0.6016 valid loss: 0.4775
+Epoch:  25
+Avg loss:  0.5091111361980438
+Fold 6. Epoch 25: train acc: 0.5712 train loss: 0.5091 valid acc: 0.6270 valid loss: 0.4669
+Epoch:  26
+Avg loss:  0.4897117018699646
+Fold 6. Epoch 26: train acc: 0.5587 train loss: 0.4897 valid acc: 0.6016 valid loss: 0.4759
+Epoch:  27
+Avg loss:  0.46013708114624025
+Fold 6. Epoch 27: train acc: 0.5666 train loss: 0.4601 valid acc: 0.6396 valid loss: 0.4636
+Epoch:  28
+Avg loss:  0.5110967963933944
+Fold 6. Epoch 28: train acc: 0.5550 train loss: 0.5111 valid acc: 0.6079 valid loss: 0.4747
+Epoch:  29
+Avg loss:  0.4707909166812897
+Fold 6. Epoch 29: train acc: 0.5352 train loss: 0.4708 valid acc: 0.5762 valid loss: 0.4965
+Epoch:  30
+Avg loss:  0.46668248176574706
+Fold 6. Epoch 30: train acc: 0.5527 train loss: 0.4667 valid acc: 0.6333 valid loss: 0.4602
+Epoch:  31
+Avg loss:  0.45908014476299286
+Fold 6. Epoch 31: train acc: 0.5690 train loss: 0.4591 valid acc: 0.6016 valid loss: 0.4695
+Epoch:  32
+Avg loss:  0.47059490978717805
+Fold 6. Epoch 32: train acc: 0.5711 train loss: 0.4706 valid acc: 0.6016 valid loss: 0.4699
+Epoch:  33
+Avg loss:  0.4744395226240158
+Fold 6. Epoch 33: train acc: 0.5617 train loss: 0.4744 valid acc: 0.6396 valid loss: 0.4555
+Epoch:  34
+Avg loss:  0.4582848191261292
+Fold 6. Epoch 34: train acc: 0.5563 train loss: 0.4583 valid acc: 0.5952 valid loss: 0.4744
+Epoch:  35
+Avg loss:  0.4600276261568069
+Fold 6. Epoch 35: train acc: 0.5430 train loss: 0.4600 valid acc: 0.6016 valid loss: 0.4660
+Epoch:  36
+Avg loss:  0.46194665133953094
+Fold 6. Epoch 36: train acc: 0.5676 train loss: 0.4619 valid acc: 0.6206 valid loss: 0.4574
+Epoch:  37
+Avg loss:  0.46159681081771853
+Fold 6. Epoch 37: train acc: 0.5921 train loss: 0.4616 valid acc: 0.6143 valid loss: 0.4569
+Epoch:  38
+Avg loss:  0.44789962470531464
+Fold 6. Epoch 38: train acc: 0.5780 train loss: 0.4479 valid acc: 0.6206 valid loss: 0.4549
+Epoch:  39
+Avg loss:  0.4532117128372192
+Fold 6. Epoch 39: train acc: 0.5836 train loss: 0.4532 valid acc: 0.6079 valid loss: 0.4569
+Epoch:  40
+Avg loss:  0.469080051779747
+Fold 6. Epoch 40: train acc: 0.5655 train loss: 0.4691 valid acc: 0.6206 valid loss: 0.4551
+Epoch:  41
+Avg loss:  0.4585613965988159
+Fold 6. Epoch 41: train acc: 0.5712 train loss: 0.4586 valid acc: 0.6143 valid loss: 0.4562
+Epoch:  42
+Avg loss:  0.44674019515514374
+Fold 6. Epoch 42: train acc: 0.5506 train loss: 0.4467 valid acc: 0.5952 valid loss: 0.4718
+Epoch:  43
+Avg loss:  0.44087285697460177
+Fold 6. Epoch 43: train acc: 0.5511 train loss: 0.4409 valid acc: 0.6016 valid loss: 0.4621
+Epoch:  44
+Avg loss:  0.4439183086156845
+Fold 6. Epoch 44: train acc: 0.6003 train loss: 0.4439 valid acc: 0.6016 valid loss: 0.4563
+Epoch:  45
+Avg loss:  0.45290185511112213
+Fold 6. Epoch 45: train acc: 0.5746 train loss: 0.4529 valid acc: 0.6206 valid loss: 0.4518
+Epoch:  46
+Avg loss:  0.4549910932779312
+Fold 6. Epoch 46: train acc: 0.5614 train loss: 0.4550 valid acc: 0.6016 valid loss: 0.4600
+Epoch:  47
+Avg loss:  0.452371409535408
+Fold 6. Epoch 47: train acc: 0.5544 train loss: 0.4524 valid acc: 0.5952 valid loss: 0.4717
+Epoch:  48
+Avg loss:  0.4451220780611038
+Fold 6. Epoch 48: train acc: 0.5492 train loss: 0.4451 valid acc: 0.5952 valid loss: 0.4623
+Epoch:  49
+Avg loss:  0.4489576190710068
+Fold 6. Epoch 49: train acc: 0.5548 train loss: 0.4490 valid acc: 0.6206 valid loss: 0.4509
+Fold 7. Initial acc: 0.6914 loss: 0.6622
+Epoch:  0
+Avg loss:  0.708974051475525
+Fold 7. Epoch 00: train acc: 0.5161 train loss: 0.7090 valid acc: 0.7188 valid loss: 0.5803
+Epoch:  1
+Avg loss:  0.6564383208751678
+Fold 7. Epoch 01: train acc: 0.6026 train loss: 0.6564 valid acc: 0.5137 valid loss: 0.6600
+Epoch:  2
+Avg loss:  0.6217051148414612
+Fold 7. Epoch 02: train acc: 0.5662 train loss: 0.6217 valid acc: 0.7188 valid loss: 0.5618
+Epoch:  3
+Avg loss:  0.610002514719963
+Fold 7. Epoch 03: train acc: 0.6013 train loss: 0.6100 valid acc: 0.6572 valid loss: 0.5771
+Epoch:  4
+Avg loss:  0.5971724331378937
+Fold 7. Epoch 04: train acc: 0.5880 train loss: 0.5972 valid acc: 0.6641 valid loss: 0.5622
+Epoch:  5
+Avg loss:  0.5825465202331543
+Fold 7. Epoch 05: train acc: 0.5461 train loss: 0.5825 valid acc: 0.6914 valid loss: 0.5306
+Epoch:  6
+Avg loss:  0.5549804866313934
+Fold 7. Epoch 06: train acc: 0.5942 train loss: 0.5550 valid acc: 0.6914 valid loss: 0.5244
+Epoch:  7
+Avg loss:  0.5725014716386795
+Fold 7. Epoch 07: train acc: 0.5841 train loss: 0.5725 valid acc: 0.6094 valid loss: 0.5639
+Epoch:  8
+Avg loss:  0.5957476228475571
+Fold 7. Epoch 08: train acc: 0.5112 train loss: 0.5957 valid acc: 0.6914 valid loss: 0.5216
+Epoch:  9
+Avg loss:  0.5318617284297943
+Fold 7. Epoch 09: train acc: 0.5819 train loss: 0.5319 valid acc: 0.6230 valid loss: 0.5473
+Epoch:  10
+Avg loss:  0.5523088157176972
+Fold 7. Epoch 10: train acc: 0.5652 train loss: 0.5523 valid acc: 0.6914 valid loss: 0.5106
+Epoch:  11
+Avg loss:  0.533498203754425
+Fold 7. Epoch 11: train acc: 0.5536 train loss: 0.5335 valid acc: 0.6777 valid loss: 0.5129
+Epoch:  12
+Avg loss:  0.5423684537410736
+Fold 7. Epoch 12: train acc: 0.6195 train loss: 0.5424 valid acc: 0.6572 valid loss: 0.5165
+Epoch:  13
+Avg loss:  0.5230558425188064
+Fold 7. Epoch 13: train acc: 0.5488 train loss: 0.5231 valid acc: 0.6504 valid loss: 0.5154
+Epoch:  14
+Avg loss:  0.5012130737304688
+Fold 7. Epoch 14: train acc: 0.5817 train loss: 0.5012 valid acc: 0.6846 valid loss: 0.5023
+Epoch:  15
+Avg loss:  0.5185275256633759
+Fold 7. Epoch 15: train acc: 0.5951 train loss: 0.5185 valid acc: 0.6436 valid loss: 0.5124
+Epoch:  16
+Avg loss:  0.5006406337022782
+Fold 7. Epoch 16: train acc: 0.5281 train loss: 0.5006 valid acc: 0.6777 valid loss: 0.4998
+Epoch:  17
+Avg loss:  0.4860338389873505
+Fold 7. Epoch 17: train acc: 0.5729 train loss: 0.4860 valid acc: 0.6709 valid loss: 0.4994
+Epoch:  18
+Avg loss:  0.517988333106041
+Fold 7. Epoch 18: train acc: 0.5470 train loss: 0.5180 valid acc: 0.6299 valid loss: 0.5089
+Epoch:  19
+Avg loss:  0.5154254645109176
+Fold 7. Epoch 19: train acc: 0.5451 train loss: 0.5154 valid acc: 0.6709 valid loss: 0.4990
+Epoch:  20
+Avg loss:  0.5007641196250916
+Fold 7. Epoch 20: train acc: 0.5737 train loss: 0.5008 valid acc: 0.6641 valid loss: 0.4999
+Epoch:  21
+Avg loss:  0.49673011302948
+Fold 7. Epoch 21: train acc: 0.5472 train loss: 0.4967 valid acc: 0.6299 valid loss: 0.5072
+Epoch:  22
+Avg loss:  0.5298176079988479
+Fold 7. Epoch 22: train acc: 0.5584 train loss: 0.5298 valid acc: 0.6777 valid loss: 0.4938
+Epoch:  23
+Avg loss:  0.4760516881942749
+Fold 7. Epoch 23: train acc: 0.5620 train loss: 0.4761 valid acc: 0.6162 valid loss: 0.5136
+Epoch:  24
+Avg loss:  0.4857672452926636
+Fold 7. Epoch 24: train acc: 0.5684 train loss: 0.4858 valid acc: 0.6846 valid loss: 0.4914
+Epoch:  25
+Avg loss:  0.48517449498176574
+Fold 7. Epoch 25: train acc: 0.5923 train loss: 0.4852 valid acc: 0.6572 valid loss: 0.4952
+Epoch:  26
+Avg loss:  0.5072306305170059
+Fold 7. Epoch 26: train acc: 0.5426 train loss: 0.5072 valid acc: 0.6641 valid loss: 0.4920
+Epoch:  27
+Avg loss:  0.47083642780780793
+Fold 7. Epoch 27: train acc: 0.5518 train loss: 0.4708 valid acc: 0.6094 valid loss: 0.5179
+Epoch:  28
+Avg loss:  0.4613122433423996
+Fold 7. Epoch 28: train acc: 0.5619 train loss: 0.4613 valid acc: 0.6709 valid loss: 0.4890
+Epoch:  29
+Avg loss:  0.48951390385627747
+Fold 7. Epoch 29: train acc: 0.5654 train loss: 0.4895 valid acc: 0.6641 valid loss: 0.4909
+Epoch:  30
+Avg loss:  0.45196829438209535
+Fold 7. Epoch 30: train acc: 0.5685 train loss: 0.4520 valid acc: 0.6367 valid loss: 0.4998
+Epoch:  31
+Avg loss:  0.449844154715538
+Fold 7. Epoch 31: train acc: 0.5690 train loss: 0.4498 valid acc: 0.6641 valid loss: 0.4908
+Epoch:  32
+Avg loss:  0.4591670513153076
+Fold 7. Epoch 32: train acc: 0.5707 train loss: 0.4592 valid acc: 0.6504 valid loss: 0.4916
+Epoch:  33
+Avg loss:  0.45333257019519807
+Fold 7. Epoch 33: train acc: 0.5565 train loss: 0.4533 valid acc: 0.6436 valid loss: 0.4932
+Epoch:  34
+Avg loss:  0.4570027470588684
+Fold 7. Epoch 34: train acc: 0.5538 train loss: 0.4570 valid acc: 0.6367 valid loss: 0.4943
+Epoch:  35
+Avg loss:  0.47587589025497434
+Fold 7. Epoch 35: train acc: 0.5700 train loss: 0.4759 valid acc: 0.6436 valid loss: 0.4919
+Epoch:  36
+Avg loss:  0.4523871123790741
+Fold 7. Epoch 36: train acc: 0.5755 train loss: 0.4524 valid acc: 0.6641 valid loss: 0.4869
+Epoch:  37
+Avg loss:  0.45960742235183716
+Fold 7. Epoch 37: train acc: 0.5700 train loss: 0.4596 valid acc: 0.6572 valid loss: 0.4884
+Epoch:  38
+Avg loss:  0.44234015941619875
+Fold 7. Epoch 38: train acc: 0.5588 train loss: 0.4423 valid acc: 0.6367 valid loss: 0.4936
+Epoch:  39
+Avg loss:  0.451995512843132
+Fold 7. Epoch 39: train acc: 0.5768 train loss: 0.4520 valid acc: 0.6436 valid loss: 0.4900
+Epoch:  40
+Avg loss:  0.4583498388528824
+Fold 7. Epoch 40: train acc: 0.5706 train loss: 0.4583 valid acc: 0.6777 valid loss: 0.4856
+Epoch:  41
+Avg loss:  0.46944685876369474
+Fold 7. Epoch 41: train acc: 0.5707 train loss: 0.4694 valid acc: 0.6367 valid loss: 0.4913
+Epoch:  42
+Avg loss:  0.4624083906412125
+Fold 7. Epoch 42: train acc: 0.5680 train loss: 0.4624 valid acc: 0.6709 valid loss: 0.4867
+Epoch:  43
+Avg loss:  0.4504853516817093
+Fold 7. Epoch 43: train acc: 0.5646 train loss: 0.4505 valid acc: 0.6436 valid loss: 0.4905
+Epoch:  44
+Avg loss:  0.4494881868362427
+Fold 7. Epoch 44: train acc: 0.5540 train loss: 0.4495 valid acc: 0.6299 valid loss: 0.4929
+Epoch:  45
+Avg loss:  0.46488929688930514
+Fold 7. Epoch 45: train acc: 0.5829 train loss: 0.4649 valid acc: 0.6504 valid loss: 0.4869
+Epoch:  46
+Avg loss:  0.4738420009613037
+Fold 7. Epoch 46: train acc: 0.5694 train loss: 0.4738 valid acc: 0.6504 valid loss: 0.4864
+Epoch:  47
+Avg loss:  0.47386409938335416
+Fold 7. Epoch 47: train acc: 0.5460 train loss: 0.4739 valid acc: 0.6162 valid loss: 0.4961
+Epoch:  48
+Avg loss:  0.44116545617580416
+Fold 7. Epoch 48: train acc: 0.5439 train loss: 0.4412 valid acc: 0.6162 valid loss: 0.5014
+Epoch:  49
+Avg loss:  0.4412150740623474
+Fold 7. Epoch 49: train acc: 0.5656 train loss: 0.4412 valid acc: 0.6367 valid loss: 0.4900
+Fold 8. Initial acc: 0.4463 loss: 0.6971
+Epoch:  0
+Avg loss:  0.6338787257671357
+Fold 8. Epoch 00: train acc: 0.5830 train loss: 0.6339 valid acc: 0.8438 valid loss: 0.4089
+Epoch:  1
+Avg loss:  0.6789871484041214
+Fold 8. Epoch 01: train acc: 0.5766 train loss: 0.6790 valid acc: 0.3496 valid loss: 0.7532
+Epoch:  2
+Avg loss:  0.6084643095731735
+Fold 8. Epoch 02: train acc: 0.5716 train loss: 0.6085 valid acc: 0.7900 valid loss: 0.4494
+Epoch:  3
+Avg loss:  0.5767276525497437
+Fold 8. Epoch 03: train acc: 0.5870 train loss: 0.5767 valid acc: 0.7363 valid loss: 0.5311
+Epoch:  4
+Avg loss:  0.569184935092926
+Fold 8. Epoch 04: train acc: 0.5720 train loss: 0.5692 valid acc: 0.7148 valid loss: 0.5593
+Epoch:  5
+Avg loss:  0.5714635014533996
+Fold 8. Epoch 05: train acc: 0.5321 train loss: 0.5715 valid acc: 0.7793 valid loss: 0.4546
+Epoch:  6
+Avg loss:  0.555623322725296
+Fold 8. Epoch 06: train acc: 0.5444 train loss: 0.5556 valid acc: 0.7363 valid loss: 0.4854
+Epoch:  7
+Avg loss:  0.5195604026317596
+Fold 8. Epoch 07: train acc: 0.5827 train loss: 0.5196 valid acc: 0.7363 valid loss: 0.4967
+Epoch:  8
+Avg loss:  0.5096118658781051
+Fold 8. Epoch 08: train acc: 0.5736 train loss: 0.5096 valid acc: 0.7471 valid loss: 0.4733
+Epoch:  9
+Avg loss:  0.5338628739118576
+Fold 8. Epoch 09: train acc: 0.5723 train loss: 0.5339 valid acc: 0.7793 valid loss: 0.4346
+Epoch:  10
+Avg loss:  0.5168954074382782
+Fold 8. Epoch 10: train acc: 0.5622 train loss: 0.5169 valid acc: 0.6504 valid loss: 0.5260
+Epoch:  11
+Avg loss:  0.509048467874527
+Fold 8. Epoch 11: train acc: 0.5519 train loss: 0.5090 valid acc: 0.7578 valid loss: 0.4514
+Epoch:  12
+Avg loss:  0.49492320120334626
+Fold 8. Epoch 12: train acc: 0.5497 train loss: 0.4949 valid acc: 0.7578 valid loss: 0.4507
+Epoch:  13
+Avg loss:  0.5244179725646972
+Fold 8. Epoch 13: train acc: 0.5973 train loss: 0.5244 valid acc: 0.6289 valid loss: 0.5473
+Epoch:  14
+Avg loss:  0.5096173524856568
+Fold 8. Epoch 14: train acc: 0.5164 train loss: 0.5096 valid acc: 0.7793 valid loss: 0.4257
+Epoch:  15
+Avg loss:  0.5101521223783493
+Fold 8. Epoch 15: train acc: 0.5821 train loss: 0.5102 valid acc: 0.6826 valid loss: 0.4962
+Epoch:  16
+Avg loss:  0.4816325157880783
+Fold 8. Epoch 16: train acc: 0.5709 train loss: 0.4816 valid acc: 0.7793 valid loss: 0.4230
+Epoch:  17
+Avg loss:  0.5023759573698043
+Fold 8. Epoch 17: train acc: 0.5654 train loss: 0.5024 valid acc: 0.6934 valid loss: 0.4804
+Epoch:  18
+Avg loss:  0.5219232946634292
+Fold 8. Epoch 18: train acc: 0.5283 train loss: 0.5219 valid acc: 0.7363 valid loss: 0.4627
+Epoch:  19
+Avg loss:  0.47260300517082215
+Fold 8. Epoch 19: train acc: 0.5499 train loss: 0.4726 valid acc: 0.7363 valid loss: 0.4644
+Epoch:  20
+Avg loss:  0.475396591424942
+Fold 8. Epoch 20: train acc: 0.5435 train loss: 0.4754 valid acc: 0.7041 valid loss: 0.4868
+Epoch:  21
+Avg loss:  0.4782453000545502
+Fold 8. Epoch 21: train acc: 0.5732 train loss: 0.4782 valid acc: 0.7578 valid loss: 0.4326
+Epoch:  22
+Avg loss:  0.4777863919734955
+Fold 8. Epoch 22: train acc: 0.5677 train loss: 0.4778 valid acc: 0.7363 valid loss: 0.4525
+Epoch:  23
+Avg loss:  0.45918079614639284
+Fold 8. Epoch 23: train acc: 0.5877 train loss: 0.4592 valid acc: 0.7363 valid loss: 0.4530
+Epoch:  24
+Avg loss:  0.49409314393997195
+Fold 8. Epoch 24: train acc: 0.5724 train loss: 0.4941 valid acc: 0.7363 valid loss: 0.4443
+Epoch:  25
+Avg loss:  0.4758996397256851
+Fold 8. Epoch 25: train acc: 0.5779 train loss: 0.4759 valid acc: 0.7041 valid loss: 0.4805
+Epoch:  26
+Avg loss:  0.47904179990291595
+Fold 8. Epoch 26: train acc: 0.5304 train loss: 0.4790 valid acc: 0.7041 valid loss: 0.4654
+Epoch:  27
+Avg loss:  0.4893606185913086
+Fold 8. Epoch 27: train acc: 0.5602 train loss: 0.4894 valid acc: 0.7578 valid loss: 0.4262
+Epoch:  28
+Avg loss:  0.46179898381233214
+Fold 8. Epoch 28: train acc: 0.5481 train loss: 0.4618 valid acc: 0.6934 valid loss: 0.4876
+Epoch:  29
+Avg loss:  0.46698746979236605
+Fold 8. Epoch 29: train acc: 0.5335 train loss: 0.4670 valid acc: 0.7363 valid loss: 0.4509
+Epoch:  30
+Avg loss:  0.46350655555725095
+Fold 8. Epoch 30: train acc: 0.5437 train loss: 0.4635 valid acc: 0.7148 valid loss: 0.4656
+Epoch:  31
+Avg loss:  0.46675813794136045
+Fold 8. Epoch 31: train acc: 0.5379 train loss: 0.4668 valid acc: 0.7363 valid loss: 0.4544
+Epoch:  32
+Avg loss:  0.45728941857814787
+Fold 8. Epoch 32: train acc: 0.5718 train loss: 0.4573 valid acc: 0.7256 valid loss: 0.4554
+Epoch:  33
+Avg loss:  0.4583468556404114
+Fold 8. Epoch 33: train acc: 0.5526 train loss: 0.4583 valid acc: 0.7363 valid loss: 0.4442
+Epoch:  34
+Avg loss:  0.4442788988351822
+Fold 8. Epoch 34: train acc: 0.5431 train loss: 0.4443 valid acc: 0.7148 valid loss: 0.4670
+Epoch:  35
+Avg loss:  0.4669774234294891
+Fold 8. Epoch 35: train acc: 0.5334 train loss: 0.4670 valid acc: 0.7363 valid loss: 0.4467
+Epoch:  36
+Avg loss:  0.4432343035936356
+Fold 8. Epoch 36: train acc: 0.5544 train loss: 0.4432 valid acc: 0.7148 valid loss: 0.4657
+Epoch:  37
+Avg loss:  0.44946726262569425
+Fold 8. Epoch 37: train acc: 0.5483 train loss: 0.4495 valid acc: 0.7471 valid loss: 0.4305
+Epoch:  38
+Avg loss:  0.46337528228759767
+Fold 8. Epoch 38: train acc: 0.5304 train loss: 0.4634 valid acc: 0.6826 valid loss: 0.4923
+Epoch:  39
+Avg loss:  0.4686741352081299
+Fold 8. Epoch 39: train acc: 0.5204 train loss: 0.4687 valid acc: 0.6934 valid loss: 0.4848
+Epoch:  40
+Avg loss:  0.46110396087169647
+Fold 8. Epoch 40: train acc: 0.5358 train loss: 0.4611 valid acc: 0.7256 valid loss: 0.4504
+Epoch:  41
+Avg loss:  0.4391080647706985
+Fold 8. Epoch 41: train acc: 0.5504 train loss: 0.4391 valid acc: 0.7578 valid loss: 0.4214
+Epoch:  42
+Avg loss:  0.46065022349357604
+Fold 8. Epoch 42: train acc: 0.5406 train loss: 0.4607 valid acc: 0.7256 valid loss: 0.4538
+Epoch:  43
+Avg loss:  0.4380973607301712
+Fold 8. Epoch 43: train acc: 0.5431 train loss: 0.4381 valid acc: 0.7363 valid loss: 0.4453
+Epoch:  44
+Avg loss:  0.43973877727985383
+Fold 8. Epoch 44: train acc: 0.5450 train loss: 0.4397 valid acc: 0.7363 valid loss: 0.4395
+Epoch:  45
+Avg loss:  0.43767654299736025
+Fold 8. Epoch 45: train acc: 0.5622 train loss: 0.4377 valid acc: 0.7363 valid loss: 0.4427
+Epoch:  46
+Avg loss:  0.4309799402952194
+Fold 8. Epoch 46: train acc: 0.5431 train loss: 0.4310 valid acc: 0.7363 valid loss: 0.4322
+Epoch:  47
+Avg loss:  0.45523824393749235
+Fold 8. Epoch 47: train acc: 0.5603 train loss: 0.4552 valid acc: 0.7363 valid loss: 0.4394
+Epoch:  48
+Avg loss:  0.430332624912262
+Fold 8. Epoch 48: train acc: 0.5642 train loss: 0.4303 valid acc: 0.7363 valid loss: 0.4392
+Epoch:  49
+Avg loss:  0.4525121718645096
+Fold 8. Epoch 49: train acc: 0.5753 train loss: 0.4525 valid acc: 0.7363 valid loss: 0.4325
+Fold 9. Initial acc: 0.6133 loss: 0.6808
+Epoch:  0
+Avg loss:  0.6447036743164063
+Fold 9. Epoch 00: train acc: 0.6400 train loss: 0.6447 valid acc: 0.6055 valid loss: 0.6457
+Epoch:  1
+Avg loss:  0.6143050909042358
+Fold 9. Epoch 01: train acc: 0.5912 train loss: 0.6143 valid acc: 0.5703 valid loss: 0.6522
+Epoch:  2
+Avg loss:  0.5822306632995605
+Fold 9. Epoch 02: train acc: 0.5843 train loss: 0.5822 valid acc: 0.5938 valid loss: 0.6342
+Epoch:  3
+Avg loss:  0.5482384204864502
+Fold 9. Epoch 03: train acc: 0.6058 train loss: 0.5482 valid acc: 0.6055 valid loss: 0.6324
+Epoch:  4
+Avg loss:  0.5345118045806885
+Fold 9. Epoch 04: train acc: 0.5763 train loss: 0.5345 valid acc: 0.5508 valid loss: 0.6376
+Epoch:  5
+Avg loss:  0.5377838611602783
+Fold 9. Epoch 05: train acc: 0.5667 train loss: 0.5378 valid acc: 0.6133 valid loss: 0.6698
+Epoch:  6
+Avg loss:  0.5574139177799224
+Fold 9. Epoch 06: train acc: 0.5804 train loss: 0.5574 valid acc: 0.5391 valid loss: 0.6307
+Epoch:  7
+Avg loss:  0.5397372543811798
+Fold 9. Epoch 07: train acc: 0.5761 train loss: 0.5397 valid acc: 0.5586 valid loss: 0.6167
+Epoch:  8
+Avg loss:  0.5469144344329834
+Fold 9. Epoch 08: train acc: 0.5251 train loss: 0.5469 valid acc: 0.6055 valid loss: 0.6432
+Epoch:  9
+Avg loss:  0.5068600028753281
+Fold 9. Epoch 09: train acc: 0.5672 train loss: 0.5069 valid acc: 0.5703 valid loss: 0.6095
+Epoch:  10
+Avg loss:  0.5153373718261719
+Fold 9. Epoch 10: train acc: 0.5731 train loss: 0.5153 valid acc: 0.5898 valid loss: 0.6085
+Epoch:  11
+Avg loss:  0.5029089361429214
+Fold 9. Epoch 11: train acc: 0.5511 train loss: 0.5029 valid acc: 0.5977 valid loss: 0.6114
+Epoch:  12
+Avg loss:  0.5163813263177872
+Fold 9. Epoch 12: train acc: 0.5785 train loss: 0.5164 valid acc: 0.5586 valid loss: 0.6081
+Epoch:  13
+Avg loss:  0.4831663638353348
+Fold 9. Epoch 13: train acc: 0.5510 train loss: 0.4832 valid acc: 0.6055 valid loss: 0.6150
+Epoch:  14
+Avg loss:  0.486063277721405
+Fold 9. Epoch 14: train acc: 0.5738 train loss: 0.4861 valid acc: 0.5703 valid loss: 0.5931
+Epoch:  15
+Avg loss:  0.5167229831218719
+Fold 9. Epoch 15: train acc: 0.5803 train loss: 0.5167 valid acc: 0.6016 valid loss: 0.5987
+Epoch:  16
+Avg loss:  0.4836446136236191
+Fold 9. Epoch 16: train acc: 0.5631 train loss: 0.4836 valid acc: 0.5664 valid loss: 0.5870
+Epoch:  17
+Avg loss:  0.4481913402676582
+Fold 9. Epoch 17: train acc: 0.5724 train loss: 0.4482 valid acc: 0.6016 valid loss: 0.5933
+Epoch:  18
+Avg loss:  0.4563806146383286
+Fold 9. Epoch 18: train acc: 0.5829 train loss: 0.4564 valid acc: 0.5586 valid loss: 0.5846
+Epoch:  19
+Avg loss:  0.4931346088647842
+Fold 9. Epoch 19: train acc: 0.5433 train loss: 0.4931 valid acc: 0.5742 valid loss: 0.5824
+Epoch:  20
+Avg loss:  0.4532079964876175
+Fold 9. Epoch 20: train acc: 0.5800 train loss: 0.4532 valid acc: 0.5820 valid loss: 0.5815
+Epoch:  21
+Avg loss:  0.44847863018512724
+Fold 9. Epoch 21: train acc: 0.5649 train loss: 0.4485 valid acc: 0.5703 valid loss: 0.5806
+Epoch:  22
+Avg loss:  0.45356536507606504
+Fold 9. Epoch 22: train acc: 0.5803 train loss: 0.4536 valid acc: 0.5898 valid loss: 0.5807
+Epoch:  23
+Avg loss:  0.4587764173746109
+Fold 9. Epoch 23: train acc: 0.5684 train loss: 0.4588 valid acc: 0.5742 valid loss: 0.5784
+Epoch:  24
+Avg loss:  0.44085984379053117
+Fold 9. Epoch 24: train acc: 0.5597 train loss: 0.4409 valid acc: 0.5859 valid loss: 0.5785
+Epoch:  25
+Avg loss:  0.4524518370628357
+Fold 9. Epoch 25: train acc: 0.5714 train loss: 0.4525 valid acc: 0.5742 valid loss: 0.5781
+Epoch:  26
+Avg loss:  0.47556455433368683
+Fold 9. Epoch 26: train acc: 0.5479 train loss: 0.4756 valid acc: 0.5625 valid loss: 0.5790
+Epoch:  27
+Avg loss:  0.44591248631477354
+Fold 9. Epoch 27: train acc: 0.5840 train loss: 0.4459 valid acc: 0.5977 valid loss: 0.5833
+Epoch:  28
+Avg loss:  0.44556028246879575
+Fold 9. Epoch 28: train acc: 0.5971 train loss: 0.4456 valid acc: 0.5898 valid loss: 0.5782
+Epoch:  29
+Avg loss:  0.4569857895374298
+Fold 9. Epoch 29: train acc: 0.5582 train loss: 0.4570 valid acc: 0.5625 valid loss: 0.5761
+Epoch:  30
+Avg loss:  0.47126026153564454
+Fold 9. Epoch 30: train acc: 0.5518 train loss: 0.4713 valid acc: 0.5586 valid loss: 0.5774
+Epoch:  31
+Avg loss:  0.48028960824012756
+Fold 9. Epoch 31: train acc: 0.5353 train loss: 0.4803 valid acc: 0.5625 valid loss: 0.5739
+Epoch:  32
+Avg loss:  0.4581340104341507
+Fold 9. Epoch 32: train acc: 0.5633 train loss: 0.4581 valid acc: 0.5898 valid loss: 0.5742
+Epoch:  33
+Avg loss:  0.4406282275915146
+Fold 9. Epoch 33: train acc: 0.5851 train loss: 0.4406 valid acc: 0.5742 valid loss: 0.5710
+Epoch:  34
+Avg loss:  0.4634435594081879
+Fold 9. Epoch 34: train acc: 0.5624 train loss: 0.4634 valid acc: 0.5938 valid loss: 0.5731
+Epoch:  35
+Avg loss:  0.47254748046398165
+Fold 9. Epoch 35: train acc: 0.5772 train loss: 0.4725 valid acc: 0.5781 valid loss: 0.5694
+Epoch:  36
+Avg loss:  0.4340636432170868
+Fold 9. Epoch 36: train acc: 0.5644 train loss: 0.4341 valid acc: 0.5820 valid loss: 0.5685
+Epoch:  37
+Avg loss:  0.42306711673736574
+Fold 9. Epoch 37: train acc: 0.5496 train loss: 0.4231 valid acc: 0.5508 valid loss: 0.5726
+Epoch:  38
+Avg loss:  0.42442243695259096
+Fold 9. Epoch 38: train acc: 0.5493 train loss: 0.4244 valid acc: 0.5664 valid loss: 0.5673
+Epoch:  39
+Avg loss:  0.4346871107816696
+Fold 9. Epoch 39: train acc: 0.5704 train loss: 0.4347 valid acc: 0.5820 valid loss: 0.5683
+Epoch:  40
+Avg loss:  0.4401129186153412
+Fold 9. Epoch 40: train acc: 0.5631 train loss: 0.4401 valid acc: 0.5625 valid loss: 0.5679
+Epoch:  41
+Avg loss:  0.4333892077207565
+Fold 9. Epoch 41: train acc: 0.5559 train loss: 0.4334 valid acc: 0.5625 valid loss: 0.5674
+Epoch:  42
+Avg loss:  0.46628040373325347
+Fold 9. Epoch 42: train acc: 0.5508 train loss: 0.4663 valid acc: 0.5742 valid loss: 0.5670
+Epoch:  43
+Avg loss:  0.4640040576457977
+Fold 9. Epoch 43: train acc: 0.5688 train loss: 0.4640 valid acc: 0.5742 valid loss: 0.5661
+Epoch:  44
+Avg loss:  0.4304999679327011
+Fold 9. Epoch 44: train acc: 0.5541 train loss: 0.4305 valid acc: 0.5625 valid loss: 0.5660
+Epoch:  45
+Avg loss:  0.41423130631446836
+Fold 9. Epoch 45: train acc: 0.5652 train loss: 0.4142 valid acc: 0.5625 valid loss: 0.5662
+Epoch:  46
+Avg loss:  0.41870714724063873
+Fold 9. Epoch 46: train acc: 0.5588 train loss: 0.4187 valid acc: 0.5742 valid loss: 0.5661
+Epoch:  47
+Avg loss:  0.45452219545841216
+Fold 9. Epoch 47: train acc: 0.5715 train loss: 0.4545 valid acc: 0.5742 valid loss: 0.5659
+Epoch:  48
+Avg loss:  0.45448424220085143
+Fold 9. Epoch 48: train acc: 0.5447 train loss: 0.4545 valid acc: 0.5781 valid loss: 0.5646
+Epoch:  49
+Avg loss:  0.425309020280838
+Fold 9. Epoch 49: train acc: 0.5644 train loss: 0.4253 valid acc: 0.5586 valid loss: 0.5648
+average accuracy: 0.64921875
+DONE
